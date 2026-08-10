@@ -1,0 +1,560 @@
+﻿@page
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<IdentityUser> SignInManager
+@inject UserManager<IdentityUser> UserManager
+@model IndexModel
+@{
+    ViewData["Title"] = "Home Page";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <style>
+        @@keyframes flash {
+            0% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        .flash {
+            animation: flash 1s infinite;
+        }
+
+        .bg-light-red {
+            background-color: #f8d7da !important;
+        }
+
+        .bg-light-green {
+            background-color: #d4edda !important;
+        }
+    </style>
+
+</head>
+<body>
+    @if (User.IsInRole("Admin") || User.IsInRole("Supervisor") || User.IsInRole("Management"))
+    {
+        <div class="container mt-5">
+        
+            <!-- Title Section -->
+            <div class="row mb-4">
+                <div class="col-12 text-center">
+                    <h1 class="display-5 fw-bold text-success">📋 Transcend Task Manager Dashboard</h1>
+                    <p class="lead text-muted">Monitor, assign, and manage tasks efficiently across all departments.</p>
+                    <hr class="my-4" />
+                </div>
+            </div>
+            <!-- Top Cards -->
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-xl-5 g-2 mb-4" id="task-cards">
+                <div class="col">
+                    <a class="nav-link" href="Assign_TaskList">
+                        <div id="card-assign" class="card shadow p-3 bg-primary text-white text-center">
+                            <h5><i class="bi bi-person-check-fill"></i> Assembly Build</h5>
+                            <h3 id="assign-task-count">0</h3>
+                        </div>
+                    </a>
+                </div>
+                <div class="col">
+                    <a class="nav-link" href="Request_InventoryList">
+                        <div id="card-request" class="card shadow p-3 bg-success text-white text-center">
+                            <h5><i class="bi bi-box-seam"></i> Inventory Requests</h5>
+                            <h3 id="request-task-count">0</h3>
+                        </div>
+                    </a>
+                </div>
+                <div class="col">
+                    <a class="nav-link" href="Move_ItemList">
+                        <div id="card-move" class="card shadow p-3 bg-warning text-dark text-center">
+                            <h5><i class="bi bi-arrow-left-right"></i> Move Items</h5>
+                            <h3 id="move-task-count">0</h3>
+                        </div>
+                    </a>
+                </div>
+                <div class="col">
+                    <a class="nav-link" href="Clear_WasteList">
+                        <div id="card-waste" class="card shadow p-3 bg-info text-white text-center">
+                            <h5><i class="bi bi-trash-fill"></i> Clear Wastes</h5>
+                            <h3 id="waste-task-count">0</h3>
+                        </div>
+                    </a>
+                </div>
+                <div class="col">
+                    <a class="nav-link" href="Quarantine_ItemList">
+                        <div id="card-quarantine" class="card shadow p-3 bg-danger text-white text-center">
+                            <h5><i class="bi bi-shield-exclamation"></i> Item Quarantine</h5>
+                            <h3 id="quarantine-task-count">0</h3>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+        
+                <!-- Chart Section -->
+                <div class="row mb-4">
+                    <div class="col-lg-9 mb-4">
+                        <div class="row">
+                            <!-- Bar Chart Container -->
+                            <div class="col-12 mb-4">
+                                <!-- Added mb-4 to create space below -->
+                                <div class="card shadow p-3">
+                                    <canvas id="taskBarChart"></canvas>
+                                </div>
+                            </div>
+
+                            <!-- Line Chart Container -->
+                            <div class="col-12">
+                                <div class="card shadow p-3">
+                                    <canvas id="taskLineChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-3 mb-4">
+                        <div class="row">
+                            <!-- Pie Chart Container -->
+                            <div class="col-12 mb-4">
+                                <!-- Added mb-4 to add spacing below -->
+                                <div class="card shadow p-3">
+                                    <canvas id="taskPieChart" width="300" height="300"></canvas>
+                                </div>
+                            </div>
+
+                            <!-- Doughnut Chart Container 1 -->
+                            <div class="col-12 mb-4">
+                                <!-- Added mb-4 to add spacing below -->
+                                <div class="card shadow p-3">
+                                    <canvas id="taskTypeDoughnutChart1" width="300" height="300"></canvas>
+                                </div>
+                            </div>
+
+                            <!-- Doughnut Chart Container 2 -->
+                            <div class="col-12">
+                                <div class="card shadow p-3">
+                                    <canvas id="taskStatusDoughnutChart" width="400" height="400"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Task List Table -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card shadow p-3">
+                            <h5 class="mb-3">Task List</h5>
+
+                            <!-- Task Search Input -->
+                            <input type="text" id="taskSearch" class="form-control mb-3" placeholder="Search tasks...">
+
+                            <!-- Task Table -->
+                            <div class="table-responsive">
+                                <table id="taskTable" class="table table-striped table-bordered table-hover" style="width:100%">
+                                    <thead class="bg-success text-white">
+                                        <tr>
+                                            <th class="text-center">Action</th>
+                                            <th>W/O No</th>
+                                            <th>Task Type</th>
+                                            <th>Task Name</th>
+                                            <th>Task Description</th>
+                                            <th>Assign To</th>
+                                            <th>Qty</th>
+                                            <th>Unit</th>
+                                            <th>Status</th>
+                                            <th>Priority Level</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="taskTableBody">
+                                        @foreach (var task in Model.listtask)
+                                        {
+                                            <tr class="@(task.Status == "A" ? "bg-light-red" : task.Status == "C" ? "bg-light-green" : "")">
+                                                <td class="text-center">
+                                                    <div class="dropdown">
+                                                        <!-- Ellipsis Icon Only, Centered -->
+                                                        <a href="#" class="btn btn-link p-0 text-decoration-none"
+                                                           id="dropdownMenuButton_@task.Id"
+                                                           data-bs-toggle="dropdown" aria-expanded="false">
+                                                            <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                                                        </a>
+
+                                                        <!-- Dropdown Menu -->
+                                                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton_@task.Id">
+                                                            <li>
+                                                                <a class="dropdown-item" href="Complete_Task?id=@task.Id">
+                                                                    <i class="bi bi-check2-circle me-1"></i> Complete Task
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a class="dropdown-item" href="/Edit_Task?id=@task.Id">
+                                                                    <i class="bi bi-pencil-square me-1"></i> Edit Task
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a class="dropdown-item" href="/Delete_Task?id=@task.Id"
+                                                                   onclick="return confirm('Are you sure you want to delete this task?');">
+                                                                    <i class="bi bi-trash me-1"></i> Delete Task
+                                                                </a>
+                                                            </li>
+                                                        </ul>
+                                                    </div>
+                                                </td>
+                                                <td>@task.Ref_No</td>
+                                                <td>@task.Task_Type</td>
+                                                <td>@task.Task_Name</td>
+                                                <td>@task.Task_Description</td>
+                                                <td>@task.Assign_To</td>
+                                                <td>@task.Qty</td>
+                                                <td>@task.Unit</td>
+                                                <td>@task.Status</td>
+                                                <td>@task.Priority_Level</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+        
+        </div>
+    }    
+</body>
+</html>
+<!-- Chart.js Configuration -->
+@section Scripts {
+
+    <script>
+        // Previous task counts
+        let previousCounts = {
+            assignTask: 0,
+            requestInventory: 0,
+            moveItem: 0,
+            clearWaste: 0,
+            quarantineItem: 0
+        };
+
+        const audioSrc = '/sounds/beep.mp3';
+        let canPlaySound = false;
+
+        // Unlock audio on first user interaction
+        window.addEventListener('click', unlockAudio, { once: true });
+        window.addEventListener('touchstart', unlockAudio, { once: true });
+
+        function unlockAudio() {
+            canPlaySound = true;
+            // Play and pause to unlock the audio
+            const tempAudio = new Audio(audioSrc);
+            tempAudio.play().then(() => tempAudio.pause()).catch(() => {});
+        }
+
+        // Function to play beep
+        function playBeep() {
+            if (!canPlaySound) return;
+            const beep = new Audio(audioSrc); // new instance to allow multiple plays
+            beep.play().catch(err => console.warn('Audio play error:', err));
+        }
+
+        // Fetch task counts and update cards
+        function updateTaskCounts() {
+            fetch('/api/taskcounts')
+                .then(res => res.json())
+                .then(data => {
+                    updateCard('assign', data.assignTask, previousCounts.assignTask);
+                    updateCard('request', data.requestInventory, previousCounts.requestInventory);
+                    updateCard('move', data.moveItem, previousCounts.moveItem);
+                    updateCard('waste', data.clearWaste, previousCounts.clearWaste);
+                    updateCard('quarantine', data.quarantineItem, previousCounts.quarantineItem);
+
+                    // Save current counts for next comparison
+                    previousCounts = { ...data };
+                })
+                .catch(err => console.error('Fetch error:', err));
+        }
+
+        // Update individual card
+        function updateCard(type, newCount, oldCount) {
+            const countElem = document.getElementById(`${type}-task-count`);
+            if (countElem) countElem.textContent = newCount;
+
+            const cardElem = document.getElementById(`card-${type}`);
+            if (cardElem) {
+                // Flash effect if tasks exist
+                if (newCount > 0) {
+                    cardElem.classList.add('flash');
+                } else {
+                    cardElem.classList.remove('flash');
+                }
+
+                // Play beep if count increased
+                if (newCount > oldCount) {
+                    playBeep();
+                }
+            }
+        }
+
+        // Initial load
+        updateTaskCounts();
+        // Repeat every 10 seconds
+        setInterval(updateTaskCounts, 10000);
+    </script>
+
+
+    <script>
+            // Data table
+            $(document).ready(function () {
+            // Initialize DataTable with responsive support
+            var table = $('#taskTable').DataTable({
+                responsive: true, // Makes the table responsive
+                paging: true,     // Enable pagination
+                lengthMenu: [5, 10, 25, 50, 100], // Page length options
+                pageLength: 10,   // Default number of rows per page
+                ordering: true,   // Enable sorting
+                searching: true,  // Enable search
+                autoWidth: false, // Prevent fixed width
+                language: {
+                    search: "🔍 Search:",
+                    lengthMenu: "Show _MENU_ tasks per page",
+                    zeroRecords: "No matching tasks found",
+                    info: "Showing _START_ to _END_ of _TOTAL_ tasks",
+                    infoFiltered: "(filtered from _MAX_ total tasks)",
+                    paginate: {
+                        previous: "←",
+                        next: "→"
+                    }
+                }
+            });
+
+            // Custom Search using taskSearch input
+            $('#taskSearch').on('keyup', function () {
+                table.search(this.value).draw(); // Search all columns
+            });
+        });
+
+    </script>
+
+
+    <script>
+            document.addEventListener("DOMContentLoaded", function () {
+            // Bar Chart for Assign_To Wise Task Distribution
+            var barChart = new Chart(document.getElementById("taskBarChart"), {
+                type: 'bar',
+                data: {
+                    labels: @Html.Raw(Json.Serialize(Model.AssignToCounts.Keys)),  // Assignees
+                    datasets: [{
+                        label: 'Tasks Assigned',
+                        data: @Html.Raw(Json.Serialize(Model.AssignToCounts.Values)),  // Task counts for each assignee
+                        backgroundColor: '#4e73df'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+
+            // Pie Chart
+            var pieChart = new Chart(document.getElementById("taskPieChart"), {
+            type: 'pie',
+            data: {
+                labels: ["High", "Medium", "Low"],
+                datasets: [{
+                        data: [
+                        @Model.HighPriorityCount,
+                        @Model.MediumPriorityCount,
+                        @Model.LowPriorityCount
+                        ],
+                        backgroundColor: ['#e74a3b', '#f6c23e', '#1cc88a']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,  // Allows manual resizing
+                    width: 200,  // You can also directly set width and height here
+                    height: 200
+                }
+            });
+
+            // Line Chart - Task_Name wise Qty
+            var lineChart = new Chart(document.getElementById("taskLineChart"), {
+                type: 'line',
+                data: {
+                    labels: @Html.Raw(Json.Serialize(Model.TaskQtyCounts.Keys)), // Task Names as X-axis
+                    datasets: [{
+                        label: 'Task Quantity',
+                        data: @Html.Raw(Json.Serialize(Model.TaskQtyCounts.Values)), // Qty values as Y-axis
+                        borderColor: '#36b9cc',
+                        backgroundColor: 'rgba(54, 185, 204, 0.1)', // Light fill under line
+                        fill: true,
+                        tension: 0.4, // Smooth line curve
+                        pointBackgroundColor: '#36b9cc',
+                        pointBorderColor: '#fff',
+                        pointHoverRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Quantity'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Task Name'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        tooltip: {
+                            enabled: true
+                        }
+                    }
+                }
+            });
+
+            // Doughnut Chart1
+            var ctx = document.getElementById("taskTypeDoughnutChart1").getContext('2d');
+
+            var taskTypeDoughnutChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: @Html.Raw(Json.Serialize(Model.TaskTypeCounts.Keys)), // Task_Type categories
+                    datasets: [{
+                        label: 'Task Type Distribution',
+                        data: @Html.Raw(Json.Serialize(Model.TaskTypeCounts.Values)), // Task counts for each Task_Type
+                        backgroundColor: [
+                            '#4e73df', // Blue
+                            '#1cc88a', // Green
+                            '#36b9cc', // Teal
+                            '#f6c23e', // Yellow
+                            '#e74a3b', // Red
+                            '#858796'  // Grey
+                        ],
+                        hoverBackgroundColor: [
+                            '#2e59d9',
+                            '#17a673',
+                            '#2c9faf',
+                            '#f4b619',
+                            '#e02d1b',
+                            '#6c757d'
+                        ],
+                        hoverBorderColor: "rgba(234, 236, 244, 1)",
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    responsive: true,
+                    layout: {
+                        padding: {
+                            bottom: 20
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'bottom', // Moves the legend to the bottom
+                            labels: {
+                                padding: 20, // Adds some space between the legend and the chart
+                                boxWidth: 20, // Controls the size of the color box in the legend
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        },
+                        tooltip: {
+                            enabled: true
+                        }
+                    }
+                }
+            });
+
+            // Doughnut Chart for Task Status
+            var ctx = document.getElementById("taskStatusDoughnutChart").getContext('2d');
+
+            var taskStatusDoughnutChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: @Html.Raw(Json.Serialize(Model.TaskStatusCounts.Keys)), // Task status categories
+                    datasets: [{
+                        label: 'Task Status Distribution',
+                        data: @Html.Raw(Json.Serialize(Model.TaskStatusCounts.Values)), // Task counts for each status
+                        backgroundColor: [
+                            '#4e73df', // Blue for "Completed"
+                            '#1cc88a', // Green for "In Progress"
+                            '#f6c23e', // Yellow for "Pending"
+                            '#e74a3b', // Red for "Overdue"
+                            '#36b9cc', // Teal for "On Hold"
+                            '#858796'  // Grey for "Cancelled"
+                        ],
+                        hoverBackgroundColor: [
+                            '#2e59d9',
+                            '#17a673',
+                            '#f4b619',
+                            '#e02d1b',
+                            '#2c9faf',
+                            '#6c757d'
+                        ],
+                        hoverBorderColor: "rgba(234, 236, 244, 1)",
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    responsive: true,
+                    layout: {
+                        padding: {
+                            bottom: 20
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'bottom', // Moves the legend to the bottom
+                            labels: {
+                                padding: 20, // Adds space between legend and chart
+                                boxWidth: 20, // Size of the color box in legend
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        },
+                        tooltip: {
+                            enabled: true
+                        }
+                    }
+                }
+            });
+
+            // Task Search Filter
+            $('#taskSearch').on('keyup', function () {
+                var value = $(this).val().toLowerCase();
+                $('#taskTableBody tr').filter(function () {
+                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+                });
+            });
+        });
+    </script>
+
+}

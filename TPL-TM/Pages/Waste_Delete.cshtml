@@ -1,0 +1,59 @@
+﻿@page
+@model TPL_TM.Pages.Waste_DeleteModel
+@{
+    ViewData["Title"] = "Delete Waste Record";
+}
+
+<div class="modal fade show" id="deleteWasteModal" tabindex="-1" aria-labelledby="deleteWasteModalLabel" aria-hidden="true" style="display: block;">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 500px;">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteWasteModalLabel">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" onclick="window.location.href=redirectUrl"></button>
+            </div>
+            
+            <div class="modal-body">
+                @if (!string.IsNullOrEmpty(Model.errorMessage))
+                {
+                    <div class="alert alert-danger">@Model.errorMessage</div>
+                }
+                else
+                {
+                    <h5 class="text-danger">Are you sure you want to delete this waste record?</h5>
+
+                    <table class="table table-bordered table-hover table-sm align-middle" style="background-color: #f9f9f9;">
+                        <tbody>
+                            <tr><th style="width: 30%;">Shift ID:</th><td>@Model.Waste.Shift_Id</td></tr>
+                            <tr><th>Waste Type:</th><td>@Model.Waste.Waste_Type</td></tr>
+                            <tr><th>Weight:</th><td>@Model.Waste.Waste_Weight</td></tr>
+                            <tr><th>Created By:</th><td>@Model.Waste.Created_By</td></tr>
+                            <tr><th>Created On:</th><td>@Model.Waste.Created_At?.ToString("dd/MM/yyyy HH:mm")</td></tr>
+                        </tbody>
+                    </table>
+
+                    <form method="post" asp-page-handler="DeleteWaste" novalidate>
+                        <input type="hidden" name="Id" value="@Model.Waste.Id" />
+                        <button type="submit" class="btn btn-danger w-100">Delete Waste</button>
+                        <a href="/Waste_RecordsReport" class="btn btn-secondary w-100 mt-2">Cancel</a>
+                    </form>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var deleteModal = new bootstrap.Modal(document.getElementById('deleteWasteModal'), {
+                backdrop: 'static',
+                keyboard: false
+            });
+            deleteModal.show();
+        });
+    </script>
+    <script>
+        const redirectUrl = "@(
+         User.IsInRole("User") ? "/Operator_Index" : "/Waste_RecordsReport")";
+    </script>
+}

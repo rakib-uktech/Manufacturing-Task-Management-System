@@ -1,0 +1,407 @@
+﻿@page
+@model TPL_TM.Pages.Material_Consumption_SummaryModel
+@using System.Linq
+
+<div class="container-fluid mt-4">
+
+    <!-- HEADER -->
+    <div class="card shadow p-3 mb-4">
+        <div class="container-fluid bg-success text-white py-3 mb-4 rounded shadow">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h2 class="mb-0"><i class="bi bi-box-seam me-2"></i> Material Consumption Summary</h2>
+                    <p class="mb-0">Shift, machine, and material-wise consumption summary.</p>
+                </div>
+                <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                    <a id="exportBtn" class="btn btn-outline-light" href="javascript:void(0);">
+                        <i class="bi bi-download me-1"></i> Export
+                    </a>
+                </div>
+            </div>            
+        </div>        
+    </div>
+
+    <!-- FILTERS -->
+    <div class="card shadow mb-4 p-3">
+        <div class="d-flex gap-2 align-items-center flex-nowrap">
+
+            <input type="text" id="summarySearch" class="form-control form-control-sm" placeholder="Search…" />
+
+            <select id="machineLineFilter" class="form-select form-select-sm w-auto">
+                <option value="">All Machine Lines</option>
+            </select>
+
+            <select id="machineNameFilter" class="form-select form-select-sm w-auto">
+                <option value="">All Machine Names</option>
+            </select>
+
+            <select id="rangeSelect" class="form-select form-select-sm w-auto">
+                <option value="today" selected>Today</option>
+                <option value="7">Last 7 days</option>
+                <option value="30">Last 30 days</option>
+                <option value="all">All</option>
+                <option value="custom">Custom Range</option>
+            </select>
+
+            <input type="date" id="fromDate" class="form-control form-control-sm" disabled />
+            <input type="date" id="toDate" class="form-control form-control-sm" disabled />
+
+            <button id="applyBtn" class="btn btn-info btn-sm" disabled>Apply</button>
+
+            <select id="pageLength" class="form-select form-select-sm w-auto ms-auto">
+                <option value="5">5</option>
+                <option value="10" selected>10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+            </select>
+
+        </div>
+    </div>
+
+    <!-- SUMMARY CARDS -->
+    <div class="card shadow p-3 mb-4">
+        <h5 class="mb-3 text-success"><i class="bi bi-grid-3x3-gap me-1"></i> Shift-wise Material Consumption Summary</h5>
+        <div class="row" id="shiftSummaryContainer"></div>
+    </div>
+
+    <!-- DETAILED TABLE -->
+    <div class="card shadow p-3 mt-4">
+        <div class="table-responsive">
+            <table id="summaryTable" class="table table-striped table-bordered table-hover w-100">
+                <thead class="bg-success text-white">
+                    <tr>
+                        <th>Shift</th>
+                        <th>Machine Line</th>
+                        <th>Machine Name</th>
+                        <th>Work Order</th>
+                        <th>Material ID</th>
+                        <th>Batch</th>
+                        <th class="text-end">Quantity</th>
+                        <th>Created At</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- SCRIPTS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+    $(function () {
+
+        // =========================
+        // 🔹 GET FILTER VALUES
+        // =========================
+        function getFilters() {
+            return {
+                search: $('#summarySearch').val(),
+                range: $('#rangeSelect').val(),
+                fromDate: $('#fromDate').val(),
+                toDate: $('#toDate').val(),
+                machineLine: $('#machineLineFilter').val(),
+                machineName: $('#machineNameFilter').val()
+            };
+        }
+
+        // =========================
+        // 🔹 DATATABLE INIT
+        // =========================
+        const table = $('#summaryTable').DataTable({
+            processing: true,
+            serverSide: true,
+            deferRender: true,
+            pageLength: 10,
+            searching: false,
+            destroy: true,
+
+            ajax: {
+                url: '/Material_Consumption_Summary?handler=LoadData',
+                data: function (d) {
+                    return { ...d, ...getFilters() };
+                }
+            },
+
+            columns: [
+                { data: 'shift' },
+                { data: 'machineLine' },
+                { data: 'machineName' },
+                { data: 'wo' },
+                { data: 'material' },
+                { data: 'batch' },
+                { data: 'qty', className: "text-end",
+                    render: data => data ? data.toLocaleString() : "0"
+                },
+                { data: 'createdAt' }
+            ]
+        });
+
+        // =========================
+        // 🔹 REFRESH ALL
+        // =========================
+        function refreshAll() {
+            table.draw(false);
+            loadSummary();
+        }
+
+        // =========================
+        // 🔹 SUMMARY API CALL
+        // =========================
+        function loadSummary() {
+            $.get('/Material_Consumption_Summary?handler=Summary', getFilters(), function (data) {
+                renderSummary(data);
+            });
+        }
+
+        // =========================
+        // 🔹 SUMMARY RENDER
+        // =========================
+            function renderSummary(data) {
+
+        const container = $('#shiftSummaryContainer');
+        container.empty();
+
+        let grouped = {};
+
+        // 🔹 GROUP DATA
+        data.forEach(row => {
+            const shift = row.shift || 'N/A';
+            const line = row.machineLine || 'N/A';
+            const machine = row.machineName || 'N/A';
+            const material = row.material || 'N/A';
+            const wo = row.wo || 'N/A';
+            const batch = row.batch || 'N/A';
+            const qty = parseInt(row.qty) || 0;
+
+            grouped[shift] ??= {};
+            grouped[shift][line] ??= {};
+            grouped[shift][line][machine] ??= {};
+            grouped[shift][line][machine][material] ??= {};
+            grouped[shift][line][machine][material][wo] ??= {};
+            grouped[shift][line][machine][material][wo][batch] ??= 0;
+
+            grouped[shift][line][machine][material][wo][batch] += qty;
+        });
+
+        // 🔹 BUILD UI
+        Object.keys(grouped).sort().forEach(shift => {
+
+            let shiftTotal = 0;
+
+            const shiftCard = $('<div class="col-md-4 mb-3"></div>');
+            const card = $(`
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-success text-white fw-bold">
+                        Shift ${shift}
+                    </div>
+                    <div class="card-body"></div>
+                </div>
+            `);
+            const cardBody = card.find('.card-body');
+
+            Object.keys(grouped[shift]).sort().forEach(line => {
+
+                let lineTotal = 0;
+                cardBody.append(`<h6 class="mt-3 fw-semibold text-secondary">${line}</h6>`);
+
+                Object.keys(grouped[shift][line]).sort().forEach(machine => {
+
+                    const materials = grouped[shift][line][machine];
+                    let machineTotal = 0;
+
+                    const tableEl = $(`
+                        <table class="table table-sm table-bordered mb-3">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Machine</th>
+                                    <th>Material</th>
+                                    <th>Work Order</th>
+                                    <th>Batch</th>
+                                    <th class="text-end">Qty</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    `);
+                    const tbody = tableEl.find('tbody');
+
+                    let firstMachineRow = true;
+
+                    Object.keys(materials).sort().forEach(material => {
+
+                        const workOrders = materials[material];
+                        let firstMaterialRow = true;
+
+                        Object.keys(workOrders).sort().forEach(wo => {
+
+                            const batches = workOrders[wo];
+                            let firstWoRow = true;
+
+                            Object.keys(batches).sort().forEach(batch => {
+
+                                const qty = batches[batch];
+                                machineTotal += qty;
+                                lineTotal += qty;
+                                shiftTotal += qty;
+
+                                const tr = $('<tr></tr>');
+
+                                // ✅ MACHINE ROWSPAN
+                                if (firstMachineRow) {
+                                    const machineRowCount = Object.values(materials)
+                                        .reduce((acc, m) => acc + Object.values(m).reduce((a,b)=>a+Object.keys(b).length,0), 0);
+                                    tr.append(`<td rowspan="${machineRowCount}" class="align-middle fw-semibold">${machine}</td>`);
+                                    firstMachineRow = false;
+                                }
+
+                                // ✅ MATERIAL ROWSPAN
+                                if (firstMaterialRow) {
+                                    const materialRowCount = Object.values(workOrders)
+                                        .reduce((acc, b) => acc + Object.keys(b).length, 0);
+                                    tr.append(`<td rowspan="${materialRowCount}" class="align-middle">${material}</td>`);
+                                    firstMaterialRow = false;
+                                }
+
+                                // ✅ WORK ORDER ROWSPAN
+                                if (firstWoRow) {
+                                    tr.append(`<td rowspan="${Object.keys(batches).length}" class="align-middle">${wo}</td>`);
+                                    firstWoRow = false;
+                                }
+
+                                tr.append(`
+                                    <td>${batch}</td>
+                                    <td class="text-end">${qty.toLocaleString()}</td>
+                                `);
+
+                                tbody.append(tr);
+                            });
+
+                            
+                        });
+
+                    });
+
+                    // ✅ MACHINE TOTAL
+                    tbody.append(`
+                        <tr class="fw-bold bg-secondary text-white">
+                            <td colspan="4" class="text-end">Machine Total</td>
+                            <td class="text-end">${machineTotal.toLocaleString()}</td>
+                        </tr>
+                    `);
+
+                    cardBody.append(tableEl);
+                });
+
+                cardBody.append(`<div class="fw-bold text-success text-end mt-2">Machine Line Total: ${lineTotal.toLocaleString()}</div>`);
+            });
+
+            cardBody.append(`<div class="fw-bold text-success text-end mt-2">Shift Total: ${shiftTotal.toLocaleString()}</div>`);
+            shiftCard.append(card);
+            container.append(shiftCard);
+        });
+    }
+
+        // =========================
+        // 🔹 FILTER EVENTS
+        // =========================
+        function debounce(fn, delay = 400) {
+            let t;
+            return () => {
+                clearTimeout(t);
+                t = setTimeout(fn, delay);
+            };
+        }
+
+        function loadFilters(machineLine = "") {
+            $.get('/Material_Consumption_Summary?handler=Filters', { machineLine }, function (data) {
+
+                const lineSelect = $('#machineLineFilter');
+                const nameSelect = $('#machineNameFilter');
+
+                if (!machineLine) {
+                    lineSelect.empty().append('<option value="">All Machine Lines</option>');
+                    data.machineLines.forEach(x => {
+                        lineSelect.append(`<option value="${x}">${x}</option>`);
+                    });
+                }
+
+                nameSelect.empty().append('<option value="">All Machine Names</option>');
+                data.machineNames.forEach(x => {
+                    nameSelect.append(`<option value="${x}">${x}</option>`);
+                });
+            });
+        }
+
+        $('#summarySearch').keyup(debounce(refreshAll));
+
+        $('#machineLineFilter, #machineNameFilter').change(refreshAll);
+
+        $('#rangeSelect').change(function () {
+            const isCustom = this.value === "custom";
+            $('#fromDate,#toDate,#applyBtn').prop('disabled', !isCustom);
+            refreshAll();
+        });
+
+        $('#applyBtn').click(refreshAll);
+
+        $('#pageLength').change(function () {
+            table.page.len(this.value).draw();
+        });
+        
+        $('#machineLineFilter').change(function () {
+            const selectedLine = $(this).val();
+            loadFilters(selectedLine);   // 🔥 reload machine names
+            refreshAll();
+        });
+        // =========================
+        // 🔹 INITIAL LOAD
+        // =========================
+        $('#rangeSelect').val('today');
+
+            $('#exportBtn').click(function () {
+
+        const filters = getFilters();
+
+        $.get('/Material_Consumption_Summary?handler=Summary', filters, function (data) {
+
+            if (!data || !data.length) {
+                alert('No data to export!');
+                return;
+            }
+
+            const wsData = [
+                ["Shift", "Machine Line", "Machine Name", "Work Order", "Material", "Quantity"]
+            ];
+
+            data.forEach(row => {
+                wsData.push([
+                    row.shift || '',
+                    row.machineLine || '',
+                    row.machineName || '',
+                    row.wo || '',
+                    row.material || '',
+                    row.qty || 0
+                ]);
+            });
+
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+            XLSX.utils.book_append_sheet(wb, ws, "MaterialSummary");
+
+            XLSX.writeFile(wb, `Material_Summary_${moment().format("YYYYMMDD_HHmmss")}.xlsx`);
+        });
+    });
+        loadFilters();
+        refreshAll();
+
+    });
+</script>

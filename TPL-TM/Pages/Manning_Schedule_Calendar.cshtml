@@ -1,0 +1,1717 @@
+﻿@page
+@model TPL_TM.Pages.Manning_Schedule_CalendarModel
+@{
+    ViewData["Title"] = "Manning Scheduler";
+}
+
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/index.global.min.css"
+      rel="stylesheet" />
+<link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/index.global.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@6.1.19/index.global.min.js"></script>
+
+<div class="scheduler-page">
+
+    <div class="scheduler-header">
+
+        <div class="header-left">
+
+            <div class="header-icon">
+                <i class="bi bi-calendar2-week-fill"></i>
+            </div>
+
+            <div>
+                <h2>Manning Scheduler</h2>
+                <span>Manage employee assignments across production machines</span>
+            </div>
+
+        </div>
+
+        <div class="header-right">
+
+            <div class="scheduler-legend">
+
+                <span class="legend-item">
+                    <span class="legend-dot dot-a"></span>
+                    Shift A
+                </span>
+
+                <span class="legend-item">
+                    <span class="legend-dot dot-b"></span>
+                    Shift B
+                </span>
+
+                <span class="legend-item">
+                    <span class="legend-dot dot-c"></span>
+                    Shift C
+                </span>
+
+            </div>
+
+           
+            <div class="d-flex gap-2">
+
+                <button id="btnPrint"
+                        class="btn btn-outline-secondary rounded-pill">
+                    <i class="bi bi-printer me-2"></i>
+                    Print
+                </button>
+
+                <button id="btnExportExcel"
+                        class="btn btn-outline-success rounded-pill">
+                    <i class="bi bi-file-earmark-excel me-2"></i>
+                    Excel
+                </button>
+
+                <button id="btnExportPdf"
+                        class="btn btn-outline-danger rounded-pill">
+                    <i class="bi bi-file-earmark-pdf me-2"></i>
+                    PDF
+                </button>
+
+                <a asp-page="/Manning_Schedule"
+                   class="btn btn-success rounded-pill px-4">
+                    <i class="bi bi-plus-circle me-2"></i>
+                    New Schedule
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+    <div class="card shadow-sm border-success mb-3">
+
+        <div id="filterHeader"
+             class="card-header bg-success text-white d-flex justify-content-between align-items-center"
+             style="cursor:pointer;">
+
+            <div>
+                <i class="bi bi-funnel me-2"></i>
+                <strong>Machine Filters</strong>
+            </div>
+
+            <i id="filterIcon" class="bi bi-chevron-right"></i>
+
+        </div>
+
+        <div id="machineFilters" style="display:none;">
+
+            <div class="card-body">
+
+                <h6 class="border-bottom border-success pb-2 mb-3">
+                    <i class="bi bi-diagram-3 me-1"></i>
+                    Machine Lines
+                </h6>
+
+                <div id="machineLineButtons"
+                     class="d-flex flex-wrap gap-2 mb-4">
+                </div>
+
+                <h6 class="border-bottom border-success pb-2 mb-3">
+                    <i class="bi bi-cpu me-1"></i>
+                    Machines
+                </h6>
+
+                <div id="machineButtons"
+                     class="d-flex flex-wrap gap-2">
+                </div>
+                <h6 class="border-bottom border-success pb-2 mb-3 mt-4">
+                    <i class="bi bi-clock-history me-1"></i>
+                    Shifts
+                </h6>
+
+                <div id="shiftButtons"
+                     class="d-flex flex-wrap gap-2">
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="scheduler-card">
+
+        <div id="manningScheduler"></div>
+
+    </div>
+    <div id="weeklyRosterReport"></div>
+
+</div>
+
+<div class="modal fade"
+     id="manningModal"
+     tabindex="-1">
+
+    <div class="modal-dialog modal-dialog-centered">
+
+        <div class="modal-content">
+
+            <div class="modal-header bg-success text-white">
+
+                <!-- Left Menu -->
+                <div class="dropdown">
+
+                    <button class="btn btn-sm btn-success border-0 p-1"
+                            type="button"
+                            data-bs-toggle="dropdown"
+                            aria-expanded="false">
+                        <i class="bi bi-three-dots-vertical fs-5 text-white"></i>
+                    </button>
+
+                    <ul class="dropdown-menu">
+
+                        <li>
+                            <a id="editScheduleLink"
+                               class="dropdown-item"
+                               href="#">
+                                <i class="bi bi-pencil-square me-2"></i>
+                                Edit Schedule
+                            </a>
+                        </li>
+
+                    </ul>
+
+                </div>
+
+                <!-- Title -->
+                <h5 class="modal-title flex-grow-1 text-center mb-0">
+                    Manning Details
+                </h5>
+
+                <!-- Close -->
+                <button class="btn-close btn-close-white"
+                        data-bs-dismiss="modal">
+                </button>
+
+            </div>
+
+            <div class="modal-body">
+
+                <table class="table table-bordered">
+
+                    <tr>
+                        <th width="180">Employee</th>
+                        <td id="modalEmployee"></td>
+                    </tr>
+
+                    <tr>
+                        <th>Machine</th>
+                        <td id="modalMachine"></td>
+                    </tr>
+
+                    <tr>
+                        <th>Shift</th>
+                        <td id="modalShift"></td>
+                    </tr>
+
+                    <tr>
+                        <th>Comments</th>
+                        <td id="modalComments"></td>
+                    </tr>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script>
+
+    document.addEventListener('DOMContentLoaded', async function () {
+
+        const response = await fetch('?handler=ManningData');
+
+        const data = await response.json();
+
+        const allResources = data.resources;
+
+        const allEvents = data.events;
+
+        document.getElementById("btnExportPdf")
+    .addEventListener("click", function(){
+
+
+    let report = generateRosterReport(
+        allEvents,
+        allResources
+    );
+
+
+    html2pdf()
+    .set({
+
+        margin:0.3,
+
+        filename:'Manning_Roster.pdf',
+
+        image:{
+            type:'jpeg',
+            quality:1
+        },
+
+        html2canvas:{
+            scale:2
+        },
+
+        jsPDF:{
+            orientation:'landscape',
+            format:'a3'
+        }
+
+    })
+    .from(report)
+    .save();
+
+
+    });
+
+       
+        let selectedLine = null;
+        let selectedMachine = null;
+        let selectedShift = null;
+
+        const machineLines =
+            [...new Set(allResources.map(r => r.machineLine))];
+
+        const lineContainer =
+            document.getElementById("machineLineButtons");
+
+        const machineContainer =
+            document.getElementById("machineButtons");
+
+        const shiftContainer =
+            document.getElementById("shiftButtons");
+
+        const allLineBtn = document.createElement("button");
+
+        allLineBtn.className =
+            "btn btn-outline-success btn-sm filter-btn active";
+
+        allLineBtn.textContent = "All Lines";
+
+            allLineBtn.onclick = () => {
+
+            selectedLine = null;
+            selectedMachine = null;
+            selectedShift = null; // add this
+
+            document.querySelectorAll("#machineLineButtons .filter-btn")
+                .forEach(b => b.classList.remove("active"));
+
+            document.querySelectorAll("#shiftButtons .filter-btn")
+                .forEach(b => b.classList.remove("active"));
+
+            allLineBtn.classList.add("active");
+
+            // activate All Shifts button
+            shiftContainer.querySelector(".filter-btn")?.classList.add("active");
+
+            buildMachineButtons();
+            applyFilters();
+        };
+
+        function buildShiftButtons() {
+
+        shiftContainer.innerHTML = "";
+
+        const shifts = ["A", "B", "C"];
+
+        const allBtn = document.createElement("button");
+
+        allBtn.className =
+            "btn btn-outline-success btn-sm filter-btn active";
+
+        allBtn.textContent = "All Shifts";
+
+        allBtn.onclick = () => {
+
+            selectedShift = null;
+
+            shiftContainer
+                .querySelectorAll(".filter-btn")
+                .forEach(b => b.classList.remove("active"));
+
+            allBtn.classList.add("active");
+
+            applyFilters();
+
+        };
+
+        shiftContainer.appendChild(allBtn);
+
+        shifts.forEach(shift => {
+
+            const btn = document.createElement("button");
+
+            btn.className =
+                "btn btn-outline-success btn-sm filter-btn";
+
+            btn.innerHTML =
+                `<span class="badge bg-success me-1">${shift}</span> Shift ${shift}`;
+
+            btn.onclick = () => {
+
+                selectedShift = shift;
+
+                shiftContainer
+                    .querySelectorAll(".filter-btn")
+                    .forEach(b => b.classList.remove("active"));
+
+                btn.classList.add("active");
+
+                applyFilters();
+
+            };
+
+            shiftContainer.appendChild(btn);
+
+        });
+
+    }
+        lineContainer.appendChild(allLineBtn);
+
+        machineLines.forEach(line => {
+
+            const btn = document.createElement("button");
+
+            btn.className =
+                "btn btn-outline-success btn-sm filter-btn";
+
+            btn.textContent = line;
+
+            btn.onclick = () => {
+
+                selectedLine = line;
+                selectedMachine = null;
+
+                document.querySelectorAll("#machineLineButtons .filter-btn")
+                    .forEach(b => b.classList.remove("active"));
+
+                btn.classList.add("active");
+
+                buildMachineButtons();
+                applyFilters();
+            };
+
+            lineContainer.appendChild(btn);
+
+        });
+
+        const calendar = new FullCalendar.Calendar(
+
+            document.getElementById('manningScheduler'),
+
+            {
+
+                height:820,
+
+                schedulerLicenseKey:'CC-Attribution-NonCommercial',
+
+                initialView:'resourceTimelineWeek',
+
+                resourceAreaWidth:'230px',
+
+                resourceGroupField:'machineLine',
+
+                resourceAreaColumns:[
+                    {
+                        field:'title',
+                        headerContent:'Machine'
+                    }
+                ],
+
+                headerToolbar:{
+                    left:'prev,next today',
+                    center:'title',
+                    right:'resourceTimelineDay,resourceTimelineWeek,resourceTimelineMonth'
+                },
+
+                buttonText:{
+                    today:'Today',
+                    resourceTimelineDay:'Day',
+                    resourceTimelineWeek:'Week',
+                    resourceTimelineMonth:'Month'
+                },
+
+                expandRows:true,
+
+                stickyHeaderDates:true,
+
+                stickyFooterScrollbar:true,
+
+                nowIndicator:true,
+
+                editable:false,
+
+                resources: allResources,
+                events: allEvents,
+                
+                slotLaneContent: function(info){
+
+                return {
+                    html: `
+                        <button class="empty-slot-plus"
+                                title="Assign Employee">
+                            <i class="bi bi-plus-lg"></i>
+                        </button>
+                    `
+                };
+
+            },
+
+                views:{
+
+                    resourceTimelineDay:{
+
+                        slotDuration:{days:1},
+                        slotLabelInterval:{days:1},
+
+                        slotLabelFormat:[
+                            {weekday:'short'},
+                            {day:'numeric'}
+                        ]
+                    },
+
+                    resourceTimelineWeek:{
+
+                        slotDuration:{days:1},
+                        slotLabelInterval:{days:1},
+
+                        slotLabelFormat:[
+                            {weekday:'short'},
+                            {day:'numeric'}
+                        ]
+                    },
+
+                    resourceTimelineMonth:{
+
+                        slotDuration:{days:1},
+                        slotLabelInterval:{days:1},
+
+                        slotLabelFormat:[
+                            {weekday:'short'},
+                            {day:'numeric'}
+                        ]
+                    }
+
+                },
+
+            eventContent: function (info) {
+
+                const shift = info.event.extendedProps.shift;
+
+                let iconColor = "text-success";
+
+                if (shift === "B")
+                    iconColor = "text-warning";
+
+                if (shift === "C")
+                    iconColor = "text-danger";
+
+                return {
+                    html: `
+                    <div class="manning-box">
+                        <div class="wo-title">
+                            <i class="bi bi-person-circle ${iconColor}"></i>
+                            <span title="${info.event.extendedProps.employee}">
+                                ${info.event.extendedProps.employee}
+                            </span>
+                        </div>
+
+                        <div class="wo-pct">
+                            Shift ${shift}
+                        </div>
+                    </div>
+                    `
+                };
+            },
+
+                eventDidMount: function (info) {
+
+                    info.el.setAttribute(
+                        "data-shift",
+                        info.event.extendedProps.shift
+                    );
+
+                },
+
+                 dateClick: function(info) {
+
+                    // Only empty slot click
+
+                    const resource = info.resource;
+
+                    const machine = resource.title;
+
+                    const machineLine = resource.extendedProps.machineLine;
+
+
+                    const selectedDate = formatLocalDate(info.date);
+
+
+                    // Determine shift from clicked time
+
+                    let hour = info.date.getHours();
+
+                    let shift = "";
+
+
+                    if(hour >= 6 && hour < 14)
+                    {
+                        shift = "A";
+                    }
+                    else if(hour >= 14 && hour < 22)
+                    {
+                        shift = "B";
+                    }
+                    else
+                    {
+                        shift = "C";
+                    }
+
+
+                    window.location.href =
+                        `/Manning_Schedule?` +
+                        `machine=${encodeURIComponent(machine)}` +
+                        `&machineLine=${encodeURIComponent(machineLine)}` +
+                        `&date=${selectedDate}` +
+                        `&shift=${shift}`;
+
+                },
+
+               
+                
+                eventClick: function(info){
+
+                    document.getElementById("modalEmployee").innerText =
+                        info.event.extendedProps.employee;
+
+                    document.getElementById("modalMachine").innerText =
+                        info.event.getResources()[0].title;
+
+                    document.getElementById("modalShift").innerText =
+                        info.event.extendedProps.shift;
+
+                    document.getElementById("modalComments").innerText =
+                        info.event.extendedProps.comments;
+
+                    // Set edit link
+                    document.getElementById("editScheduleLink").href =
+                        `/Manning_Schedule?id=${info.event.id}`;
+
+                    new bootstrap.Modal(
+                        document.getElementById("manningModal")
+                    ).show();
+                }
+
+                
+
+            });
+            
+            function formatLocalDate(date) {
+
+                const year = date.getFullYear();
+
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+
+                const day = String(date.getDate()).padStart(2, '0');
+
+                return `${year}-${month}-${day}`;
+            }
+
+            calendar.render();
+    function generateRosterReport(events, resources)
+    {
+
+        const report =
+        document.getElementById("weeklyRosterReport");
+
+
+        let html = `
+
+    <div class="roster-report">
+
+
+    <div class="roster-header">
+
+    <img src="/images/logo.png">
+
+    <div class="roster-title">
+     Transcend Packaging Limited
+    </div>
+
+    <div>
+    WEEKLY MANNING ROSTER
+    </div>
+
+    <div>
+    Week Beginning:
+    ${calendar.view.currentStart.toLocaleDateString('en-GB')}
+    </div>
+
+    <div>
+    Printed:
+    ${new Date().toLocaleString('en-GB')}
+    </div>
+
+    </div>
+
+    `;
+
+
+    const lines =
+    [...new Set(resources.map(x=>x.machineLine))]
+    .sort();
+
+
+
+    lines.forEach(line=>{
+
+
+    html += `
+
+    <table class="roster-table">
+
+    <tr>
+    <td colspan="8"
+    class="line-header">
+    ${line}
+    </td>
+    </tr>
+
+
+    <tr>
+
+    <th>Machine</th>
+
+    <th>Monday</th>
+    <th>Tuesday</th>
+    <th>Wednesday</th>
+    <th>Thursday</th>
+    <th>Friday</th>
+    <th>Saturday</th>
+    <th>Sunday</th>
+
+    </tr>
+
+
+    `;
+
+
+    resources
+    .filter(r=>r.machineLine===line)
+    .sort((a,b)=>a.title.localeCompare(b.title))
+    .forEach(machine=>{
+
+
+    html += `
+    <tr>
+
+    <td>
+    ${machine.title}
+    </td>
+    `;
+
+
+
+    for(let i=0;i<7;i++)
+    {
+
+
+    let day =
+    new Date(calendar.view.currentStart);
+
+    day.setDate(day.getDate()+i);
+
+
+    let dayString =
+    day.toISOString().substring(0,10);
+
+
+
+    let event =
+    events.find(e=>
+
+    e.resourceId===machine.id
+    &&
+    e.start.substring(0,10)===dayString
+
+    );
+
+
+
+    if(event)
+    {
+
+    html += `
+
+    <td class="shift-${event.shift}">
+
+    <div class="employee">
+    ${event.employee}
+    </div>
+
+    <div class="shift">
+    Shift ${event.shift}
+    </div>
+
+
+    </td>
+
+    `;
+
+    }
+    else
+    {
+
+    html += `<td></td>`;
+
+    }
+
+
+    }
+
+
+
+    html += "</tr>";
+
+    });
+
+
+    html += "</table>";
+
+    });
+
+
+
+    html += `
+
+
+    <div class="roster-footer">
+
+    <div>
+        Printed by: ${window.currentUserName ?? ''}
+    </div>
+
+
+    <div>
+    ${new Date().toLocaleString('en-GB')}
+    </div>
+
+
+    </div>
+
+
+    </div>
+
+    `;
+
+
+    report.innerHTML=html;
+
+
+    return report;
+
+    }
+        
+    function buildMachineButtons() {
+
+        machineContainer.innerHTML = "";
+
+        let machines = allResources;
+
+        if (selectedLine) {
+
+            machines = machines.filter(x =>
+                x.machineLine === selectedLine);
+        }
+
+        const allBtn = document.createElement("button");
+
+        allBtn.className =
+            "btn btn-outline-success btn-sm filter-btn active";
+
+        allBtn.textContent = "All Machines";
+
+        allBtn.onclick = () => {
+
+            selectedMachine = null;
+
+            machineContainer
+                .querySelectorAll(".filter-btn")
+                .forEach(b => b.classList.remove("active"));
+
+            allBtn.classList.add("active");
+
+            applyFilters();
+        };
+
+        machineContainer.appendChild(allBtn);
+
+        machines.forEach(machine => {
+
+            const btn = document.createElement("button");
+
+            btn.className =
+                "btn btn-outline-success btn-sm filter-btn";
+
+            btn.textContent = machine.title;
+
+            btn.onclick = () => {
+
+                selectedMachine = machine.id;
+
+                machineContainer
+                    .querySelectorAll(".filter-btn")
+                    .forEach(b => b.classList.remove("active"));
+
+                btn.classList.add("active");
+
+                applyFilters();
+            };
+
+            machineContainer.appendChild(btn);
+
+        });
+
+    }
+
+        function applyFilters() {
+
+        let resources = allResources;
+
+        // Filter by Machine Line
+        if (selectedLine) {
+            resources = resources.filter(r =>
+                r.machineLine === selectedLine);
+        }
+
+        // Filter by Machine
+        if (selectedMachine) {
+            resources = resources.filter(r =>
+                r.id === selectedMachine);
+        }
+
+        const resourceIds = resources.map(r => r.id);
+
+        // IMPORTANT: use let, not const
+        let events = allEvents.filter(e =>
+            resourceIds.includes(e.resourceId));
+
+        // Filter by Shift
+        if (selectedShift) {
+            events = events.filter(e =>
+                e.shift === selectedShift);
+        }
+
+        // Refresh calendar
+        calendar.batchRendering(() => {
+
+            // Remove current data
+            calendar.getResources().forEach(r => r.remove());
+            calendar.getEvents().forEach(e => e.remove());
+
+            // Add filtered resources
+            resources.forEach(r => calendar.addResource(r));
+
+            // Add filtered events
+            events.forEach(e => calendar.addEvent(e));
+        });
+    }
+
+    const filterHeader =
+        document.getElementById("filterHeader");
+
+    const filterPanel =
+        document.getElementById("machineFilters");
+
+    const filterIcon =
+        document.getElementById("filterIcon");
+
+    filterHeader.addEventListener("click", () => {
+
+        if (filterPanel.style.display === "none") {
+
+            filterPanel.style.display = "block";
+            filterIcon.style.transform = "rotate(180deg)";
+
+        } else {
+
+            filterPanel.style.display = "none";
+            filterIcon.style.transform = "rotate(0deg)";
+        }
+
+    });
+
+    buildMachineButtons();
+    buildShiftButtons();
+    document.getElementById("btnExportExcel")
+    .addEventListener("click", function(){
+
+        let report = generateRosterReport(
+            allEvents,
+            allResources
+        );
+
+
+        let tables =
+            report.querySelectorAll("table");
+
+
+        let wb =
+            XLSX.utils.book_new();
+
+
+        tables.forEach((tbl,index)=>{
+
+
+            let ws =
+            XLSX.utils.table_to_sheet(tbl);
+
+
+
+            ws["!cols"]=[
+
+                {wch:20},
+                {wch:18},
+                {wch:18},
+                {wch:18},
+                {wch:18},
+                {wch:18},
+                {wch:18},
+                {wch:18}
+
+            ];
+
+
+
+            XLSX.utils.book_append_sheet(
+                wb,
+                ws,
+                "Line "+(index+1)
+            );
+
+
+        });
+
+
+        XLSX.writeFile(
+            wb,
+            "Manning_Roster.xlsx"
+        );
+
+
+    });
+   
+
+    document.getElementById("manningScheduler")
+        .addEventListener("click", function(e){
+
+
+            const btn = e.target.closest(".empty-slot-plus");
+
+
+            if(!btn)
+                return;
+
+
+            e.stopPropagation();
+
+
+            const cell = btn.closest(".fc-timeline-slot");
+
+
+            if(!cell)
+                return;
+
+
+            const date =
+                cell.getAttribute("data-date");
+
+
+            const resourceId =
+                cell.closest("[data-resource-id]")
+                    ?.getAttribute("data-resource-id");
+
+
+            const resource =
+                calendar.getResourceById(resourceId);
+
+
+            if(!resource)
+                return;
+
+
+            let selectedDate = date.substring(0,10);
+
+
+            let hour =
+                new Date(date).getHours();
+
+
+            let shift="";
+
+
+            if(hour >=6 && hour <14)
+                shift="A";
+
+            else if(hour>=14 && hour<22)
+                shift="B";
+
+            else
+                shift="C";
+
+
+            window.location.href =
+                `/Manning_Schedule?`+
+                `machine=${encodeURIComponent(resource.title)}`+
+                `&machineLine=${encodeURIComponent(resource.extendedProps.machineLine)}`+
+                `&date=${selectedDate}`+
+                `&shift=${shift}`;
+
+        });
+            
+        document.getElementById("manningScheduler").addEventListener("click", function (e) {
+
+            const btn = e.target.closest(".assign-btn");
+
+            if (!btn)
+                return;
+
+            e.preventDefault();
+            e.stopPropagation();
+
+            const eventEl = btn.closest(".fc-event");
+
+            const eventApi = calendar.getEventById(eventEl.fcSeg.eventRange.def.publicId);
+
+            const resource = eventApi.getResources()[0];
+
+            const start = eventApi.start;
+
+            const url =
+                `/Manning_Schedule?` +
+                `machine=${encodeURIComponent(resource.title)}` +
+                `&machineLine=${encodeURIComponent(resource.extendedProps.machineLine)}` +
+                `&date=${formatLocalDate(start)}` +
+                `&shift=${eventApi.extendedProps.shift}`;
+
+            window.location = url;
+
+        });
+
+    });
+</script>
+<style>
+    
+    .roster-report {
+        font-family: "Segoe UI", Arial;
+        width: 100%;
+        font-size: 12px;
+    }
+
+    .roster-header {
+        text-align: center;
+        margin-bottom: 15px;
+    }
+
+        .roster-header img {
+            height: 50px;
+            float: left;
+        }
+
+    .roster-title {
+        font-size: 22px;
+        font-weight: bold;
+    }
+
+    .roster-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 25px;
+    }
+
+        .roster-table th {
+            background: #343a40;
+            color: white;
+            border: 1px solid #999;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .roster-table td {
+            border: 1px solid #aaa;
+            height: 55px;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+    .line-header {
+        background: #e9ecef;
+        font-weight: bold;
+        font-size: 15px;
+        text-align: left !important;
+        padding: 8px;
+    }
+
+
+    .shift-A {
+        background: #d4edda;
+    }
+
+    .shift-B {
+        background: #fff3cd;
+    }
+
+    .shift-C {
+        background: #f8d7da;
+    }
+
+
+    .employee {
+        font-weight: bold;
+    }
+
+    .shift {
+        font-size: 11px;
+    }
+
+    .roster-footer {
+        margin-top: 20px;
+        font-size: 11px;
+        display: flex;
+        justify-content: space-between;
+    }
+
+
+    @@media print {
+        body *
+
+    {
+        visibility: hidden;
+    }
+
+    #weeklyRosterReport,
+    #weeklyRosterReport * {
+        visibility: visible;
+    }
+    
+
+        #weeklyRosterReport {
+            position: absolute;
+            left: -99999px;
+            top: 0;
+            width: 1200px;
+        }
+
+    }
+</style>
+<style>
+
+    @@media print {
+        body *
+
+    {
+        visibility: hidden;
+    }
+
+    #manningScheduler,
+    #manningScheduler * {
+        visibility: visible;
+    }
+
+    #manningScheduler {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+    }
+
+    .fc-toolbar {
+        display: none !important;
+    }
+
+    }
+    /* ==========================================================
+       PAGE
+    ========================================================== */
+
+    .scheduler-page {
+        padding: 20px;
+        background: #f4f6f9;
+        min-height: 100vh;
+    }
+
+    /* ==========================================================
+       HEADER
+    ========================================================== */
+
+    .scheduler-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 25px;
+        flex-wrap: wrap;
+        padding: 22px 28px;
+        margin-bottom: 22px;
+        border-radius: 18px;
+        background: linear-gradient(135deg,#198754,#157347);
+        color: #fff;
+        box-shadow: 0 10px 25px rgba(25,135,84,.18);
+    }
+
+    .header-left {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+    }
+
+    .header-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 16px;
+        background: rgba(255,255,255,.15);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 30px;
+        backdrop-filter: blur(8px);
+    }
+
+    .header-left h2 {
+        margin: 0;
+        font-size: 28px;
+        font-weight: 700;
+    }
+
+    .header-left span {
+        display: block;
+        margin-top: 4px;
+        font-size: 14px;
+        opacity: .9;
+    }
+
+    .header-right {
+        display: flex;
+        align-items: center;
+        gap: 25px;
+        flex-wrap: wrap;
+    }
+
+    /* ==========================================================
+       LEGEND
+    ========================================================== */
+
+    .scheduler-legend {
+        display: flex;
+        gap: 18px;
+        flex-wrap: wrap;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #fff;
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+    .legend-dot {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+    }
+
+    .dot-a {
+        background: #32d26d;
+    }
+
+    .dot-b {
+        background: #ffc107;
+    }
+
+    .dot-c {
+        background: #ff5d5d;
+    }
+
+    /* ==========================================================
+       CARD
+    ========================================================== */
+
+    .scheduler-card {
+        background: #fff;
+        border-radius: 18px;
+        padding: 16px;
+        box-shadow: 0 5px 20px rgba(0,0,0,.08);
+    }
+
+    /* ==========================================================
+       FULLCALENDAR VARIABLES
+    ========================================================== */
+
+    .fc {
+        --fc-button-text-color: #444;
+        --fc-button-bg-color: #fff;
+        --fc-button-border-color: #dee2e6;
+        --fc-button-hover-bg-color: #198754;
+        --fc-button-hover-border-color: #198754;
+        --fc-button-hover-text-color: #fff;
+        --fc-button-active-bg-color: #198754;
+        --fc-button-active-border-color: #198754;
+        --fc-button-active-text-color: #fff;
+        --fc-now-indicator-color: #dc3545;
+        --fc-today-bg-color: #edf8f0;
+        font-size: 14px;
+    }
+
+    /* ==========================================================
+       TOOLBAR
+    ========================================================== */
+
+    .fc-header-toolbar {
+        background: white;
+        padding: 14px 18px;
+        border-radius: 14px;
+        box-shadow: 0 2px 10px rgba(0,0,0,.08);
+        margin-bottom: 18px !important;
+    }
+
+    .fc-toolbar-title {
+        color: #212529 !important;
+        font-size: 24px !important;
+        font-weight: 700 !important;
+    }
+
+    .fc-button {
+        border-radius: 10px !important;
+        font-weight: 600;
+        transition: .2s;
+    }
+
+        .fc-button:hover {
+            transform: translateY(-1px);
+        }
+
+    /* ==========================================================
+       REMOVE BLUE LINKS
+    ========================================================== */
+
+    .fc a {
+        color: #495057 !important;
+        text-decoration: none !important;
+    }
+
+    .fc-col-header-cell-cushion,
+    .fc-datagrid-cell-cushion {
+        color: #495057 !important;
+        font-weight: 600;
+    }
+
+    /* ==========================================================
+       GRID
+    ========================================================== */
+
+    .fc-theme-standard td,
+    .fc-theme-standard th {
+        border-color: #e9ecef;
+    }
+
+    .fc-scrollgrid {
+        border: none !important;
+        border-radius: 14px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0,0,0,.06);
+    }
+
+    /* ==========================================================
+       RESOURCE AREA
+    ========================================================== */
+
+    .fc .fc-resource-group {
+        background: linear-gradient(90deg,#198754,#157347);
+        color: white;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        font-weight: 700;
+    }
+
+    .fc-datagrid-cell {
+        background: #fafafa;
+    }
+
+    .fc-datagrid-cell-main {
+        font-weight: 600;
+        color: #343a40;
+    }
+
+    /* ==========================================================
+       EVENTS
+    ========================================================== */
+
+    .fc-event,
+    .fc-timeline-event {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        color: inherit !important;
+    }
+
+    .fc-event-main,
+    .fc-event-main-frame {
+        padding: 0 !important;
+    }
+
+    /* ==========================================================
+       EMPLOYEE CARD
+    ========================================================== */
+
+    .manning-box {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        position: relative;
+        width: 100%;
+        overflow: hidden;
+        background: #fff;
+        border-left: 5px solid #198754;
+        border-radius: 10px;
+        padding: 8px 12px;
+        min-height: 48px;
+        box-shadow: 0 2px 8px rgba(0,0,0,.08);
+        transition: .2s;
+    }
+
+    .fc-event:hover .manning-box {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 18px rgba(0,0,0,.15);
+    }
+
+    .wo-title {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        width: 100%;
+        overflow: hidden;
+        min-width: 0;
+    }
+
+        .wo-title i {
+            flex: 0 0 auto;
+            font-size: 15px;
+        }
+
+        .wo-title span {
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            font-size: 13px;
+            font-weight: 600;
+            color: #212529;
+        }
+
+    .wo-pct {
+        margin-left: 22px;
+        margin-top: 3px;
+        color: #6c757d;
+        font-size: 11px;
+    }
+
+    .fc-event[data-shift="A"] .manning-box {
+        border-left-color: #198754;
+    }
+
+    .fc-event[data-shift="B"] .manning-box {
+        border-left-color: #ffc107;
+    }
+
+    .fc-event[data-shift="C"] .manning-box {
+        border-left-color: #dc3545;
+    }
+
+    /* ==========================================================
+       EMPTY SLOT BUTTON
+    ========================================================== */
+
+    .fc-timeline-slot {
+        position: relative;
+    }
+
+    .empty-slot-plus {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: absolute;
+        right: 5px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 22px;
+        height: 22px;
+        border: none;
+        border-radius: 50%;
+        background: #198754;
+        color: white;
+        font-size: 12px;
+        opacity: 0;
+        transition: .2s;
+        cursor: pointer;
+    }
+
+    .fc-timeline-slot:hover .empty-slot-plus {
+        opacity: 1;
+    }
+
+    /* ==========================================================
+       MODAL
+    ========================================================== */
+
+    .modal-content {
+        border: none;
+        border-radius: 18px;
+        overflow: hidden;
+        box-shadow: 0 10px 35px rgba(0,0,0,.2);
+    }
+
+    .modal-header {
+        background: linear-gradient(135deg,#198754,#157347);
+        border: none;
+        color: white;
+    }
+
+    .modal-title {
+        font-weight: 600;
+    }
+
+    .modal-body table {
+        margin-bottom: 0;
+    }
+
+    .modal-body th {
+        background: #f8f9fa;
+        width: 180px;
+    }
+
+    /* ==========================================================
+       SCROLLBAR
+    ========================================================== */
+
+    .fc-scroller::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+    }
+
+    .fc-scroller::-webkit-scrollbar-thumb {
+        background: #bfc7ce;
+        border-radius: 20px;
+    }
+
+        .fc-scroller::-webkit-scrollbar-thumb:hover {
+            background: #8e9aa5;
+        }
+
+    /* ==========================================================
+       MOBILE
+    ========================================================== */
+
+    @@media (max-width:992px) {
+        .scheduler-header
+
+    {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .header-right {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .scheduler-legend {
+        gap: 12px;
+    }
+
+    .fc-toolbar {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .fc-toolbar-chunk {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .fc-toolbar-title {
+        font-size: 20px !important;
+    }
+
+    }
+
+    @@media (max-width:768px) {
+        .scheduler-page
+
+    {
+        padding: 10px;
+    }
+
+    .scheduler-header {
+        padding: 18px;
+    }
+
+    .header-icon {
+        width: 52px;
+        height: 52px;
+        font-size: 24px;
+    }
+
+    .header-left h2 {
+        font-size: 22px;
+    }
+
+    .scheduler-legend {
+        width: 100%;
+    }
+
+    .header-right {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 15px;
+    }
+
+        .header-right .btn {
+            width: 100%;
+        }
+
+    .scheduler-card {
+        padding: 10px;
+    }
+
+    .fc-toolbar-title {
+        font-size: 18px !important;
+    }
+
+    .fc-button {
+        font-size: 12px !important;
+        padding: .35rem .6rem !important;
+    }
+
+    .fc {
+        font-size: 12px;
+    }
+
+    }
+
+</style>

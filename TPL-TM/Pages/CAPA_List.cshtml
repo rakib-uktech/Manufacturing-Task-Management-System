@@ -1,0 +1,286 @@
+﻿@page
+@model TPL_TM.Pages.CAPA_ListModel
+
+@{
+    ViewData["Title"] = "CAPA List";
+}
+
+<div class="container-fluid mt-3">
+
+    <div class="card shadow">
+
+        <div class="card-header bg-primary text-white">
+
+            <div class="d-flex justify-content-between">
+
+                <h4 class="mb-0">
+                    CAPA List
+                </h4>
+
+                <a asp-page="/Report_Incident"
+                   class="btn btn-light btn-sm">
+
+                    <i class="bi bi-plus-circle"></i>
+                    New Incident
+
+                </a>
+
+            </div>
+
+        </div>
+
+        <div class="card-body">
+
+            <div class="table-responsive">
+
+                <table id="capaTable"
+                       class="table table-bordered table-hover table-striped nowrap"
+                       style="width:100%">
+
+                <thead class="table-dark">
+
+                    <tr>
+                        <th>Action</th>
+                        <th>CAPA No</th>
+                        <th>Date</th>
+                        <th>Type</th>
+                        <th>Severity</th>
+                        <th>Machine</th>
+                        <th>Title</th>
+                        <th>Status</th>
+                        <th>Owner</th>
+                        <th>Reported by</th>                       
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    @foreach (var item in Model.CAPAList)
+                    {
+                        <tr>
+                                <td class="text-nowrap">
+
+                                    <div class="dropdown">
+
+                                        <button class="btn btn-light btn-sm"
+                                                type="button"
+                                                data-bs-toggle="dropdown"
+                                                aria-expanded="false">
+
+                                            <i class="bi bi-three-dots-vertical fs-5"></i>
+
+                                        </button>
+
+
+                                        <ul class="dropdown-menu dropdown-menu-end shadow">
+
+                                            <!-- Open -->
+                                            <li>
+                                                <a asp-page="/CAPA_Detail"
+                                                   asp-route-id="@item.Id"
+                                                   class="dropdown-item">
+
+                                                    <i class="bi bi-eye text-primary me-2"></i>
+                                                    Open
+
+                                                </a>
+                                            </li>
+
+
+                                            @if (item.Status != "Closed")
+                                            {
+                                                <!-- Edit -->
+                                                <li>
+                                                    <a asp-page="/Report_Incident"
+                                                       asp-route-id="@item.Id"
+                                                       class="dropdown-item">
+
+                                                        <i class="bi bi-pencil-square text-warning me-2"></i>
+                                                        Edit
+
+                                                    </a>
+                                                </li>
+                                            }
+
+
+                                            <li>
+                                                <hr class="dropdown-divider" />
+                                            </li>
+
+
+                                            @if (User.IsInRole("Admin"))
+                                            {
+                                                <!-- Delete -->
+                                                <li>
+
+                                                    <form method="post"
+                                                          asp-page-handler="Delete"
+                                                          asp-route-id="@item.Id"
+                                                          onsubmit="return confirmDelete(this);">
+
+                                                        <button type="submit"
+                                                                class="dropdown-item text-danger">
+
+                                                            <i class="bi bi-trash me-2"></i>
+                                                            Delete
+
+                                                        </button>
+
+                                                    </form>
+
+                                                </li>
+                                            }
+
+
+                                        </ul>
+
+                                    </div>
+
+                                </td>
+
+                            <td>@item.CAPA_No</td>
+
+                            <td>
+                                @item.Incident_Date.ToString("dd/MM/yyyy")
+                            </td>
+
+                            <td>@item.Incident_Type</td>
+
+                            <td>
+
+                                @if (item.Severity == "Critical")
+                                {
+                                    <span class="badge bg-danger">
+                                        @item.Severity
+                                    </span>
+                                }
+                                else if (item.Severity == "Major")
+                                {
+                                    <span class="badge bg-warning text-dark">
+                                        @item.Severity
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-info">
+                                        @item.Severity
+                                    </span>
+                                }
+
+                            </td>
+
+                            <td>@item.Machine_Name</td>
+
+                            <td>@item.Title</td>
+                                <td>
+
+                                    @if (item.Status == "Open")
+                                    {
+                                        <span class="badge bg-danger">
+                                            Open
+                                        </span>
+                                    }
+                                    else if (item.Status == "Investigation")
+                                    {
+                                        <span class="badge bg-warning text-dark">
+                                            Investigation
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success">
+                                            Closed
+                                        </span>
+                                    }
+
+                                </td>
+
+                            <td>@item.Assigned_To</td>
+                            
+                            <td>@item.Reported_By</td>
+
+                           
+
+
+                        </tr>
+                    }
+
+                </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+@section Scripts
+{
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        $(document).ready(function () {
+
+           $('#capaTable').DataTable({
+
+                pageLength: 25,
+
+                order: [[1,'desc']],
+
+                scrollX: true,
+
+                autoWidth: false,
+
+                columnDefs: [
+                    {
+                        targets: "_all",
+                        className: "align-middle"
+                    }
+                ]
+
+            });
+
+        });
+    </script>
+    <script>
+        function confirmDelete(form)
+        {
+            Swal.fire({
+                title: 'Delete CAPA?',
+                text: 'All related actions, photos and history will be deleted.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor:'#dc3545',
+                cancelButtonColor:'#6c757d',
+                confirmButtonText:'Yes, Delete'
+            })
+            .then(function(result){
+
+                if(result.isConfirmed)
+                {
+                    form.removeAttribute("onsubmit");
+                    form.submit();
+                }
+
+            });
+
+            return false;
+        }
+
+    </script>
+    
+}
+<style>
+    #capaTable th,
+    #capaTable td {
+        white-space: nowrap;
+    }
+
+        #capaTable td:nth-child(6) {
+            max-width: 250px;
+            white-space: normal;
+        }
+</style>

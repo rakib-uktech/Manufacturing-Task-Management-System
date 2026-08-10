@@ -1,0 +1,256 @@
+﻿@page
+@model TPL_TM.Pages.Clear_WasteModel
+@{
+}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<!-- Request Clear Waste Modal (Auto Open on Page Load) -->
+<div class="modal fade show" id="clearWasteModal" tabindex="-1" aria-labelledby="clearWasteModalLabel" aria-hidden="true" style="display: block;">
+    <div class="modal-dialog modal-dialog-centered" style="margin-top: 80px;">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="clearWasteModalLabel">Clear Waste</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="closeClearWasteModal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="clear-waste-form" method="post" novalidate>
+                    <!-- QR Code Modal (Bootstrap Modal) -->
+                    <div class="modal fade" id="qrModal" tabindex="-1" aria-labelledby="qrModalLabel" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="qrModalLabel">Scan QR Code</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <!-- QR Reader will be shown here -->
+                                    <div id="qr-reader" style="width:100%; height: 300px;"></div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bin Name input with QR code scan button -->
+                    <div class="form-floating mb-3 position-relative">
+                        <input class="form-control pe-5" list="BinNamelistOptions" id="BinName" name="BinName" required placeholder="Bin Name" autocomplete="off" />
+                        
+                        <datalist id="BinNamelistOptions">
+                            @foreach (var location in Model.LocationList)
+                            {
+                                <option value="@location.BinName"
+                                        data-wastelocation="@location.WasteLocation"
+                                        data-wastetype="@location.WasteType"
+                                        data-wastedescription="@location.WasteDescription"
+                                        data-binweight="@location.BinWeight">
+                                    @location.BinName
+                                </option>
+                            }
+                        </datalist>
+                        <label>Bin Name</label>
+                        <div class="invalid-feedback">Bin name is required.</div>
+
+                        <!-- QR Icon Button -->
+                        <button type="button" id="scanQrBtn" class="btn btn-outline-secondary position-absolute top-50 end-0 translate-middle-y me-2 p-1" style="z-index: 5;">
+                            <i class="bi bi-qr-code-scan" style="font-size: 1.5rem;"></i> <!-- Bootstrap Icons QR -->
+                        </button>
+                    </div>
+
+                                       
+                    <!-- Waste Location -->
+                    <div class="form-floating mb-3">
+                        <input class="form-control" list="Waste_LocationlistOptions" id="Waste_Location" name="Waste_Location" required placeholder="Waste Location" />
+                        <datalist id="Waste_LocationlistOptions">
+                            @foreach (var location in Model.LocationList.Select(x => x.WasteLocation).Distinct().OrderBy(x => x))
+                            {
+                                <option value="@location">@location</option>
+                            }
+                        </datalist>
+                        <label>Waste Location</label>
+                        <div class="invalid-feedback">Waste Location is required.</div>
+                    </div>
+
+
+                    <!-- Waste Type -->
+                    <div class="form-floating mb-3">
+                        <input class="form-control" list="Waste_TypelistOptions" id="Waste_Type" name="Waste_Type" required placeholder="Waste Type" />
+                        <datalist id="Waste_TypelistOptions">
+                            @foreach (var location in Model.LocationList.Select(x => x.WasteType).Distinct().OrderBy(x => x))
+                            {
+                                <option value="@location">@location</option>
+                            }
+                        </datalist>
+                        <label>Waste Type</label>
+                        <div class="invalid-feedback">Waste type is required.</div>
+                    </div>
+                   
+                    <!-- Waste Description -->
+                    <div class="form-floating mb-3">
+                        <input class="form-control" list="Waste_DescriptionlistOptions" id="Waste_Description" name="Waste_Description" required placeholder="Waste Description" />
+                        <datalist id="Waste_DescriptionlistOptions">
+                            @foreach (var location in Model.LocationList.Select(x => x.WasteDescription).Distinct().OrderBy(x => x))
+                            {
+                                <option value="@location">@location</option>
+                            }
+                        </datalist>
+                        <label>Waste Description</label>
+                        <div class="invalid-feedback">Waste description is required.</div>
+                    </div>
+                    <!-- Bin Weight -->
+                    <div class="form-floating mb-3">
+                        <input class="form-control" type="number" id="BinWeight" name="BinWeight" readonly />
+                        <label>Bin Weight</label>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <input type="number" name="Qty" class="form-control" required placeholder="Quantity" min="0" value="0" />
+                        <label>Quantity</label>
+                        <div class="invalid-feedback">Quantity must be at least 0.</div>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <select name="Unit" class="form-select" required>
+                            <option value="">Select Unit</option>
+                            <option value="Piece">Piece</option>
+                            <option value="Case">Case</option>
+                            <option value="Pallet">Pallet</option>
+                            <option value="Kilogram" selected>Kilogram</option> <!-- Selected by default -->
+                        </select>
+                        <label>Unit</label>
+                        <div class="invalid-feedback">Please select a unit.</div>
+                    </div>
+                    <!-- Priority Level -->
+                    <div class="form-floating mb-3">
+                        <select name="Priority_Level" class="form-select" required>
+                            <option value="">Select Priority Level</option>
+                            <option value="High" selected>High</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Low">Low</option>
+                        </select>
+                        <label>Priority Level</label>
+                        <div class="invalid-feedback">Please select a priority level.</div>
+                    </div>
+
+                    <!-- Comments -->
+                    <div class="form-floating mb-3">
+                        <textarea id="Comments" name="Comments" class="form-control" placeholder="Comments" style="height: 100px;"></textarea>
+                        <label>Comments</label>
+                    </div>
+
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="w-100 btn btn-lg btn-danger">Clear Waste</button>
+
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var myModal = new bootstrap.Modal(document.getElementById('clearWasteModal'), {
+                backdrop: 'static',
+                keyboard: false
+            });
+            myModal.show();
+
+            document.getElementById("closeClearWasteModal").addEventListener("click", function () {
+                window.location.href = "/Index";  // Redirect after closing modal
+            });
+
+            // Form validation
+            (function () {
+                'use strict';
+                var form = document.getElementById('clear-waste-form');
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            })();
+        });
+    </script>
+
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const binNameInput = document.getElementById('BinName');
+            const scanQrBtn = document.getElementById('scanQrBtn');
+            const qrReaderDiv = document.getElementById('qr-reader');
+            const commentsInput = document.getElementById('Comments');
+
+            function fillWasteFields(selectedBinName) {
+                const options = document.querySelectorAll('#BinNamelistOptions option');
+                const selectedOption = Array.from(options).find(option => option.value === selectedBinName);
+
+                if (selectedOption) {
+                    const location = selectedOption.getAttribute('data-wastelocation') || '';
+                    const type = selectedOption.getAttribute('data-wastetype') || '';
+                    const description = selectedOption.getAttribute('data-wastedescription') || '';
+                    const weight = selectedOption.getAttribute('data-binweight') || '0';
+                    const unit = document.querySelector('select[name="Unit"]').value || 'kg';
+
+                    document.getElementById('Waste_Location').value = location;
+                    document.getElementById('Waste_Type').value = type;
+                    document.getElementById('Waste_Description').value = description;
+                    document.getElementById('BinWeight').value = weight;
+
+                    // Auto-fill Comments
+                    commentsInput.value = `Please clear the waste from Waste BIN Number ${selectedBinName} on ${location}. Approx bin weight ${weight} ${unit}.`;
+                } else {
+                    document.getElementById('Waste_Location').value = '';
+                    document.getElementById('Waste_Type').value = '';
+                    document.getElementById('Waste_Description').value = '';
+                    document.getElementById('BinWeight').value = 0;
+                    commentsInput.value = '';
+                }
+            }
+
+            binNameInput.addEventListener('keydown', function (event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    fillWasteFields(this.value.trim());
+                }
+            });
+
+            binNameInput.addEventListener('change', function () {
+                fillWasteFields(this.value.trim());
+            });
+
+            if (scanQrBtn) {
+                scanQrBtn.addEventListener('click', function () {
+                    const qrModal = new bootstrap.Modal(document.getElementById('qrModal'));
+                    qrModal.show();
+                    qrReaderDiv.style.display = 'block';
+
+                    const html5QrCode = new Html5Qrcode("qr-reader");
+                    html5QrCode.start(
+                        { facingMode: "environment" },
+                        { fps: 10, qrbox: 250 },
+                        (decodedText) => {
+                            binNameInput.value = decodedText.trim();
+                            fillWasteFields(decodedText.trim());
+                            html5QrCode.stop().then(() => qrModal.hide());
+                        },
+                        (errorMessage) => {
+                            console.warn('QR scan error: ', errorMessage);
+                        }
+                    ).catch((err) => {
+                        console.error('Camera start error:', err);
+                    });
+                });
+            }
+        });
+    </script>
+
+
+}

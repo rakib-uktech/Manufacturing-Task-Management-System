@@ -1,0 +1,88 @@
+﻿@page
+@model TPL_TM.Pages.Waste_EditModel
+@{
+}
+
+<div class="modal fade show" id="wasteEditModal" tabindex="-1" aria-labelledby="wasteEditModalLabel" aria-hidden="true" style="display:block;">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 550px; margin-top:80px;">
+        <div class="modal-content shadow-lg border-0 rounded-4">
+            <div class="modal-header bg-primary text-white d-flex align-items-center rounded-top-4">
+                <i class="bi bi-recycle me-2 fs-4"></i>
+                <h5 class="modal-title fw-semibold" id="wasteEditModalLabel">
+                    @(Model.Waste.Id > 0 ? "Update Waste Record" : "Add Waste Record")
+                </h5>
+                <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal" aria-label="Close" id="closeWasteEditModal"></button>
+            </div>
+
+            <div class="modal-body p-4">
+                <form id="waste-edit-form" method="post" novalidate class="needs-validation">
+
+                    <input type="hidden" name="Id" value="@Model.Waste.Id" />
+                    <input type="hidden" name="Shift_Id" value="@Model.Waste.Shift_Id" />
+
+                    <!-- Waste Type (NetSuite-style) -->
+                    <div class="form-floating mb-3">
+                        <select class="form-select" name="Waste_Type" id="Waste_Type" required>
+                            <option value="">Select Waste Type</option>
+                            @foreach (var type in Model.WasteTypeList)
+                            {
+                                <option value="@type" selected="@(type == Model.Waste.Waste_Type)">
+                                    @type
+                                </option>
+                            }
+                        </select>
+                        <label for="Waste_Type"><i class="bi bi-tags me-1 text-primary"></i>Waste Type</label>
+                        <div class="invalid-feedback">Please select a waste type.</div>
+                    </div>
+
+                    <!-- Waste Weight -->
+                    <div class="form-floating mb-4">
+                        <input type="number" step="0.01" name="Waste_Weight" id="Waste_Weight" class="form-control" value="@Model.Waste.Waste_Weight" placeholder="Waste Weight" required />
+                        <label for="Waste_Weight"><i class="bi bi-speedometer2 me-1 text-primary"></i>Waste Weight (kg)</label>
+                        <div class="invalid-feedback">Please enter a valid weight.</div>
+                    </div>
+
+                    <button type="submit" class="btn btn-lg btn-success w-100 shadow-sm rounded-3">
+                        <i class="bi bi-check-circle me-2"></i>@(Model.Waste.Id > 0 ? "Update Waste" : "Save Waste")
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+             // 🔐 Role check (same as Production_Edit)
+            const isUser = @User.IsInRole("User").ToString().ToLower();
+
+            const modal = new bootstrap.Modal(document.getElementById('wasteEditModal'), { backdrop: 'static', keyboard: false });
+            modal.show();
+
+             // ❌ Close button redirect logic
+            document.getElementById("closeWasteEditModal")
+                .addEventListener("click", function () {
+
+                    if (isUser) {
+                        window.location.href = "/Operator_Index";
+                    } else {
+                        window.location.href = "/Waste_RecordsReport";
+                    }
+                });
+            // Form validation
+            (function () {
+                'use strict';
+                const form = document.getElementById('waste-edit-form');
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            })();
+        });
+    </script>
+}

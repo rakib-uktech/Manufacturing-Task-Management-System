@@ -1,0 +1,244 @@
+﻿@page
+@model TPLPLM.Areas.Identity.Pages.Account.Manage.UserListModel
+@{
+    ViewData["Title"] = "User List";
+}
+
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow p-3">
+                <!-- Header Section -->
+                <div class="container-fluid bg-success text-white py-3 mb-4 rounded shadow">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h2 class="mb-0">
+                                <i class="bi bi-people-fill me-2"></i> User List
+                            </h2>
+                            <p class="mb-0">Manage users, roles, and shift assignments.</p>
+                        </div>
+                        <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                            <a asp-page="./Index" class="btn btn-light text-success me-2">
+                                <i class="bi bi-person-fill-gear me-1"></i> Manage Users
+                            </a>
+                            <a id="exportBtn" class="btn btn-outline-light" href="javascript:void(0);">
+                                <i class="bi bi-download me-1"></i> Export Users
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Search Bar -->
+                <input type="text" id="userSearch" class="form-control mb-3" placeholder="Search users...">
+
+                <!-- User Table -->
+                <div class="table-responsive">
+                    <table id="userTable" class="table table-striped table-bordered table-hover" style="width:100%">
+                        <thead class="bg-success text-white">
+                            <tr>
+                                <th class="text-center">Action</th>
+                                <th>User Name</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Shift</th>
+                                <th>Shift Time</th>
+                            </tr>
+                        </thead>
+                        <tbody id="userTableBody">
+                            @foreach (var user in Model.Users)
+                            {
+                                <tr>
+                                    <td class="text-center">
+                                        <div class="dropdown">
+                                            <a href="#" class="btn btn-link p-0 text-decoration-none"
+                                               id="dropdownMenuButton_@user.Id"
+                                               data-bs-toggle="dropdown" aria-expanded="false">
+                                                <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                                            </a>
+                                            <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="dropdownMenuButton_@user.Id">
+                                                <li>
+                                                    <a class="dropdown-item view-details"
+                                                       href="javascript:void(0);"
+                                                       data-id="@user.Id"
+                                                       data-username="@user.UserName"
+                                                       data-email="@user.Email"
+                                                       data-role="@user.Role"
+                                                       data-shift="@user.ShiftName"
+                                                       data-shifttime="@user.ShiftTime">
+                                                        <i class="bi bi-eye me-1"></i> View Details
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item" asp-page="./EditUser" asp-route-id="@user.Id">
+                                                        <i class="bi bi-pencil-square me-1"></i> Edit User
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item text-warning" asp-page="./ResetPassword" asp-route-id="@user.Id">
+                                                        <i class="bi bi-key me-1"></i> Reset Password
+                                                    </a>
+                                                </li>
+                                                <li><hr class="dropdown-divider" /></li>
+                                                <li>
+                                                    <a class="dropdown-item text-danger" asp-page="./DeleteUser" asp-route-id="@user.Id"
+                                                       onclick="return confirm('Are you sure you want to delete this user?');">
+                                                        <i class="bi bi-trash me-1"></i> Delete User
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </td>
+                                    <td>@user.UserName</td>
+                                    <td>@user.Email</td>
+                                    <td>@user.Role</td>
+                                    <td>@user.ShiftName</td>
+                                    <td>@user.ShiftTime</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ✅ User Details Modal -->
+<div class="modal fade" id="userDetailsModal" tabindex="-1" aria-labelledby="userDetailsLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header bg-success text-white rounded-top-4">
+                <h5 class="modal-title" id="userDetailsLabel">
+                    <i class="bi bi-person-badge me-2"></i> User Details
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="d-flex align-items-center mb-3">
+                    <i class="bi bi-person-circle text-success fs-1 me-3"></i>
+                    <div>
+                        <h5 id="modalUserName" class="mb-0 fw-bold"></h5>
+                        <small id="modalUserEmail" class="text-muted"></small>
+                    </div>
+                </div>
+                <hr />
+                <p><strong>Role:</strong> <span id="modalUserRole" class="text-success"></span></p>
+                <p><strong>Shift:</strong> <span id="modalUserShift"></span></p>
+                <p><strong>Shift Time:</strong> <span id="modalUserShiftTime"></span></p>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-outline-success" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-1"></i> Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <!-- ✅ jQuery and DataTables -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" />
+
+    <style>
+        /* ✅ Align pagination and dropdown styling with Task_List */
+        div.dataTables_wrapper div.dataTables_length select {
+            width: auto;
+            display: inline-block;
+            margin-left: 0.5rem;
+            margin-right: 0.5rem;
+            border-radius: 0.5rem;
+            padding: 0.25rem 0.5rem;
+        }
+
+        div.dataTables_wrapper div.dataTables_length,
+        div.dataTables_wrapper div.dataTables_filter {
+            margin-bottom: 1rem;
+        }
+
+        div.dataTables_wrapper .dataTables_paginate .paginate_button {
+            border-radius: 0.5rem !important;
+            border: 1px solid #28a745 !important;
+            margin: 0 2px;
+            padding: 0.3rem 0.6rem !important;
+            color: #28a745 !important;
+            background-color: #fff !important;
+            transition: 0.2s;
+        }
+
+            div.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+                background-color: #28a745 !important;
+                color: #fff !important;
+            }
+
+            div.dataTables_wrapper .dataTables_paginate .paginate_button.current {
+                background-color: #28a745 !important;
+                color: #fff !important;
+                border: 1px solid #28a745 !important;
+            }
+    </style>
+
+    <script>
+        $(document).ready(function () {
+            var table = $('#userTable').DataTable({
+                responsive: true,
+                paging: true,
+                lengthMenu: [5, 10, 25, 50, 100],
+                pageLength: 10,
+                ordering: true,
+                searching: true,
+                autoWidth: false,
+                dom: '<"row mb-3"<"col-sm-6"l><"col-sm-6 text-end"f>>t<"row mt-3"<"col-sm-6"i><"col-sm-6"p>>',
+                language: {
+                    search: "🔍 Search:",
+                    lengthMenu: "Show _MENU_ users per page",
+                    zeroRecords: "No matching users found",
+                    info: "Showing _START_ to _END_ of _TOTAL_ users",
+                    infoFiltered: "(filtered from _MAX_ total users)",
+                    paginate: {
+                        previous: "←",
+                        next: "→"
+                    }
+                }
+            });
+
+            $('#userSearch').on('keyup', function () {
+                table.search(this.value).draw();
+            });
+        });
+    </script>
+
+    <!-- ✅ Export to Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script>
+        document.getElementById("exportBtn").addEventListener("click", function () {
+            var table = document.getElementById("userTable");
+            var workbook = XLSX.utils.table_to_book(table, { sheet: "Users" });
+            XLSX.writeFile(workbook, "User_List.xlsx");
+        });
+    </script>
+    <script>
+        $(document).on('click', '.view-details', function () {
+            var username = $(this).data('username');
+            var email = $(this).data('email');
+            var role = $(this).data('role');
+            var shift = $(this).data('shift');
+            var shifttime = $(this).data('shifttime');
+
+            // Fill modal fields
+            $('#modalUserName').text(username);
+            $('#modalUserEmail').text(email);
+            $('#modalUserRole').text(role);
+            $('#modalUserShift').text(shift);
+            $('#modalUserShiftTime').text(shifttime);
+
+            // Show modal
+            var modal = new bootstrap.Modal(document.getElementById('userDetailsModal'));
+            modal.show();
+        });
+    </script>
+
+}

@@ -1,0 +1,1956 @@
+﻿@page
+@model TPL_TM.Pages.OEE_DashboardModel
+
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+
+<style>
+    :root {
+        --bg: #f5f7fb;
+        --surface: #ffffff;
+        --surface2: #eef2f7;
+        --border: rgba(15,23,42,0.10);
+        --border2: rgba(15,23,42,0.18);
+        --text: #0f172a;
+        --heading: #0f172a;
+        --card-text: #1e293b;
+        --muted: #475569;
+        --accent: #00a889;
+        --accent2: #0284c7;
+        --warn: #d97706;
+        --danger: #dc2626;
+        --green: #16a34a;
+        --oee-good: #00a889;
+        --oee-ok: #d97706;
+        --oee-bad: #dc2626;
+        --chart-grid: rgba(15,23,42,0.08);
+        --gauge-track: rgba(15,23,42,0.10);
+        --gauge-needle: rgba(15,23,42,0.70);
+        --ghost-text: rgba(15,23,42,0.04);
+        --shadow: rgba(15,23,42,0.12);
+        --font-head: 'Syne', sans-serif;
+        --font-mono: 'DM Mono', monospace;
+    }
+
+    body.night-mode {
+        --bg: #0a0d12;
+        --surface: #111620;
+        --surface2: #171d2a;
+        --border: rgba(255,255,255,0.07);
+        --border2: rgba(255,255,255,0.12);
+        --text: #e2e8f0;
+        --heading: #ffffff;
+        --card-text: #cbd5e1;
+        --muted: #94a3b8;
+        --accent: #00d4aa;
+        --accent2: #0ea5e9;
+        --warn: #f59e0b;
+        --danger: #ef4444;
+        --green: #22c55e;
+        --oee-good: #00d4aa;
+        --oee-ok: #f59e0b;
+        --oee-bad: #ef4444;
+        --chart-grid: rgba(255,255,255,0.04);
+        --gauge-track: rgba(255,255,255,0.08);
+        --gauge-needle: rgba(255,255,255,0.75);
+        --ghost-text: rgba(255,255,255,0.02);
+        --shadow: rgba(0,0,0,0.40);
+    }
+
+    *, *::before, *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+
+    body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--font-mono);
+        font-size: 13px;
+        min-height: 100vh;
+        transition: background .2s ease, color .2s ease;
+    }
+
+    .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 24px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        gap: 16px;
+        flex-wrap: wrap;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
+
+    .topbar-brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .brand-mark {
+        width: 36px;
+        height: 36px;
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        color: #000;
+    }
+
+    .brand-title {
+        font-family: var(--font-head);
+        font-size: 18px;
+        font-weight: 800;
+        color: var(--heading);
+        letter-spacing: -0.3px;
+    }
+
+    .brand-sub {
+        font-size: 10px;
+        color: var(--muted);
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        margin-top: 1px;
+    }
+
+    .live-pill {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(0,168,137,0.10);
+        border: 1px solid rgba(0,168,137,0.28);
+        border-radius: 20px;
+        padding: 3px 10px;
+        font-size: 10px;
+        color: var(--accent);
+        letter-spacing: 1px;
+        text-transform: uppercase;
+    }
+
+    .live-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--accent);
+        animation: blink 2s infinite;
+    }
+
+    .theme-toggle {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 10px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .switch {
+        position: relative;
+        width: 42px;
+        height: 22px;
+        flex: 0 0 auto;
+    }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+    .slider {
+        position: absolute;
+        inset: 0;
+        background: var(--surface2);
+        border: 1px solid var(--border2);
+        border-radius: 22px;
+        cursor: pointer;
+        transition: .2s;
+    }
+
+        .slider::before {
+            content: "";
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            left: 3px;
+            top: 2px;
+            background: var(--muted);
+            border-radius: 50%;
+            transition: .2s;
+        }
+
+    .switch input:checked + .slider {
+        background: rgba(0,212,170,0.18);
+        border-color: rgba(0,212,170,0.45);
+    }
+
+        .switch input:checked + .slider::before {
+            transform: translateX(19px);
+            background: var(--accent);
+        }
+
+    @@keyframes blink {
+        0%, 100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: .2;
+        }
+    }
+
+    .topbar-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .btn {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        font-weight: 500;
+        padding: 6px 14px;
+        border-radius: 6px;
+        border: 1px solid var(--border2);
+        background: var(--surface2);
+        color: var(--text);
+        cursor: pointer;
+        transition: all .15s;
+        letter-spacing: 0.3px;
+        white-space: nowrap;
+    }
+
+        .btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+    .btn-accent {
+        background: var(--accent);
+        color: #000;
+        border-color: var(--accent);
+        font-weight: 700;
+    }
+
+        .btn-accent:hover {
+            filter: brightness(1.08);
+            color: #000;
+        }
+
+    .btn-danger {
+        background: rgba(220,38,38,0.12);
+        border-color: rgba(220,38,38,0.35);
+        color: var(--danger);
+    }
+
+    body.night-mode .btn-danger {
+        background: rgba(239,68,68,0.15);
+        border-color: rgba(239,68,68,0.4);
+        color: #fca5a5;
+    }
+
+    .btn-danger:hover {
+        background: rgba(220,38,38,0.18);
+    }
+
+    .filters-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 24px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        flex-wrap: wrap;
+    }
+
+    .filter-label {
+        font-size: 10px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .filter-control {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        height: 32px;
+        padding: 0 10px;
+        background: var(--surface2);
+        border: 1px solid var(--border2);
+        border-radius: 6px;
+        color: var(--text);
+        outline: none;
+        transition: border-color .15s;
+    }
+
+        .filter-control:focus {
+            border-color: var(--accent);
+        }
+
+        .filter-control option {
+            background: var(--surface2);
+            color: var(--text);
+        }
+
+        .filter-control::placeholder {
+            color: var(--muted);
+        }
+
+    .filter-sep {
+        width: 1px;
+        height: 22px;
+        background: var(--border);
+        margin: 0 4px;
+    }
+
+    .main {
+        padding: 20px 24px;
+        max-width: 1600px;
+        margin: 0 auto;
+    }
+
+    .section-label {
+        font-size: 10px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+        .section-label::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+    .oee-hero {
+        display: grid;
+        grid-template-columns: 220px 1fr 1fr 1fr 1fr;
+        gap: 1px;
+        background: var(--border);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+        margin-bottom: 20px;
+    }
+
+    .oee-main {
+        background: var(--surface);
+        padding: 24px 28px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .oee-main::before {
+            content: 'OEE';
+            position: absolute;
+            right: -10px;
+            bottom: -20px;
+            font-family: var(--font-head);
+            font-size: 80px;
+            font-weight: 800;
+            color: var(--ghost-text);
+            pointer-events: none;
+        }
+
+    .oee-main-label,
+    .pillar-label,
+    .kpi-label,
+    .oee-cell-label,
+    .metric-label,
+    .chart-cell-label {
+        color: var(--muted);
+    }
+
+    .oee-main-label {
+        font-size: 10px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+    }
+
+    .oee-main-value {
+        font-family: var(--font-head);
+        font-size: 52px;
+        font-weight: 800;
+        line-height: 1;
+        color: var(--accent);
+    }
+
+    .oee-main-sub,
+    .pillar-desc,
+    .kpi-delta,
+    .mcard-sub,
+    .line-stats,
+    .dt-name,
+    .ai-sub {
+        color: var(--muted);
+    }
+
+    .oee-main-sub {
+        font-size: 10px;
+        margin-top: 6px;
+    }
+
+    .oee-pillar {
+        background: var(--surface);
+        padding: 20px 20px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .pillar-label {
+        font-size: 10px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+    }
+
+    .pillar-value {
+        font-family: var(--font-head);
+        font-size: 28px;
+        font-weight: 700;
+        line-height: 1;
+        color: var(--heading);
+    }
+
+    .pillar-bar {
+        height: 3px;
+        background: var(--border);
+        border-radius: 2px;
+        margin-top: 10px;
+        overflow: hidden;
+    }
+
+    .pillar-fill {
+        height: 100%;
+        border-radius: 2px;
+        transition: width .6s ease;
+    }
+
+    .pillar-desc {
+        font-size: 10px;
+        margin-top: 5px;
+    }
+
+    .kpi-row {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .kpi-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 16px 18px;
+        position: relative;
+        overflow: hidden;
+        transition: border-color .2s;
+    }
+
+        .kpi-card:hover {
+            border-color: var(--border2);
+        }
+
+    .kpi-card-accent {
+        border-left: 3px solid var(--accent);
+    }
+
+    .kpi-card-warn {
+        border-left: 3px solid var(--warn);
+    }
+
+    .kpi-card-danger {
+        border-left: 3px solid var(--danger);
+    }
+
+    .kpi-card-blue {
+        border-left: 3px solid var(--accent2);
+    }
+
+    .kpi-label {
+        font-size: 10px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+    }
+
+    .kpi-value {
+        font-family: var(--font-head);
+        font-size: 26px;
+        font-weight: 700;
+        color: var(--heading);
+        line-height: 1;
+    }
+
+    .kpi-delta {
+        font-size: 10px;
+        margin-top: 5px;
+    }
+
+    .line-section {
+        margin-bottom: 28px;
+    }
+
+    .line-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 14px;
+    }
+
+    .line-tag {
+        font-family: var(--font-head);
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--accent);
+        background: rgba(0,168,137,0.10);
+        border: 1px solid rgba(0,168,137,0.24);
+        padding: 3px 12px;
+        border-radius: 4px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+    }
+
+    .line-stats {
+        font-size: 11px;
+    }
+
+    .machines-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+        gap: 12px;
+    }
+
+    .mcard {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+        transition: border-color .2s, box-shadow .2s;
+    }
+
+        .mcard:hover {
+            border-color: var(--border2);
+            box-shadow: 0 8px 32px var(--shadow);
+        }
+
+        .mcard.oee-good {
+            border-top: 2px solid var(--oee-good);
+        }
+
+        .mcard.oee-ok {
+            border-top: 2px solid var(--oee-ok);
+        }
+
+        .mcard.oee-bad {
+            border-top: 2px solid var(--oee-bad);
+        }
+
+    .mcard-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        padding: 14px 16px 10px;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .mcard-title {
+        font-family: var(--font-head);
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--heading);
+    }
+
+    .mcard-sub {
+        font-size: 10px;
+        margin-top: 2px;
+        letter-spacing: 0.5px;
+    }
+
+    .status-pill {
+        font-size: 9px;
+        font-weight: 600;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        padding: 3px 8px;
+        border-radius: 20px;
+    }
+
+    .pill-good {
+        background: rgba(22,163,74,.12);
+        color: #15803d;
+        border: 1px solid rgba(22,163,74,.25);
+    }
+
+    .pill-ok {
+        background: rgba(217,119,6,.12);
+        color: #b45309;
+        border: 1px solid rgba(217,119,6,.25);
+    }
+
+    .pill-bad {
+        background: rgba(220,38,38,.12);
+        color: #b91c1c;
+        border: 1px solid rgba(220,38,38,.25);
+    }
+
+    body.night-mode .pill-good {
+        color: #86efac;
+    }
+
+    body.night-mode .pill-ok {
+        color: #fcd34d;
+    }
+
+    body.night-mode .pill-bad {
+        color: #fca5a5;
+    }
+
+    .oee-breakdown {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .oee-cell {
+        padding: 10px 12px;
+        border-right: 1px solid var(--border);
+        text-align: center;
+    }
+
+        .oee-cell:last-child {
+            border-right: none;
+        }
+
+    .oee-cell-label {
+        font-size: 9px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+    }
+
+    .oee-cell-value {
+        font-family: var(--font-head);
+        font-size: 18px;
+        font-weight: 700;
+        line-height: 1;
+    }
+
+    .oee-cell-bar {
+        height: 2px;
+        background: var(--border);
+        border-radius: 1px;
+        margin-top: 5px;
+        overflow: hidden;
+    }
+
+    .oee-cell-fill {
+        height: 100%;
+        border-radius: 1px;
+    }
+
+    .mcard-metrics {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .metric-cell {
+        padding: 10px 14px;
+        border-right: 1px solid var(--border);
+    }
+
+        .metric-cell:last-child {
+            border-right: none;
+        }
+
+    .metric-label {
+        font-size: 9px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+    }
+
+    .metric-value {
+        font-family: var(--font-head);
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--heading);
+    }
+
+        .metric-value.c-green {
+            color: var(--green);
+        }
+
+        .metric-value.c-warn {
+            color: var(--warn);
+        }
+
+        .metric-value.c-danger {
+            color: var(--danger);
+        }
+
+        .metric-value.c-accent {
+            color: var(--accent);
+        }
+
+    .shift-row {
+        display: flex;
+        gap: 6px;
+        padding: 10px 14px;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .shift-chip {
+        flex: 1;
+        text-align: center;
+        padding: 5px 4px;
+        border-radius: 5px;
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+
+    .chip-a {
+        background: rgba(22,163,74,.12);
+        color: #15803d;
+        border: 1px solid rgba(22,163,74,.22);
+    }
+
+    .chip-b {
+        background: rgba(2,132,199,.12);
+        color: #0369a1;
+        border: 1px solid rgba(2,132,199,.22);
+    }
+
+    .chip-c {
+        background: rgba(217,119,6,.12);
+        color: #b45309;
+        border: 1px solid rgba(217,119,6,.22);
+    }
+
+    body.night-mode .chip-a {
+        color: #86efac;
+    }
+
+    body.night-mode .chip-b {
+        color: #7dd3fc;
+    }
+
+    body.night-mode .chip-c {
+        color: #fcd34d;
+    }
+
+    .mcard-charts {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .chart-cell {
+        padding: 10px 14px;
+        border-right: 1px solid var(--border);
+    }
+
+        .chart-cell:last-child {
+            border-right: none;
+        }
+
+    .chart-cell-label {
+        font-size: 9px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+    }
+
+    .dt-list {
+        padding: 10px 14px 8px;
+    }
+
+    .dt-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 5px;
+    }
+
+    .dt-name {
+        font-size: 10px;
+        min-width: 90px;
+        max-width: 90px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .dt-track {
+        flex: 1;
+        height: 3px;
+        background: var(--border);
+        border-radius: 2px;
+        overflow: hidden;
+    }
+
+    .dt-fill {
+        height: 100%;
+        border-radius: 2px;
+        background: var(--danger);
+    }
+
+    .dt-min {
+        font-size: 10px;
+        color: var(--danger);
+        min-width: 40px;
+        text-align: right;
+    }
+
+    .bottom-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+
+    .panel {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 18px 20px;
+    }
+
+    .panel-title {
+        font-size: 10px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+        .panel-title span {
+            color: var(--accent);
+        }
+
+    #aiReportContainer {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 20px 24px;
+        margin-bottom: 20px;
+        display: none;
+    }
+
+    .ai-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 14px;
+    }
+
+    .ai-badge {
+        width: 28px;
+        height: 28px;
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+    }
+
+    .ai-title {
+        font-family: var(--font-head);
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--heading);
+    }
+
+    .ai-sub {
+        font-size: 10px;
+        margin-top: 1px;
+    }
+
+    #aiReportText {
+        white-space: pre-wrap;
+        font-size: 12px;
+        line-height: 1.7;
+        color: var(--card-text);
+        border-top: 1px solid var(--border);
+        padding-top: 12px;
+    }
+
+    .league-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+        .league-table th {
+            font-size: 9px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--muted);
+            padding: 6px 10px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .league-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid var(--border);
+            font-size: 12px;
+            vertical-align: middle;
+            color: var(--card-text);
+        }
+
+        .league-table tr:last-child td {
+            border-bottom: none;
+        }
+
+    .rank-num {
+        font-family: var(--font-head);
+        font-weight: 700;
+        font-size: 13px;
+        color: var(--muted);
+    }
+
+    .oee-badge {
+        font-family: var(--font-head);
+        font-size: 14px;
+        font-weight: 700;
+    }
+
+    ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: var(--bg);
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: var(--border2);
+        border-radius: 3px;
+    }
+
+    @@media (max-width: 1024px) {
+        .oee-hero {
+            grid-template-columns: 1fr 1fr 1fr;
+        }
+
+        .kpi-row {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        .machines-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .bottom-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @@media (max-width: 640px) {
+        .kpi-row {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .oee-hero {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .oee-breakdown {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .mcard-metrics {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+</style>
+
+<!-- ═══════════════════════════════ TOPBAR ═══════════════════════════════ -->
+<div class="topbar">
+    <div class="topbar-brand">
+        <div class="brand-mark">⚙</div>
+        <div>
+            <div class="brand-title">OEE Intelligence</div>
+            <div class="brand-sub">Transcend Packaging · Live Floor Monitor</div>
+        </div>
+    </div>
+    <div class="live-pill">
+        <span class="live-dot"></span>
+        <span id="nowTs">—</span>
+    </div>
+    <div class="topbar-actions">
+        <button class="btn" id="refreshBtn">↺ Refresh</button>
+        <button class="btn" id="aiReportBtn">🤖 GPT Report</button>
+        <button class="btn" id="claudeReportBtn">🧠 Claude Report</button>
+        <button class="btn btn-danger" id="sendEmailBtn">📧 Email Report</button>
+        <button class="btn btn-accent" id="exportBtn">↓ Export</button>
+        <label class="theme-toggle">
+            <span>Night mode</span>
+            <span class="switch">
+                <input type="checkbox" id="nightModeToggle">
+                <span class="slider"></span>
+            </span>
+        </label>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════ FILTERS ═══════════════════════════════ -->
+<div class="filters-bar">
+    <span class="filter-label">Line</span>
+    <select id="machineLine" class="filter-control" style="width:160px;">
+        <option value="">All lines</option>
+    </select>
+    <div class="filter-sep"></div>
+    <span class="filter-label">Period</span>
+    <select id="range" class="filter-control" style="width:140px;">
+        <option value="1" selected>Today</option>
+        <option value="7">Last 7 days</option>
+        <option value="30">Last 30 days</option>
+        <option value="all">All time</option>
+        <option value="custom">Custom</option>
+    </select>
+    <input type="date" id="fromDate" class="filter-control" disabled style="width:140px;" />
+    <input type="date" id="toDate" class="filter-control" disabled style="width:140px;" />
+    <button class="btn" id="applyBtn" disabled>Apply</button>
+    <div class="filter-sep"></div>
+    <input type="text" id="search" class="filter-control" placeholder="Search machine / product…" style="width:200px;" />
+    <div class="filter-sep"></div>
+    <span class="filter-label">Auto-refresh</span>
+    <input type="checkbox" id="autoRefresh" checked style="accent-color:var(--accent);width:14px;height:14px;" />
+    @if (!string.IsNullOrEmpty(Model.errorMessage))
+    {
+        <span style="font-size:10px;color:#fca5a5;margin-left:auto;">@Model.errorMessage</span>
+    }
+</div>
+
+<!-- ═══════════════════════════════ MAIN ═══════════════════════════════ -->
+<div class="main">
+
+    <!-- ── OEE HERO ── -->
+    <div class="section-label">Overall Equipment Effectiveness</div>
+    <div class="oee-hero" id="oeeHero">
+        <div class="oee-main">
+            <div class="oee-main-label">Plant OEE</div>
+            <div class="oee-main-value" id="heroOEE">—</div>
+            <div class="oee-main-sub" id="heroOEEsub">Calculating…</div>
+        </div>
+        <div class="oee-pillar">
+            <div class="pillar-label">Availability</div>
+            <div class="pillar-value" id="pillarA">—</div>
+            <div class="pillar-bar"><div class="pillar-fill" id="pillarAbar" style="background:var(--accent2);width:0%"></div></div>
+            <div class="pillar-desc" id="pillarAdesc">Uptime ratio</div>
+        </div>
+        <div class="oee-pillar">
+            <div class="pillar-label">Performance</div>
+            <div class="pillar-value" id="pillarP">—</div>
+            <div class="pillar-bar"><div class="pillar-fill" id="pillarPbar" style="background:var(--warn);width:0%"></div></div>
+            <div class="pillar-desc" id="pillarPdesc">vs target rate</div>
+        </div>
+        <div class="oee-pillar">
+            <div class="pillar-label">Quality</div>
+            <div class="pillar-value" id="pillarQ">—</div>
+            <div class="pillar-bar"><div class="pillar-fill" id="pillarQbar" style="background:var(--green);width:0%"></div></div>
+            <div class="pillar-desc" id="pillarQdesc">Good units ratio</div>
+        </div>
+        <div class="oee-pillar">
+            <div class="pillar-label">World Class</div>
+            <div class="pillar-value" style="color:var(--muted);">85%</div>
+            <div class="pillar-bar"><div class="pillar-fill" style="background:var(--muted);width:85%"></div></div>
+            <div class="pillar-desc">Industry benchmark</div>
+        </div>
+    </div>
+
+    <!-- ── KPI ROW ── -->
+    <div class="kpi-row">
+        <div class="kpi-card kpi-card-accent">
+            <div class="kpi-label">Total Output</div>
+            <div class="kpi-value" id="kpiOutput">—</div>
+            <div class="kpi-delta" id="kpiOutputSub">units produced</div>
+        </div>
+        <div class="kpi-card kpi-card-blue">
+            <div class="kpi-label">Achievement</div>
+            <div class="kpi-value" id="kpiAch">—</div>
+            <div class="kpi-delta" id="kpiAchSub">vs target</div>
+        </div>
+        <div class="kpi-card kpi-card-danger">
+            <div class="kpi-label">Total Downtime</div>
+            <div class="kpi-value" id="kpiDown">—</div>
+            <div class="kpi-delta" id="kpiDownSub">minutes lost</div>
+        </div>
+        <div class="kpi-card kpi-card-warn">
+            <div class="kpi-label">Total Waste</div>
+            <div class="kpi-value" id="kpiWaste">—</div>
+            <div class="kpi-delta" id="kpiWasteSub">kg recorded</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">Machines Below 85%</div>
+            <div class="kpi-value" id="kpiBelowOEE" style="color:var(--warn);">—</div>
+            <div class="kpi-delta" id="kpiBelowSub">need attention</div>
+        </div>
+    </div>
+
+    <!-- ── AI PANEL ── -->
+    <div id="aiReportContainer">
+        <div class="ai-header">
+            <div class="ai-badge">🧠</div>
+            <div>
+                <div class="ai-title">AI Analysis</div>
+                <div class="ai-sub">Auto-generated from live production data</div>
+            </div>
+        </div>
+        <pre id="aiReportText"></pre>
+    </div>
+
+    <!-- ── MACHINE CARDS ── -->
+    <div class="section-label" style="margin-top:4px;">Machine Performance · OEE Breakdown</div>
+    <div id="dashboardContainer"></div>
+
+    <!-- ── BOTTOM PANELS ── -->
+    <div class="section-label">Analytics · Trends</div>
+    <div class="bottom-grid">
+        <div class="panel">
+            <div class="panel-title"><span>◈</span> OEE League Table</div>
+            <table class="league-table" id="leagueTable">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Machine</th>
+                        <th>OEE</th>
+                        <th>Avail.</th>
+                        <th>Perf.</th>
+                        <th>Qual.</th>
+                        <th>Downtime</th>
+                    </tr>
+                </thead>
+                <tbody id="leagueBody"></tbody>
+            </table>
+        </div>
+        <div class="panel">
+            <div class="panel-title"><span>◈</span> 7-Day Output Trend</div>
+            <div style="position:relative;height:220px;">
+                <canvas id="globalTrendChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-grid">
+        <div class="panel">
+            <div class="panel-title"><span>◈</span> Downtime by Reason · All Lines</div>
+            <div style="position:relative;height:200px;">
+                <canvas id="globalDtChart"></canvas>
+            </div>
+        </div>
+        <div class="panel">
+            <div class="panel-title"><span>◈</span> Waste by Type · All Lines</div>
+            <div style="position:relative;height:200px;">
+                <canvas id="globalWasteChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ═══════════ SCRIPTS ═══════════ -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script>
+    $(function () {
+        const PLANNED_MINS_PER_SHIFT = 480;
+
+        let C = {};
+
+        function cssVar(name) {
+            return getComputedStyle(document.body).getPropertyValue(name).trim();
+        }
+
+        function syncThemeColors() {
+            C = {
+                accent: cssVar('--accent'),
+                accent2: cssVar('--accent2'),
+                warn: cssVar('--warn'),
+                danger: cssVar('--danger'),
+                green: cssVar('--green'),
+                muted: cssVar('--muted'),
+                border: cssVar('--border'),
+                grid: cssVar('--chart-grid'),
+                gaugeTrack: cssVar('--gauge-track'),
+                gaugeNeedle: cssVar('--gauge-needle'),
+                heading: cssVar('--heading'),
+                shifts: [cssVar('--green'), cssVar('--accent2'), cssVar('--warn')],
+                reasons: [cssVar('--danger'), cssVar('--warn'), cssVar('--accent2'), cssVar('--accent'), '#8b5cf6', '#ec4899', cssVar('--muted')],
+                waste: [cssVar('--warn'), cssVar('--danger'), cssVar('--accent2'), '#8b5cf6', cssVar('--green'), '#ec4899']
+            };
+
+            Chart.defaults.color = C.muted;
+            Chart.defaults.font.family = "'DM Mono', monospace";
+            Chart.defaults.font.size = 10;
+        }
+
+        const savedTheme = localStorage.getItem('oee-theme') || 'light';
+        $('body').toggleClass('night-mode', savedTheme === 'night');
+        $('#nightModeToggle').prop('checked', savedTheme === 'night');
+        syncThemeColors();
+
+        const charts = {};
+
+        function safeChart(id, cfg) {
+            if (charts[id]) charts[id].destroy();
+
+            const el = document.getElementById(id);
+            if (!el) return;
+
+            charts[id] = new Chart(el, cfg);
+        }
+
+        function getFilters() {
+            return {
+                search: $('#search').val(),
+                range: $('#range').val(),
+                fromDate: $('#fromDate').val(),
+                toDate: $('#toDate').val(),
+                machineLine: $('#machineLine').val()
+            };
+        }
+
+        function debounce(fn, d = 400) {
+            let t;
+            return () => {
+                clearTimeout(t);
+                t = setTimeout(fn, d);
+            };
+        }
+
+        function oeeColor(v) {
+            return v >= 85 ? C.green : v >= 65 ? C.warn : C.danger;
+        }
+
+        function oeeClass(v) {
+            return v >= 85 ? 'oee-good' : v >= 65 ? 'oee-ok' : 'oee-bad';
+        }
+
+        function pillClass(v) {
+            return v >= 85 ? 'pill-good' : v >= 65 ? 'pill-ok' : 'pill-bad';
+        }
+
+        function pillText(v) {
+            return v >= 85 ? 'ON TARGET' : v >= 65 ? 'WARNING' : 'CRITICAL';
+        }
+
+        function enc(s) {
+            const d = document.createElement('div');
+            d.textContent = s || '';
+            return d.innerHTML;
+        }
+
+        function calcOEE(item) {
+            const shifts = new Set();
+
+            (item.data || []).forEach(r => {
+                if (r.shift) shifts.add(r.shift);
+            });
+
+            const shiftCount = Math.max(shifts.size, 1);
+            const plannedMins = shiftCount * PLANNED_MINS_PER_SHIFT;
+
+            const avail = plannedMins > 0
+                ? Math.max(0, Math.min(100, Math.round((plannedMins - (item.downtime || 0)) / plannedMins * 100)))
+                : 100;
+
+            const perf = item.target > 0
+                ? Math.max(0, Math.min(100, Math.round(item.total / item.target * 100)))
+                : 0;
+
+            const wasteUnits = item.waste > 0 ? Math.round(item.waste / 0.2) : 0;
+
+            const qual = item.total > 0
+                ? Math.max(50, Math.min(100, Math.round((item.total - wasteUnits) / item.total * 100)))
+                : 100;
+
+            const oee = Math.round(avail * perf * qual / 10000);
+
+            return { oee, avail, perf, qual, plannedMins, shiftCount };
+        }
+
+        function drawGauge(id, pct, color) {
+            const canvas = document.getElementById(id);
+            if (!canvas) return;
+
+            const dpr = window.devicePixelRatio || 1;
+            const W = canvas.clientWidth || 130;
+            const H = canvas.clientHeight || 75;
+
+            canvas.width = W * dpr;
+            canvas.height = H * dpr;
+
+            const ctx = canvas.getContext('2d');
+            ctx.scale(dpr, dpr);
+
+            const cx = W / 2;
+            const cy = H - 4;
+            const r = Math.min(cx, cy) - 9;
+
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, Math.PI, 0);
+            ctx.strokeStyle = C.gaugeTrack;
+            ctx.lineWidth = 10;
+            ctx.lineCap = 'butt';
+            ctx.stroke();
+
+            const end = Math.PI + Math.PI * Math.min(pct, 100) / 100;
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, Math.PI, end);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 10;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+
+            [25, 50, 75, 85].forEach(v => {
+                const a = Math.PI + Math.PI * v / 100;
+                const r1 = r + 5;
+                const r2 = r - 2;
+
+                ctx.beginPath();
+                ctx.moveTo(cx + Math.cos(a) * r1, cy + Math.sin(a) * r1);
+                ctx.lineTo(cx + Math.cos(a) * r2, cy + Math.sin(a) * r2);
+                ctx.strokeStyle = v === 85 ? C.green : C.gaugeTrack;
+                ctx.lineWidth = v === 85 ? 1.5 : 0.8;
+                ctx.stroke();
+            });
+
+            const na = Math.PI + Math.PI * Math.min(pct, 100) / 100;
+
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(cx + Math.cos(na) * (r - 5), cy + Math.sin(na) * (r - 5));
+            ctx.strokeStyle = C.gaugeNeedle;
+            ctx.lineWidth = 1.5;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(cx, cy, 3, 0, Math.PI * 2);
+            ctx.fillStyle = C.gaugeNeedle;
+            ctx.fill();
+        }
+
+        function loadDashboard() {
+            syncThemeColors();
+
+            $.get('/Management_Dashboard?handler=DashboardData', getFilters(), function (data) {
+                let totalOut = 0;
+                let totalTarget = 0;
+                let totalDown = 0;
+                let totalWaste = 0;
+                let allReasons = {};
+                let allWasteTypes = {};
+                let leagueRows = [];
+
+                const existingLines = new Set($('#machineLine option').map((_, o) => o.value).get().filter(v => v));
+
+                data.forEach(x => {
+                    if (!existingLines.has(x.machine_Line)) {
+                        $('#machineLine').append(`<option value="${enc(x.machine_Line)}">${enc(x.machine_Line)}</option>`);
+                        existingLines.add(x.machine_Line);
+                    }
+                });
+
+                const byLine = {};
+
+                data.forEach(x => {
+                    if (!byLine[x.machine_Line]) byLine[x.machine_Line] = [];
+
+                    byLine[x.machine_Line].push(x);
+                    totalOut += x.total;
+                    totalTarget += x.target;
+                    totalDown += x.downtime || 0;
+                    totalWaste += x.waste || 0;
+
+                    (x.downtimeData || []).forEach(d => {
+                        const r = d.reason_Name || 'Unknown';
+                        allReasons[r] = (allReasons[r] || 0) + (d.total_Downtime || 0);
+                    });
+
+                    (x.wasteData || []).forEach(w => {
+                        const t = w.wasteType || 'Unknown';
+                        allWasteTypes[t] = (allWasteTypes[t] || 0) + (w.wasteWeight || 0);
+                    });
+                });
+
+                const shiftCount = Math.max(data.reduce((s, x) => {
+                    (x.data || []).forEach(r => s.add(r.shift));
+                    return s;
+                }, new Set()).size, 1);
+
+                const plantPlanned = shiftCount * PLANNED_MINS_PER_SHIFT;
+                const plantAvail = Math.max(0, Math.min(100, Math.round((plantPlanned - totalDown) / plantPlanned * 100)));
+                const plantPerf = totalTarget > 0 ? Math.min(100, Math.round(totalOut / totalTarget * 100)) : 0;
+                const plantWasteU = totalWaste > 0 ? Math.round(totalWaste / 0.2) : 0;
+                const plantQual = totalOut > 0 ? Math.max(50, Math.min(100, Math.round((totalOut - plantWasteU) / totalOut * 100))) : 100;
+                const plantOEE = Math.round(plantAvail * plantPerf * plantQual / 10000);
+
+                const oeeCol = oeeColor(plantOEE);
+
+                $('#heroOEE').text(plantOEE + '%').css('color', oeeCol);
+                $('#heroOEEsub').text(plantOEE >= 85 ? 'World class performance' : plantOEE >= 65 ? 'Room for improvement' : 'Critical — needs attention');
+
+                $('#pillarA').text(plantAvail + '%').css('color', oeeColor(plantAvail));
+                $('#pillarAbar').css({ width: plantAvail + '%', background: oeeColor(plantAvail) });
+                $('#pillarAdesc').text(`${totalDown} min downtime`);
+
+                $('#pillarP').text(plantPerf + '%').css('color', oeeColor(plantPerf));
+                $('#pillarPbar').css({ width: plantPerf + '%', background: oeeColor(plantPerf) });
+                $('#pillarPdesc').text(`${totalOut.toLocaleString()} / ${totalTarget.toLocaleString()}`);
+
+                $('#pillarQ').text(plantQual + '%').css('color', oeeColor(plantQual));
+                $('#pillarQbar').css({ width: plantQual + '%', background: oeeColor(plantQual) });
+                $('#pillarQdesc').text(`~${plantWasteU.toLocaleString()} waste units est.`);
+
+                const achPct = totalTarget > 0 ? Math.round(totalOut / totalTarget * 100) : 0;
+
+                $('#kpiOutput').text(totalOut.toLocaleString());
+                $('#kpiAch').text(achPct + '%').css('color', oeeColor(achPct));
+                $('#kpiDown').text(totalDown.toLocaleString() + ' min');
+                $('#kpiWaste').text(totalWaste.toLocaleString() + ' kg');
+
+                const container = $('#dashboardContainer').empty();
+                let belowOEE = 0;
+
+                Object.keys(byLine).sort().forEach(line => {
+                    const items = byLine[line];
+                    const lineOut = items.reduce((s, x) => s + x.total, 0);
+                    const lineTgt = items.reduce((s, x) => s + x.target, 0);
+                    const lineDown = items.reduce((s, x) => s + (x.downtime || 0), 0);
+                    const lineAch = lineTgt > 0 ? Math.round(lineOut / lineTgt * 100) : 0;
+
+                    const section = $(`
+                        <div class="line-section">
+                            <div class="line-header">
+                                <span class="line-tag">${enc(line)}</span>
+                                <span class="line-stats">${items.length} machine(s) &nbsp;·&nbsp; ${lineOut.toLocaleString()} units &nbsp;·&nbsp; ${lineAch}% ach. &nbsp;·&nbsp; ${lineDown} min DT</span>
+                            </div>
+                            <div class="machines-grid" id="grid_${line.replace(/\W/g, '_')}"></div>
+                        </div>
+                    `);
+
+                    container.append(section);
+                    const grid = section.find('.machines-grid');
+
+                    items.sort((a, b) => b.achievement - a.achievement).forEach((item, idx) => {
+                        const id = (line + item.machine_name + item.product_Line + idx).replace(/\W/g, '');
+                        const oeeData = calcOEE(item);
+
+                        if (oeeData.oee < 85) belowOEE++;
+
+                        const shiftSum = { A: 0, B: 0, C: 0 };
+
+                        (item.data || []).forEach(r => {
+                            shiftSum[r.shift] = (shiftSum[r.shift] || 0) + r.product_Count;
+                        });
+
+                        const reasons = {};
+
+                        (item.downtimeData || []).forEach(d => {
+                            const r = d.reason_Name || 'Unknown';
+                            reasons[r] = (reasons[r] || 0) + (d.total_Downtime || 0);
+                        });
+
+                        const reasonKeys = Object.keys(reasons).sort((a, b) => reasons[b] - reasons[a]).slice(0, 4);
+                        const reasonMax = Math.max(...Object.values(reasons), 1);
+                        const oc = oeeColor(oeeData.oee);
+
+                        leagueRows.push({
+                            name: item.machine_name,
+                            line: item.machine_Line,
+                            oee: oeeData.oee,
+                            avail: oeeData.avail,
+                            perf: oeeData.perf,
+                            qual: oeeData.qual,
+                            downtime: item.downtime || 0
+                        });
+
+                        const card = $(`
+                            <div class="mcard ${oeeClass(oeeData.oee)}">
+                                <div class="mcard-head">
+                                    <div>
+                                        <div class="mcard-title">${enc(item.machine_name)}</div>
+                                        <div class="mcard-sub">${enc(item.machine_Line)} &nbsp;·&nbsp; ${enc(item.product_Line)}</div>
+                                    </div>
+                                    <span class="status-pill ${pillClass(oeeData.oee)}">${pillText(oeeData.oee)}</span>
+                                </div>
+
+                                <div class="oee-breakdown">
+                                    <div class="oee-cell">
+                                        <div class="oee-cell-label">OEE</div>
+                                        <div class="oee-cell-value" style="color:${oc};">${oeeData.oee}%</div>
+                                        <div class="oee-cell-bar"><div class="oee-cell-fill" style="width:${oeeData.oee}%;background:${oc};"></div></div>
+                                    </div>
+                                    <div class="oee-cell">
+                                        <div class="oee-cell-label">Avail.</div>
+                                        <div class="oee-cell-value" style="color:${oeeColor(oeeData.avail)};">${oeeData.avail}%</div>
+                                        <div class="oee-cell-bar"><div class="oee-cell-fill" style="width:${oeeData.avail}%;background:${oeeColor(oeeData.avail)};"></div></div>
+                                    </div>
+                                    <div class="oee-cell">
+                                        <div class="oee-cell-label">Perf.</div>
+                                        <div class="oee-cell-value" style="color:${oeeColor(oeeData.perf)};">${oeeData.perf}%</div>
+                                        <div class="oee-cell-bar"><div class="oee-cell-fill" style="width:${oeeData.perf}%;background:${oeeColor(oeeData.perf)};"></div></div>
+                                    </div>
+                                    <div class="oee-cell">
+                                        <div class="oee-cell-label">Qual.</div>
+                                        <div class="oee-cell-value" style="color:${oeeColor(oeeData.qual)};">${oeeData.qual}%</div>
+                                        <div class="oee-cell-bar"><div class="oee-cell-fill" style="width:${oeeData.qual}%;background:${oeeColor(oeeData.qual)};"></div></div>
+                                    </div>
+                                </div>
+
+                                <div style="display:grid;grid-template-columns:130px 1fr;gap:0;border-bottom:1px solid var(--border);">
+                                    <div style="padding:10px 12px;border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;">
+                                        <div style="position:relative;width:120px;height:70px;">
+                                            <canvas id="gauge_${id}" width="120" height="70" style="width:120px;height:70px;display:block;"></canvas>
+                                            <div style="position:absolute;bottom:4px;left:0;right:0;text-align:center;pointer-events:none;">
+                                                <span style="font-family:'Syne',sans-serif;font-size:14px;font-weight:800;color:${oc};">${oeeData.oee}%</span><br>
+                                                <span style="font-size:9px;color:var(--muted);letter-spacing:1px;">OEE</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mcard-metrics" style="border:none;">
+                                        <div class="metric-cell">
+                                            <div class="metric-label">Output</div>
+                                            <div class="metric-value ${item.achievement >= 90 ? 'c-accent' : item.achievement >= 70 ? 'c-warn' : 'c-danger'}">${item.total.toLocaleString()}</div>
+                                        </div>
+                                        <div class="metric-cell">
+                                            <div class="metric-label">Target</div>
+                                            <div class="metric-value">${item.target.toLocaleString()}</div>
+                                        </div>
+                                        <div class="metric-cell">
+                                            <div class="metric-label">Downtime</div>
+                                            <div class="metric-value ${(item.downtime || 0) > 60 ? 'c-danger' : 'c-warn'}">${(item.downtime || 0)} min</div>
+                                        </div>
+                                        <div class="metric-cell">
+                                            <div class="metric-label">Waste</div>
+                                            <div class="metric-value c-warn">${(item.waste || 0).toFixed(1)} kg</div>
+                                        </div>
+                                        <div class="metric-cell">
+                                            <div class="metric-label">Planned</div>
+                                            <div class="metric-value">${oeeData.plannedMins} min</div>
+                                        </div>
+                                        <div class="metric-cell">
+                                            <div class="metric-label">Shifts</div>
+                                            <div class="metric-value">${oeeData.shiftCount}</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="shift-row">
+                                    <div class="shift-chip chip-a">Shift A<br><strong>${shiftSum.A.toLocaleString()}</strong></div>
+                                    <div class="shift-chip chip-b">Shift B<br><strong>${shiftSum.B.toLocaleString()}</strong></div>
+                                    <div class="shift-chip chip-c">Shift C<br><strong>${shiftSum.C.toLocaleString()}</strong></div>
+                                </div>
+
+                                ${reasonKeys.length ? `
+                                    <div class="dt-list">
+                                        <div style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:7px;">Downtime Reasons</div>
+                                        ${reasonKeys.map((r, i) => `
+                                            <div class="dt-item">
+                                                <div class="dt-name" title="${enc(r)}">${enc(r)}</div>
+                                                <div class="dt-track"><div class="dt-fill" style="width:${Math.round(reasons[r] / reasonMax * 100)}%;background:${C.reasons[i % C.reasons.length]};"></div></div>
+                                                <div class="dt-min">${reasons[r]}m</div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                ` : ''}
+
+                                <div class="mcard-charts">
+                                    <div class="chart-cell">
+                                        <div class="chart-cell-label">7-day output</div>
+                                        <div style="position:relative;height:70px;"><canvas id="line_${id}"></canvas></div>
+                                    </div>
+                                    <div class="chart-cell">
+                                        <div class="chart-cell-label">Downtime split</div>
+                                        <div style="position:relative;height:70px;"><canvas id="dt_${id}"></canvas></div>
+                                    </div>
+                                </div>
+                            </div>
+                        `);
+
+                        grid.append(card);
+
+                        setTimeout(() => drawGauge(`gauge_${id}`, oeeData.oee, oc), 30);
+
+                        const rows = item.data || [];
+                        const dayLabels = [];
+                        const dayData = [];
+
+                        for (let i = 6; i >= 0; i--) {
+                            const d = new Date();
+                            d.setDate(d.getDate() - i);
+                            dayLabels.push((d.getMonth() + 1) + '/' + d.getDate());
+                            dayData.push(rows.filter(r => new Date(r.timestamp_Start).toDateString() === d.toDateString()).reduce((s, r) => s + r.product_Count, 0));
+                        }
+
+                        setTimeout(() => {
+                            safeChart(`line_${id}`, {
+                                type: 'line',
+                                data: {
+                                    labels: dayLabels,
+                                    datasets: [{
+                                        data: dayData,
+                                        fill: true,
+                                        tension: .4,
+                                        borderColor: oc,
+                                        backgroundColor: oc + '22',
+                                        borderWidth: 1.5,
+                                        pointRadius: 1.5,
+                                        pointBackgroundColor: oc
+                                    }]
+                                },
+                                options: {
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    plugins: { legend: { display: false } },
+                                    scales: {
+                                        x: { ticks: { font: { size: 8 }, color: C.muted }, grid: { color: C.grid } },
+                                        y: { beginAtZero: true, ticks: { font: { size: 8 }, color: C.muted }, grid: { color: C.grid } }
+                                    }
+                                }
+                            });
+                        }, 60);
+
+                        const sdA = (item.downtimeData || []).filter(d => d.shift === 'A').reduce((s, d) => s + (d.total_Downtime || 0), 0);
+                        const sdB = (item.downtimeData || []).filter(d => d.shift === 'B').reduce((s, d) => s + (d.total_Downtime || 0), 0);
+                        const sdC = (item.downtimeData || []).filter(d => d.shift === 'C').reduce((s, d) => s + (d.total_Downtime || 0), 0);
+
+                        setTimeout(() => {
+                            safeChart(`dt_${id}`, {
+                                type: 'doughnut',
+                                data: {
+                                    labels: ['A', 'B', 'C'],
+                                    datasets: [{
+                                        data: [sdA, sdB, sdC],
+                                        backgroundColor: C.shifts,
+                                        borderWidth: 0,
+                                        hoverOffset: 3
+                                    }]
+                                },
+                                options: {
+                                    cutout: '68%',
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    plugins: {
+                                        legend: {
+                                            display: true,
+                                            position: 'right',
+                                            labels: {
+                                                font: { size: 9 },
+                                                color: C.muted,
+                                                padding: 6,
+                                                boxWidth: 8
+                                            }
+                                        }
+                                    }
+                                }
+                            });
+                        }, 90);
+                    });
+                });
+
+                $('#kpiBelowOEE').text(belowOEE);
+                $('#kpiBelowSub').text(belowOEE === 0 ? 'All on target' : 'machine(s) below 85% OEE');
+
+                leagueRows.sort((a, b) => b.oee - a.oee);
+
+                const lb = $('#leagueBody').empty();
+
+                leagueRows.forEach((r, i) => {
+                    const oc = oeeColor(r.oee);
+
+                    lb.append(`
+                        <tr>
+                            <td><span class="rank-num">${i + 1}</span></td>
+                            <td>
+                                <div style="font-weight:600;color:var(--heading);">${enc(r.name)}</div>
+                                <div style="font-size:9px;color:var(--muted);">${enc(r.line)}</div>
+                            </td>
+                            <td><span class="oee-badge" style="color:${oc};">${r.oee}%</span></td>
+                            <td style="color:${oeeColor(r.avail)};">${r.avail}%</td>
+                            <td style="color:${oeeColor(r.perf)};">${r.perf}%</td>
+                            <td style="color:${oeeColor(r.qual)};">${r.qual}%</td>
+                            <td style="color:var(--danger);">${r.downtime} min</td>
+                        </tr>
+                    `);
+                });
+
+                const trendLabels = [];
+                const trendActual = [];
+                const trendTarget = [];
+
+                for (let i = 6; i >= 0; i--) {
+                    const d = new Date();
+                    d.setDate(d.getDate() - i);
+                    trendLabels.push((d.getMonth() + 1) + '/' + d.getDate());
+
+                    let da = 0;
+                    let dt2 = 0;
+
+                    data.forEach(x => {
+                        (x.data || []).forEach(r => {
+                            if (new Date(r.timestamp_Start).toDateString() === d.toDateString()) da += r.product_Count;
+                        });
+
+                        if (new Date().toDateString() === d.toDateString()) dt2 += x.target;
+                    });
+
+                    trendActual.push(da);
+                    trendTarget.push(dt2);
+                }
+
+                setTimeout(() => {
+                    safeChart('globalTrendChart', {
+                        type: 'line',
+                        data: {
+                            labels: trendLabels,
+                            datasets: [
+                                {
+                                    label: 'Actual',
+                                    data: trendActual,
+                                    fill: true,
+                                    tension: .4,
+                                    borderColor: C.accent,
+                                    backgroundColor: C.accent + '18',
+                                    borderWidth: 2,
+                                    pointRadius: 3,
+                                    pointBackgroundColor: C.accent
+                                },
+                                {
+                                    label: 'Target',
+                                    data: trendTarget,
+                                    fill: false,
+                                    tension: 0,
+                                    borderColor: C.muted,
+                                    borderDash: [4, 3],
+                                    borderWidth: 1.5,
+                                    pointRadius: 0
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    labels: {
+                                        color: C.muted,
+                                        font: { size: 10 },
+                                        boxWidth: 10
+                                    }
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    ticks: { font: { size: 10 }, color: C.muted },
+                                    grid: { color: C.grid }
+                                },
+                                y: {
+                                    beginAtZero: false,
+                                    ticks: {
+                                        font: { size: 10 },
+                                        color: C.muted,
+                                        callback: v => v >= 1000 ? (v / 1000).toFixed(1) + 'k' : v
+                                    },
+                                    grid: { color: C.grid }
+                                }
+                            }
+                        }
+                    });
+                }, 200);
+
+                const dtKeys = Object.keys(allReasons).sort((a, b) => allReasons[b] - allReasons[a]).slice(0, 8);
+                const dtVals = dtKeys.map(k => allReasons[k]);
+
+                setTimeout(() => {
+                    if (!dtKeys.length) return;
+
+                    safeChart('globalDtChart', {
+                        type: 'bar',
+                        data: {
+                            labels: dtKeys,
+                            datasets: [{
+                                data: dtVals,
+                                backgroundColor: dtKeys.map((_, i) => C.reasons[i % C.reasons.length]),
+                                borderRadius: 4,
+                                barThickness: 22
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: { callbacks: { label: ctx => `${ctx.raw} min` } }
+                            },
+                            scales: {
+                                x: {
+                                    ticks: {
+                                        font: { size: 9 },
+                                        color: C.muted,
+                                        maxRotation: 35,
+                                        autoSkip: false
+                                    },
+                                    grid: { display: false }
+                                },
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        font: { size: 9 },
+                                        color: C.muted,
+                                        callback: v => v + 'm'
+                                    },
+                                    grid: { color: C.grid }
+                                }
+                            }
+                        }
+                    });
+                }, 220);
+
+                const wKeys = Object.keys(allWasteTypes).sort((a, b) => allWasteTypes[b] - allWasteTypes[a]);
+                const wVals = wKeys.map(k => allWasteTypes[k]);
+
+                setTimeout(() => {
+                    if (!wKeys.length) return;
+
+                    safeChart('globalWasteChart', {
+                        type: 'doughnut',
+                        data: {
+                            labels: wKeys,
+                            datasets: [{
+                                data: wVals,
+                                backgroundColor: wKeys.map((_, i) => C.waste[i % C.waste.length]),
+                                borderWidth: 0,
+                                hoverOffset: 6
+                            }]
+                        },
+                        options: {
+                            cutout: '60%',
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'right',
+                                    labels: {
+                                        color: C.muted,
+                                        font: { size: 10 },
+                                        padding: 10,
+                                        boxWidth: 10
+                                    }
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: ctx => `${ctx.raw.toFixed(1)} kg`
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }, 240);
+            });
+        }
+
+        document.getElementById('nowTs').textContent =
+            new Date().toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
+
+        $('#nightModeToggle').change(function () {
+            const night = this.checked;
+            $('body').toggleClass('night-mode', night);
+            localStorage.setItem('oee-theme', night ? 'night' : 'light');
+            syncThemeColors();
+            loadDashboard();
+        });
+
+        $('#range').change(function () {
+            const custom = this.value === 'custom';
+            $('#fromDate,#toDate,#applyBtn').prop('disabled', !custom);
+            if (!custom) loadDashboard();
+        });
+
+        $('#applyBtn').click(loadDashboard);
+        $('#search').on('keyup', debounce(loadDashboard));
+        $('#machineLine').change(loadDashboard);
+        $('#refreshBtn').click(loadDashboard);
+
+        function showAI(txt) {
+            $('#aiReportText').text(txt);
+            $('#aiReportContainer').show();
+        }
+
+        $('#aiReportBtn').click(() => {
+            showAI('Generating GPT-4o report…');
+            $.get('/Management_Dashboard?handler=AIReport', getFilters(), showAI).fail(e => showAI('❌ ' + e.responseText));
+        });
+
+        $('#claudeReportBtn').click(() => {
+            showAI('Generating Claude report…');
+            $.get('/Management_Dashboard?handler=ClaudeReport', getFilters(), showAI).fail(e => showAI('❌ ' + e.responseText));
+        });
+
+        $('#sendEmailBtn').click(() => {
+            showAI('Sending report email…');
+            $.get('/Management_Dashboard?handler=SendAIEmail', getFilters(), showAI).fail(() => showAI('❌ Email send failed'));
+        });
+
+        $('#exportBtn').click(() => {
+            $.get('/Management_Dashboard?handler=DashboardData', getFilters(), function (data) {
+                const csv = ['Machine,Line,Product,OEE%,Avail%,Perf%,Qual%,Output,Target,Ach%,Downtime(min),Waste(kg)'];
+
+                data.forEach(x => {
+                    const o = calcOEE(x);
+                    csv.push([x.machine_name, x.machine_Line, x.product_Line, o.oee, o.avail, o.perf, o.qual, x.total, x.target, x.achievement, x.downtime || 0, (x.waste || 0).toFixed(1)].join(','));
+                });
+
+                const a = document.createElement('a');
+                a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv.join('\n'));
+                a.download = 'OEE_Report_' + new Date().toISOString().slice(0, 10) + '.csv';
+                a.click();
+            });
+        });
+
+        let autoTimer;
+
+        function startAuto() {
+            clearInterval(autoTimer);
+            if ($('#autoRefresh').is(':checked')) autoTimer = setInterval(loadDashboard, 30000);
+        }
+
+        $('#autoRefresh').change(startAuto);
+
+        loadDashboard();
+        startAuto();
+    });
+</script>

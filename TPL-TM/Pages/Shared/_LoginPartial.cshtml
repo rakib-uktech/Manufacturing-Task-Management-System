@@ -1,0 +1,74 @@
+﻿@using Microsoft.AspNetCore.Identity
+@inject SignInManager<IdentityUser> SignInManager
+@inject UserManager<IdentityUser> UserManager
+
+@{
+    var user = SignInManager.IsSignedIn(User) ? await UserManager.GetUserAsync(User) : null;
+
+    var isAdmin = user != null && await UserManager.IsInRoleAsync(user, "Admin");
+    var isSupervisor = user != null && await UserManager.IsInRoleAsync(user, "Supervisor");
+}
+
+@if (SignInManager.IsSignedIn(User))
+{
+    <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle text-light" href="#" id="userDropdown" role="button"
+           data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-person-circle"></i> Hello @User.Identity?.Name!
+        </a>
+
+        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+            <li>
+                <a class="dropdown-item" asp-area="Identity" asp-page="/Account/Manage/Index">
+                    <i class="bi bi-person"></i> Profile
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item" asp-area="Identity" asp-page="/Account/Manage/ChangePassword">
+                    <i class="bi bi-key"></i> Change Password
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item" asp-area="Identity" asp-page="/Account/Manage/Email">
+                    <i class="bi bi-envelope"></i> Change Email
+                </a>
+            </li>
+
+            @* Admin only *@
+            @if (isAdmin)
+            {
+                <li>
+                    <a class="dropdown-item" asp-area="Identity" asp-page="/Account/Register">
+                        <i class="bi bi-person-plus"></i> Register
+                    </a>
+                </li>
+            }
+
+            @* Admin + Supervisor *@
+            @if (isAdmin)
+            {
+                <li>
+                    <a class="dropdown-item" asp-area="Identity" asp-page="/Account/Manage/UserList">
+                        <i class="bi bi-people"></i> User List
+                    </a>
+                </li>
+            }
+
+            <li><hr class="dropdown-divider" /></li>
+
+            <li>
+                <a class="dropdown-item" asp-area="Identity" asp-page="/Account/Logout">
+                    <i class="bi bi-box-arrow-right"></i> Logout
+                </a>
+            </li>
+        </ul>
+    </li>
+}
+else
+{
+    <li class="nav-item">
+        <a class="nav-link text-light" asp-area="Identity" asp-page="/Account/Login">
+            <i class="bi bi-box-arrow-in-right"></i> Login
+        </a>
+    </li>
+}

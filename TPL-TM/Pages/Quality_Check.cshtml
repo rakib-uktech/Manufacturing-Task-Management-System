@@ -1,0 +1,135 @@
+﻿@page
+@model TPL_TM.Pages.Quality_CheckModel
+@{
+}
+
+<div class="modal fade show" id="qualityCheckModal" tabindex="-1" aria-labelledby="qualityCheckModalLabel" aria-hidden="true" style="display: block;">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 650px; margin-top: 80px;">
+        <div class="modal-content shadow-lg border-0 rounded-4">
+            <div class="modal-header bg-primary text-white d-flex align-items-center rounded-top-4">
+                <i class="bi bi-clipboard2-check me-2 fs-4"></i>
+                <h5 class="modal-title fw-semibold" id="qualityCheckModalLabel">Record Quality Check</h5>
+                <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal" aria-label="Close" id="closeQualityCheckModal"></button>
+            </div>
+
+            <div class="modal-body p-4">
+                <form id="quality-check-form" method="post" novalidate class="needs-validation">
+                    <input type="hidden" asp-for="ShiftId" />
+
+                    <!-- Product Category (hidden if desired) -->
+                    <input type="hidden" asp-for="ProductCategory" />
+
+                    <!-- Quality Check List -->
+                    <div class="mb-4">
+                        <label class="fw-bold mb-2 text-primary">
+                            <i class="bi bi-list-check me-1"></i>Quality Checks
+                        </label>
+
+                        @for (int i = 0; i < Model.TestChecks.Count; i++)
+                        {
+                            <div class="d-flex align-items-center mb-2 check-item p-2 rounded-3 bg-light">
+                                <!-- Toggle Switch -->
+                                <div class="form-check form-switch me-2">
+                                    <input class="form-check-input quality-toggle"
+                                           type="checkbox"
+                                           asp-for="TestChecks[@i].Status"
+                                           data-index="@i" />
+                                </div>
+
+                                <!-- Label -->
+                                <label class="form-check-label flex-grow-1">@Model.TestChecks[i].TestName</label>
+
+                                <!-- Comment -->
+                                <input type="text" class="form-control form-control-sm check-comment"
+                                       placeholder="Comment if failed"
+                                       asp-for="TestChecks[@i].Comment"
+                                       style="display:none; max-width:180px;" />
+                                <!-- Weights -->
+                                <input type="number" step="any" class="form-control form-control-sm ms-2"
+                                       placeholder="Quantity"
+                                       asp-for="TestChecks[@i].Weights"
+                                       style="max-width:100px;" />
+
+                                <input type="hidden" asp-for="TestChecks[@i].TestId" />
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="w-100 btn btn-lg btn-primary shadow-sm rounded-3">
+                        <i class="bi bi-check-circle me-2"></i>Save Quality Checks
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const modal = new bootstrap.Modal(document.getElementById('qualityCheckModal'), { backdrop: 'static', keyboard: false });
+            modal.show();
+
+            document.getElementById("closeQualityCheckModal").addEventListener("click", function () {
+                window.location.href = "/Shift_Dashboard";
+            });
+
+            // Form validation
+            const form = document.getElementById('quality-check-form');
+            form.addEventListener('submit', function (event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            });
+
+            // Toggle comments visibility
+            const toggles = document.querySelectorAll(".quality-toggle");
+            const comments = document.querySelectorAll(".check-comment");
+
+            toggles.forEach((toggle, idx) => {
+                toggle.addEventListener("change", function () {
+                    if (toggle.checked) {
+                        comments[idx].style.display = "none";
+                        comments[idx].value = "";
+                    } else {
+                        comments[idx].style.display = "inline-block";
+                    }
+                });
+
+                // Initialize
+                if (!toggle.checked) comments[idx].style.display = "inline-block";
+            });
+        });
+    </script>
+
+    <style>
+        .check-item {
+            transition: background-color 0.2s;
+        }
+
+            .check-item:hover {
+                background-color: #eef3ff;
+            }
+
+        .form-check-input {
+            width: 3em;
+            height: 1.5em;
+            border-radius: 1.5em;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+            .form-check-input:checked {
+                background-color: #28a745 !important;
+                border-color: #28a745 !important;
+            }
+
+            .form-check-input:not(:checked) {
+                background-color: #dc3545 !important;
+                border-color: #dc3545 !important;
+            }
+    </style>
+}

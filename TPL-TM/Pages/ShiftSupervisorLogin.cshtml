@@ -1,0 +1,137 @@
+﻿@page
+@model TPL_TM.Pages.ShiftSupervisorLoginModel
+@{
+    ViewData["Title"] = "Supervisor Authorization";
+}
+
+<!-- ✅ Supervisor Authorization Modal -->
+<div class="modal fade show" id="supervisorAuthModal" tabindex="-1" aria-labelledby="supervisorAuthModalLabel"
+     aria-hidden="true" style="display:block;">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 450px;">
+        <div class="modal-content shadow-lg border-0 rounded-4">
+
+            <!-- Header -->
+            <div class="modal-header bg-warning text-dark text-center rounded-top-4">
+                <i class="bi bi-shield-lock fs-3 me-2"></i>
+                <h4 class="modal-title fw-semibold" id="supervisorAuthModalLabel">Supervisor Authorization</h4>
+                <button type="button" class="btn-close" id="closeAuthModal" aria-label="Close"></button>
+            </div>
+
+            <!-- Body -->
+            <div class="modal-body p-4">
+                @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+                {
+                    <div class="alert alert-danger text-center fw-semibold mb-3 shadow-sm">
+                        @Model.ErrorMessage
+                    </div>
+                }
+
+                <form method="post" id="supervisorAuthForm" novalidate>
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <!-- Email -->
+                    <div class="form-floating mb-3">
+                        <input asp-for="Input.Email" class="form-control" placeholder="Supervisor Email" required />
+                        <label asp-for="Input.Email">Email</label>
+                        <span asp-validation-for="Input.Email" class="text-danger"></span>
+                    </div>
+
+                    <!-- Password -->
+                    <div class="form-floating mb-4">
+                        <input asp-for="Input.Password" type="password" class="form-control" placeholder="Password" required />
+                        <label asp-for="Input.Password">Password</label>
+                        <span asp-validation-for="Input.Password" class="text-danger"></span>
+                    </div>
+
+                    <!-- Hidden values -->
+                    <input type="hidden" asp-for="Input.ShiftId" />
+                    <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+
+                    <!-- Submit -->
+                    <button type="submit" class="btn btn-warning w-100 rounded-3 shadow-sm" id="authorizeButton">
+                        <i class="bi bi-check-circle me-2"></i>Authorize & Start Shift
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        .modal-content {
+            animation: fadeInDown 0.4s ease-in-out;
+        }
+
+        @@keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        body {
+            background: rgba(0, 0, 0, 0.4);
+        }
+    </style>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const modalElement = document.getElementById('supervisorAuthModal');
+            const authModal = new bootstrap.Modal(modalElement, { backdrop: 'static', keyboard: false });
+            authModal.show();
+
+            const form = document.getElementById("supervisorAuthForm");
+            const authorizeButton = document.getElementById("authorizeButton");
+            const closeBtn = document.getElementById("closeAuthModal");
+            const returnUrl = "@Model.ReturnUrl";
+
+            // ✅ Auto close or redirect manually via close button
+            closeBtn.addEventListener("click", () => {
+                if (returnUrl) window.location.href = returnUrl;
+                else window.history.back();
+            });
+
+            // ✅ Handle form submit via AJAX to allow auto-close on success
+            form.addEventListener("submit", async (e) => {
+                e.preventDefault();
+
+                authorizeButton.disabled = true;
+                authorizeButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Authorizing...';
+
+                try {
+                    const formData = new FormData(form);
+                    const response = await fetch(window.location.pathname, {
+                        method: "POST",
+                        body: formData
+                    });
+
+                    // If redirect occurred → auto-redirect manually
+                    if (response.redirected) {
+                        window.location.href = response.url;
+                        return;
+                    }
+
+                    // If not redirected, re-render with validation errors
+                    const html = await response.text();
+                    document.open();
+                    document.write(html);
+                    document.close();
+                } catch (err) {
+                    console.error("Authorization error:", err);
+                    alert("An error occurred during authorization.");
+                    authorizeButton.disabled = false;
+                    authorizeButton.innerHTML = '<i class="bi bi-check-circle me-2"></i>Authorize & Start Shift';
+                }
+            });
+        });
+    </script>
+}

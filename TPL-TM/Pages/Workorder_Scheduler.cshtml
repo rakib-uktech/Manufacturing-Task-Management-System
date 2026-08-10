@@ -1,0 +1,1987 @@
+﻿@page
+@model TPL_TM.Pages.Workorder_SchedulerModel
+
+@{
+    ViewData["Title"] = "Production Scheduler";
+}
+@* <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet">
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script> *@
+
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/index.global.min.css"
+      rel="stylesheet" />
+
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/index.global.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@6.1.19/index.global.min.js"></script>
+
+<div class="scheduler-page">
+
+    <div class="scheduler-header">
+        <div class="scheduler-header-text">
+            <h1>Production Scheduler</h1>
+            <p>Live machine timeline, synced from NetSuite work orders</p>
+        </div>
+
+        <div class="scheduler-legend">
+            <div class="scheduler-search position-relative">
+                <input type="text"
+                       id="searchBox"
+                       class="form-control"
+                       placeholder="🔍 Search Work Order, Item ID or Item Name..." />
+
+                <div id="searchResults"
+                     class="list-group position-absolute w-100 shadow"
+                     style="z-index:9999; display:none;">
+                </div>
+            </div>
+            <span class="legend-item"><span class="legend-dot dot-complete"></span>Complete</span>
+            <span class="legend-item"><span class="legend-dot dot-progress"></span>In progress</span>
+            <span class="legend-item"><span class="legend-dot dot-pending"></span>Not started</span>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-success mb-3">
+
+        <div id="filterHeader"
+             class="card-header bg-success text-white d-flex justify-content-between align-items-center"
+             style="cursor:pointer;">
+
+            <div>
+                <i class="bi bi-funnel me-2"></i>
+                <strong>Machine Filters</strong>
+            </div>
+
+            <i id="filterIcon" class="bi bi-chevron-right"></i>
+        </div>
+
+        <div id="machineFilters" style="display:none;">
+            <div class="card-body">
+
+                <h6 class="border-bottom border-success pb-2 mb-3">
+                    <i class="bi bi-diagram-3 me-1"></i>
+                    Machine Lines
+                </h6>
+
+                <div id="machineLineButtons"
+                     class="d-flex flex-wrap gap-2 mb-4">
+                </div>
+
+                <h6 class="border-bottom border-success pb-2 mb-3">
+                    <i class="bi bi-cpu me-1"></i>
+                    Machines
+                </h6>
+
+                <div id="machineButtons"
+                     class="d-flex flex-wrap gap-2">
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <div class="scheduler-card">
+
+        <div class="scheduler-loading" id="schedulerLoading">
+            <span class="scheduler-spinner"></span>
+            Loading schedule&hellip;
+        </div>
+
+        <div id="scheduler"></div>
+
+    </div>
+
+</div>
+<div class="modal fade"
+     id="workOrderModal"
+     tabindex="-1">
+
+    <div class="modal-dialog modal-xl modal-fullscreen-md-down">
+
+        <div class="modal-content">
+
+            <div class="modal-header bg-success text-white">
+                <div class="dropdown me-2">
+
+                    <button class="btn btn-success border-0"
+                            type="button"
+                            data-bs-toggle="dropdown"
+                            aria-expanded="false">
+                        <i class="bi bi-three-dots-vertical fs-4"></i>
+                    </button>
+
+                    <ul class="dropdown-menu dropdown-menu-end shadow">
+
+                        <li>
+                            <a id="modalStartShift"
+                               class="dropdown-item"
+                               href="#">
+                                <i class="bi bi-play-fill text-success me-2"></i>
+                                Start Shift
+                            </a>
+                        </li>
+
+                        <li>
+                            <a id="modalNetSuiteLink"
+                               class="dropdown-item"
+                               href="#"
+                               target="_blank">
+                                <i class="bi bi-box-arrow-up-right text-success me-2"></i>
+                                Open Work Order
+                            </a>
+                        </li>
+
+                        <li>
+                            <a id="modalBomLink"
+                               class="dropdown-item"
+                               href="#"
+                               target="_blank">
+                                <i class="bi bi-printer text-primary me-2"></i>
+                                Open Job Bag
+                            </a>
+                        </li>
+
+                        <li>
+                            <a id="modalArtworkLink"
+                               class="dropdown-item"
+                               href="#"
+                               target="_blank">
+                                <i class="bi bi-file-earmark-pdf text-warning me-2"></i>
+                                Open Artwork
+                            </a>
+                        </li>
+
+                    </ul>
+
+                </div>
+                <div class="d-flex align-items-center">
+                    <h5 class="modal-title mb-0 me-2">
+                        Work Order Details
+                    </h5>
+
+                    <span id="approvalBadge" class="badge bg-secondary">
+                        Unknown
+                    </span>
+                </div>
+
+                <button type="button"
+                        class="btn-close btn-close-white"
+                        data-bs-dismiss="modal">
+                </button>
+
+            </div>
+
+            <div class="modal-body">
+
+                <table class="table table-bordered table-sm">
+
+                    <tr>
+                        <th width="220">Work Order</th>
+                        <td>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong id="modalWONumber" class="fs-5"></strong>
+                                </div>
+
+                                <div class="text-end">
+                                    <svg id="woBarcode"></svg>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                   
+                    <tr>
+                        <th>Item Name</th>
+                        <td id="modalItemName"></td>
+                    </tr>
+
+                    <tr>
+                        <th>Item ID</th>
+                        <td id="modalItemId"></td>
+                    </tr>
+
+                    <tr>
+                        <th>Machine</th>
+                        <td id="modalMachine"></td>
+                    </tr>
+
+                    <tr>
+                        <th>Quantity</th>
+                        <td id="modalQty"></td>
+                    </tr>
+
+                    <tr>
+                        <th>Built Quantity</th>
+                        <td id="modalBuiltQty"></td>
+                    </tr>
+
+                    <tr>
+                        <th>Start</th>
+                        <td id="modalStart"></td>
+                    </tr>
+
+                    <tr>
+                        <th>End</th>
+                        <td id="modalEnd"></td>
+                    </tr>
+
+                    <tr>
+                        <th>Actual Start</th>
+                        <td id="modalActualStart"></td>
+                    </tr>
+
+                    <tr>
+                        <th>Actual End</th>
+                        <td id="modalActualEnd"></td>
+                    </tr>
+
+                </table>
+
+                <!-- BOM -->
+               
+                <div class="accordion mt-3" id="jobBagAccordion">
+                    
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed"
+                                    type="button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#bomCollapse">
+                                Bill of Materials
+                            </button>
+                        </h2>
+
+                        <div id="bomCollapse"
+                             class="accordion-collapse collapse"
+                             data-bs-parent="#jobBagAccordion">
+
+                            <div class="accordion-body">
+
+                                <table class="table table-bordered table-sm align-middle">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th style="width:120px">Qty. Required</th>
+                                            <th>Item</th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody id="bomBody">
+                                        <tr>
+                                            <td colspan="2" class="text-center text-muted">
+                                                Loading...
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Product Information -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed"
+                                    type="button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#productCollapse">
+                                Product Information
+                            </button>
+                        </h2>
+
+                        <div id="productCollapse"
+                             class="accordion-collapse collapse"
+                             data-bs-parent="#jobBagAccordion">
+
+                            <div class="accordion-body">
+
+                                <table class="table table-bordered table-sm mb-0">
+
+                                    <tr><th width="220">Product Type</th><td id="modalProductType"></td></tr>
+                                    <tr>
+                                        <th>CMYK</th>
+                                        <td id="modalCMYK"></td>
+                                        <th>Ink 1</th>
+                                        <td id="modalInk1"></td>
+                                    </tr>
+
+                                    <tr>
+                                        <th>Cyrel Ref 1</th>
+                                        <td id="modalCyrelRef1"></td>
+                                        <th>Ink 2</th>
+                                        <td id="modalInk2"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Cyrel Ref 2</th>
+                                        <td id="modalCyrelRef2"></td>
+                                        <th>Ink 3</th>
+                                        <td id="modalInk3"></td>
+                                    </tr>
+
+                                    <tr>
+                                        <th>Prima</th>
+                                        <td id="modalPrima"></td>
+                                        <th>Ink 4</th>
+                                        <td id="modalInk4"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Varnish</th>
+                                        <td id="modalVarnish"></td>
+                                        <th>Ink 5</th>
+                                        <td id="modalInk5"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Varnish2</th>
+                                        <td id="modalVarnish2"></td>
+                                        <th>Layout</th>
+                                        <td id="modalLayout"></td>
+                                    </tr>
+
+                                </table>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Case Information -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed"
+                                    type="button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#caseCollapse">
+                                Case Information
+                            </button>
+                        </h2>
+
+                        <div id="caseCollapse"
+                             class="accordion-collapse collapse"
+                             data-bs-parent="#jobBagAccordion">
+
+                            <div class="accordion-body">
+
+                                <table class="table table-bordered table-sm mb-0">
+
+                                    <tr>
+                                        <th>PI Code</th>
+                                        <td id="modalPICode"></td>
+                                        <th width="18%">OB Part No</th>
+                                        <td id="modalOBPartNo"></td>
+                                    </tr>
+
+                                    <tr>
+                                        <th>Inner Type</th>
+                                        <td id="modalInnerType"></td>
+                                        <th>Inner Part No</th>
+                                        <td id="modalInnerPartNo"></td>
+                                    </tr>
+
+                                    <tr>
+                                        <th>Inner Layout</th>
+                                        <td id="modalInnerLayout"></td>
+                                        <th>QTY Per Inner/Layer</th>
+                                        <td id="modalQtyPerInnerLayer"></td>
+
+                                    </tr>
+                                    <tr>
+                                        <th>Case Wt Net</th>
+                                        <td id="modalCaseWtNet"></td>
+
+                                        <th>Case Wt Gross</th>
+                                        <td id="modalCaseWtGross"></td>
+                                    </tr>
+
+                                    <tr>
+                                        <th>Inner/Layers Per Case</th>
+                                        <td id="modalInnersPerCase"></td>
+
+                                        <th>Case Barcode</th>
+                                        <td id="modalCaseBarcode"></td>
+                                    </tr>
+
+                                </table>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pallet Information -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed"
+                                    type="button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#palletCollapse">
+                                Pallet Information
+                            </button>
+                        </h2>
+
+                        <div id="palletCollapse"
+                             class="accordion-collapse collapse"
+                             data-bs-parent="#jobBagAccordion">
+
+                            <div class="accordion-body">
+
+                                <table class="table table-bordered table-sm mb-0">
+
+                                    
+                                   
+
+                                    <tr>
+                                        <th>Pallet Layers</th>
+                                        <td id="modalPalletLayers"></td>
+                                        <th>Qty Per Outer</th>
+                                        <td id="modalQtyPerOuter"></td>
+
+                                   
+                                    </tr>
+
+                                    <tr>
+                                        <th>Cases Per Layer</th>
+                                        <td id="modalCasesPerLayer"></td>
+                                        <th>Qty Per Pallet</th>
+                                        <td id="modalQtyPerPallet"></td>
+                                    </tr>
+
+                                    <tr>
+                                        <th>Cases Per Pallet</th>
+                                        <td id="modalCasesPerPallet"></td>
+                                        <th>Packing Description</th>
+                                        <td id="modalPackingDescription"></td>
+                                    </tr>
+
+                                    <tr>
+                                        <th>Pallet Type</th>
+                                        <td id="modalPalletType"></td>                                       
+                                        <th>Pallet Size</th>
+                                        <td id="modalPalletSize"></td>
+                                    </tr>
+                                    
+
+                                    <tr>
+                                        <th>Pallet Wt Net (KG)</th>
+                                        <td id="modalPalletWtNet"></td>
+                                        <th>Pallet Wt Gross (KG)</th>
+                                        <td id="modalPalletWtGross"></td>
+                                    </tr>
+
+                                    <tr>
+                                        <th>Pallet Height (M)</th>
+                                        <td id="modalPalletHeight"></td>
+                                        <th>Pallet Dimension</th>
+                                        <td id="modalPalletDimension"></td>
+                                    </tr>
+
+                                    <tr>
+                                        <th>Pallet Barcode</th>
+                                        <td id="modalPalletBarcode"></td>
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                    
+
+                                </table>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notes -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed"
+                                    type="button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#notesCollapse">
+                                Notes
+                            </button>
+                        </h2>
+
+                        <div id="notesCollapse"
+                             class="accordion-collapse collapse"
+                             data-bs-parent="#jobBagAccordion">
+
+                            <div class="accordion-body">
+
+                                <table class="table table-bordered table-sm mb-0">
+                                    <tr><th width="220">Hand Stripping</th><td id="modalHandStripping"></td></tr>
+                                    <tr><th width="220">Print Notes</th><td id="modalPrintNotes"></td></tr>
+                                    <tr><th>Process Comments</th><td id="modalProcessComments"></td></tr>
+                                    <tr><th>Customer Notes</th><td id="modalCustomerNotes"></td></tr>
+
+                                </table>
+
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<style>
+
+    /* ============ Design tokens — Fluent-inspired palette ============ */
+    :root {
+        --ms-font: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+        --ms-bg: #faf9f8;
+        --ms-surface: #ffffff;
+        --ms-border: #e1dfdd;
+        --ms-border-strong: #c8c6c4;
+        --ms-text: #242424;
+        --ms-text-secondary: #616161;
+        --ms-text-tertiary: #8a8886;
+        --ms-blue: #2564cf;
+        --ms-blue-dark: #1a4fb4;
+        --ms-blue-light: #eaf1fc;
+        --ms-green: #107c10;
+        --ms-orange: #ca5010;
+        --ms-red: #d13438;
+        --ms-radius-sm: 4px;
+        --ms-radius-md: 8px;
+        --ms-shadow-1: 0 1px 2px rgba(0,0,0,.07), 0 0.5px 0 rgba(0,0,0,.04);
+        --ms-shadow-2: 0 4px 12px rgba(0,0,0,.10), 0 0.5px 2px rgba(0,0,0,.06);
+    }
+
+    body {
+        background: var(--ms-bg);
+    }
+
+    .scheduler-page {
+        font-family: var(--ms-font);
+        color: var(--ms-text);
+        max-width: 1500px;
+        margin: 0 auto;
+        padding: 24px;
+    }
+
+    /* ============ Header ============ */
+    .scheduler-header {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 16px;
+        margin-bottom: 16px;
+    }
+
+        .scheduler-header h1 {
+            font-size: 22px;
+            font-weight: 600;
+            margin: 0 0 2px 0;
+            letter-spacing: -0.2px;
+            color: var(--ms-text);
+        }
+
+        .scheduler-header p {
+            margin: 0;
+            font-size: 13px;
+            color: var(--ms-text-secondary);
+        }
+
+    .scheduler-legend {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        background: var(--ms-surface);
+        border: 1px solid var(--ms-border);
+        border-radius: var(--ms-radius-md);
+        padding: 8px 16px;
+        box-shadow: var(--ms-shadow-1);
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        font-size: 12.5px;
+        color: var(--ms-text-secondary);
+        font-weight: 500;
+        white-space: nowrap;
+    }
+
+    .legend-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    .dot-complete {
+        background: var(--ms-green);
+    }
+
+    .dot-progress {
+        background: var(--ms-orange);
+    }
+
+    .dot-pending {
+        background: var(--ms-red);
+    }
+
+    /* ============ Card shell ============ */
+    .scheduler-card {
+        background: var(--ms-surface);
+        border: 1px solid var(--ms-border);
+        border-radius: var(--ms-radius-md);
+        box-shadow: var(--ms-shadow-2);
+        overflow: hidden;
+        position: relative;
+    }
+
+    #scheduler {
+        min-height: 820px;
+        font-family: var(--ms-font);
+    }
+
+    /* ============ Loading overlay ============ */
+    .scheduler-loading {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        background: var(--ms-surface);
+        z-index: 5;
+        font-size: 13px;
+        color: var(--ms-text-secondary);
+        transition: opacity .25s ease;
+    }
+
+    .scheduler-spinner {
+        width: 16px;
+        height: 16px;
+        border: 2px solid var(--ms-border-strong);
+        border-top-color: var(--ms-blue);
+        border-radius: 50%;
+        animation: scheduler-spin .7s linear infinite;
+    }
+
+    @@keyframes scheduler-spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    /* ============ Toolbar ============ */
+    .fc .fc-toolbar.fc-header-toolbar {
+        padding: 14px 18px;
+        margin: 0 !important;
+        border-bottom: 1px solid var(--ms-border);
+        background: var(--ms-surface);
+    }
+
+    .fc .fc-toolbar-title {
+        font-size: 16px !important;
+        font-weight: 600;
+        color: var(--ms-text);
+    }
+
+    .fc .fc-button {
+        background: transparent;
+        border: 1px solid var(--ms-border-strong);
+        color: var(--ms-text);
+        font-family: var(--ms-font);
+        font-size: 13px;
+        font-weight: 600;
+        padding: 6px 14px;
+        border-radius: var(--ms-radius-sm) !important;
+        box-shadow: none !important;
+        text-transform: capitalize;
+        transition: background .12s ease, border-color .12s ease;
+    }
+
+        .fc .fc-button:hover {
+            background: #f3f2f1;
+            border-color: var(--ms-border-strong);
+            color: var(--ms-text);
+        }
+
+    .fc .fc-button-primary:not(:disabled).fc-button-active,
+    .fc .fc-button-primary:not(:disabled):active {
+        background: var(--ms-blue-light) !important;
+        border-color: var(--ms-blue) !important;
+        color: var(--ms-blue-dark) !important;
+    }
+
+    .fc .fc-button:focus-visible {
+        outline: 2px solid var(--ms-blue);
+        outline-offset: 1px;
+    }
+
+    .fc .fc-button-group .fc-button {
+        margin: 0 !important;
+    }
+
+    .fc .fc-icon {
+        font-size: 14px;
+    }
+
+    /* ============ Grid lines ============ */
+    .fc-theme-standard td,
+    .fc-theme-standard th {
+        border-color: var(--ms-border) !important;
+    }
+
+    .fc-scrollgrid {
+        border: none !important;
+    }
+
+    /* ============ Resource / data grid ============ */
+    .fc-datagrid-cell,
+    .fc-timeline-lane {
+        height: 40px !important;
+    }
+
+    .fc-datagrid-cell-main {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--ms-text);
+    }
+
+    .fc-datagrid-header .fc-datagrid-cell-main,
+    .fc-col-header-cell-cushion {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--ms-text-secondary);
+        text-transform: uppercase;
+        letter-spacing: .3px;
+    }
+
+    .fc-col-header-cell {
+        background: var(--ms-bg);
+    }
+
+    /* Machine-line group rows */
+    .fc-datagrid-group {
+        background: #e8f5ee !important;
+        border-bottom: 1px solid var(--ms-border) !important;
+    }
+
+        .fc-datagrid-group .fc-datagrid-cell-main {
+            color: #0f5132;
+            font-weight: 600;
+            font-size: 11.5px;
+            text-transform: uppercase;
+            letter-spacing: .4px;
+            padding: 8px;
+        }
+
+    /* Row hover */
+    .fc-timeline-lane:hover {
+        background: #faf9fb;
+    }
+
+    /* Today column */
+    .fc-day-today {
+        background: var(--ms-blue-light) !important;
+    }
+
+    /* Now indicator — Outlook-style red line */
+    .fc-timeline-now-indicator-line {
+        border-color: var(--ms-red) !important;
+        border-width: 2px !important;
+    }
+
+    .fc-timeline-now-indicator-arrow {
+        border-top-color: var(--ms-red) !important;
+        border-bottom-color: var(--ms-red) !important;
+    }
+
+    /* ============ Events ============ */
+    .fc-timeline-event {
+        border: none !important;
+        border-radius: var(--ms-radius-sm) !important;
+        min-height: 30px !important;
+        height: 30px !important;
+        margin-top: 5px !important;
+        box-shadow: var(--ms-shadow-1);
+        transition: transform .1s ease, box-shadow .1s ease;
+        cursor: pointer;
+        transform: scale(1);
+    }
+
+        .fc-timeline-event:hover {
+            box-shadow: var(--ms-shadow-2);
+            transform: translateY(-1px);
+            z-index: 4;
+        }
+
+    .fc-event-main {
+        padding: 0 !important;
+        overflow: hidden !important;
+    }
+
+    .wo-box {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 6px;
+        padding: 0 9px;
+        overflow: hidden;
+        white-space: nowrap;
+        color: #ffffff;
+        font-family: var(--ms-font);
+    }
+
+        .wo-box .wo-title {
+            font-size: 12px;
+            font-weight: 600;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .wo-box .wo-pct {
+            font-size: 11px;
+            font-weight: 500;
+            opacity: .9;
+            flex-shrink: 0;
+        }
+
+    /* ============ Responsive ============ */
+    @@media (max-width: 768px) {
+        .scheduler-page {
+            padding: 14px;
+        }
+
+        .scheduler-header {
+            align-items: flex-start;
+        }
+
+        .scheduler-legend {
+            flex-wrap: wrap;
+        }
+    }
+    /* Move modal lower */
+    #workOrderModal .modal-dialog {
+        margin-top: 90px;
+    }
+
+    #modalNetSuiteLink {
+        min-width: 180px;
+    }
+
+    /* Timeline date header */
+    .fc-timeline-slot-cushion {
+        display: flex !important;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 8px 0;
+        line-height: 1.1;
+    }
+
+    .fc-col-header-cell,
+    .fc-timeline-header-row {
+        background: linear-gradient( 135deg, #198754 0%, #157347 50%, #0f5132 100% ) !important;
+    }
+
+    .fc-scrollgrid-section-header th {
+        border-color: rgba(255,255,255,.15) !important;
+    }
+
+    .fc-timeline-slot-cushion .fc-day-text {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: rgba(255,255,255,.85);
+        font-weight: 500;
+    }
+
+    .fc-timeline-slot-cushion .fc-date-text {
+        font-size: 18px;
+        font-weight: 700;
+        color: white;
+    }
+
+    .fc-day-today .fc-timeline-slot-cushion {
+        background: rgba(255,255,255,.18);
+        border-radius: 10px;
+        margin: 2px;
+    }
+
+    .fc-day-today .fc-date-text {
+        color: #0f5132;
+        text-shadow: 0 0 6px rgba(212,255,79,.4);
+    }
+
+    .fc-scrollgrid-section-header {
+        backdrop-filter: blur(12px);
+        box-shadow: inset 0 -1px 0 rgba(255,255,255,.15);
+    }
+
+
+    .fc-event.search-highlight {
+        animation: woPulse 1.5s infinite;
+        box-shadow: 0 0 20px #ffc107 !important;
+        z-index: 999 !important;
+        transition: transform .2s ease, box-shadow .2s ease;
+    }
+
+    @@keyframes woPulse {
+        0% {
+            transform: scale(1);
+        }
+
+        50% {
+            transform: scale(1.08);
+        }
+
+        100% {
+            transform: scale(1);
+        }
+    }
+
+    .filter-btn {
+        border-radius: 20px;
+        padding: 6px 14px;
+        font-size: 13px;
+        transition: all .2s ease;
+    }
+
+        .filter-btn.active {
+            background: #198754;
+            color: white;
+            border-color: #198754;
+        }
+
+        .filter-btn:hover {
+            transform: translateY(-1px);
+        }
+    /* Timeline header background */
+    .fc .fc-timeline-header {
+        background: #198754; /* Bootstrap success green */
+    }
+
+        /* Timeline header labels (Day/Week/Month) */
+        .fc .fc-timeline-header a,
+        .fc .fc-timeline-header-cushion,
+        .fc .fc-col-header-cell-cushion,
+        .fc .fc-scrollgrid-sync-inner a {
+            color: #fff !important;
+            text-decoration: none !important;
+            font-weight: 600;
+        }
+
+    /* Hour labels in Day view */
+    .fc .fc-timeline-slot-cushion {
+        color: #fff !important;
+        font-weight: 600;
+    }
+
+    /* Header cell background */
+    .fc .fc-timeline-header-row,
+    .fc .fc-scrollgrid-section-header th {
+        background-color: #198754 !important;
+        border-color: #157347 !important;
+    }
+
+    /* ==========================================
+       Responsive Improvements
+       ========================================== */
+
+    /* Large tablets */
+    @@media (max-width: 991.98px) {
+        .scheduler-header
+
+    {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .scheduler-legend {
+        width: 100%;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .scheduler-search {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    #searchBox {
+        width: 100%;
+    }
+
+    #scheduler {
+        min-width: 1000px;
+    }
+
+    .scheduler-card {
+        overflow-x: auto;
+    }
+
+    #workOrderModal .modal-dialog {
+        max-width: 98%;
+    }
+
+    .modal-body {
+        overflow-x: auto;
+    }
+
+    }
+
+    /* Mobile */
+    @@media (max-width: 767.98px) {
+        .scheduler-page
+
+    {
+        padding: 12px;
+    }
+
+    .scheduler-header h1 {
+        font-size: 1.5rem;
+    }
+
+    .scheduler-header p {
+        font-size: .85rem;
+    }
+
+    .scheduler-legend {
+        padding: 12px;
+        gap: 10px;
+    }
+
+    .legend-item {
+        font-size: 12px;
+    }
+
+    .scheduler-search,
+    #searchBox {
+        width: 100%;
+    }
+
+    /* Horizontal scroll for scheduler */
+    .scheduler-card {
+        overflow-x: auto;
+    }
+
+    #scheduler {
+        min-width: 900px;
+    }
+
+    /* Modal */
+    #workOrderModal .modal-dialog {
+        margin: .5rem;
+        margin-top: 65px;
+        max-width: calc(100% - 1rem);
+    }
+
+    .modal-title {
+        font-size: 1rem;
+    }
+
+    .modal-body {
+        padding: .75rem;
+        overflow-x: auto;
+    }
+
+    .table {
+        font-size: .8rem;
+        white-space: nowrap;
+    }
+
+    #woBarcode {
+        max-width: 120px;
+    }
+
+    .dropdown-menu {
+        font-size: .9rem;
+    }
+
+    }
+
+    /* Small phones */
+    @@media (max-width: 575.98px) {
+        .scheduler-page
+
+    {
+        padding: 8px;
+    }
+
+    .scheduler-header h1 {
+        font-size: 1.25rem;
+    }
+
+    .scheduler-header p {
+        display: none;
+    }
+
+    .scheduler-legend {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .legend-item {
+        width: 100%;
+    }
+
+    .fc .fc-toolbar {
+        flex-direction: column;
+        gap: 10px;
+        align-items: stretch;
+    }
+
+    .fc-toolbar-chunk {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .fc .fc-button {
+        font-size: 12px;
+        padding: 5px 10px;
+    }
+
+    #scheduler {
+        min-width: 850px;
+    }
+
+    }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+<script>
+
+    document.addEventListener('DOMContentLoaded', async function () {
+
+        const loadingEl = document.getElementById('schedulerLoading');
+
+        const response =
+            await fetch('?handler=SchedulerData');
+
+        const data =
+            await response.json();
+        const allResources = data.resources;
+        const allEvents = data.events;
+
+        let selectedLine = null;
+        let selectedMachine = null;
+
+        const calendarEl =
+            document.getElementById('scheduler');
+
+            const machineLines =
+        [...new Set(allResources.map(r => r.machineLine))];
+
+    const lineContainer =
+        document.getElementById('machineLineButtons');
+
+    const machineContainer =
+        document.getElementById('machineButtons');
+
+    const allLineBtn = document.createElement('button');
+        allLineBtn.className = 'btn btn-outline-success btn-sm filter-btn active';
+        allLineBtn.textContent = 'All Lines';
+
+        allLineBtn.onclick = () => {
+            selectedLine = null;
+            selectedMachine = null;
+
+            document.querySelectorAll('#machineLineButtons .filter-btn')
+                .forEach(b => b.classList.remove('active'));
+
+            allLineBtn.classList.add('active');
+
+            buildMachineButtons();
+            applyFilters();
+        };
+
+        lineContainer.appendChild(allLineBtn);
+
+        machineLines.forEach(line => {
+
+            const btn = document.createElement('button');
+
+            btn.className =
+                'btn btn-outline-success btn-sm filter-btn';
+
+            btn.textContent = line;
+
+            btn.onclick = () => {
+
+                selectedLine = line;
+                selectedMachine = null;
+
+                document.querySelectorAll('#machineLineButtons .filter-btn')
+                    .forEach(b => b.classList.remove('active'));
+
+                btn.classList.add('active');
+
+                buildMachineButtons();
+                applyFilters();
+            };
+
+            lineContainer.appendChild(btn);
+        });
+
+        const calendar =
+            new FullCalendar.Calendar(calendarEl, {
+
+                height: 820,
+
+                schedulerLicenseKey:
+                    'CC-Attribution-NonCommercial',
+
+               initialView: 'resourceTimelineWeek',
+
+               eventMinWidth: 60,
+
+                expandRows: true,
+
+                nowIndicator: true,
+
+                stickyHeaderDates: true,
+
+                stickyFooterScrollbar: true,
+
+                editable: true,
+
+                resourceAreaWidth: '230px',
+
+                resourceGroupField: 'machineLine',
+
+                resourceAreaColumns: [
+                    {
+                        field: 'title',
+                        headerContent: 'Machine'
+                    }
+                ],
+
+                resourceAreaHeaderContent:
+                    'Machines',
+
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'resourceTimelineDay,resourceTimelineWeek,resourceTimelineMonth'
+                },
+
+                buttonText: {
+                    today: 'Today',
+                    resourceTimelineDay: 'Day',
+                    resourceTimelineWeek: 'Week',
+                    resourceTimelineMonth: 'Month'
+                },
+
+                
+
+
+                views: {
+
+                    resourceTimelineDay: {
+
+                        slotDuration: "01:00:00",
+
+                        slotLabelInterval: "01:00:00",
+
+                        slotLabelFormat: {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: false
+                        },
+
+                        slotMinWidth: 70
+                    },
+
+                    resourceTimelineWeek: {
+
+                        slotDuration: { days: 1 },
+
+                        slotLabelInterval: { days: 1 },
+
+                        slotLabelFormat: [
+                            {
+                                weekday: 'short'
+                            },
+                            {
+                                day: 'numeric'
+                            }
+                        ],
+
+                        slotMinWidth: 90
+                    },
+
+                    resourceTimelineMonth: {
+
+                        slotDuration: { days: 1 },
+
+                        slotLabelInterval: { days: 1 },
+
+                        slotLabelFormat: {
+                            day: 'numeric'
+                        },
+
+                        slotMinWidth: 90
+                    }
+                },
+
+                resources:
+                    data.resources,
+
+                events:
+                    data.events,
+
+               eventContent: function (info) {
+
+                    const qty = info.event.extendedProps.qty;
+                    const built = info.event.extendedProps.builtQty;
+                    const itemId = info.event.extendedProps.itemId;
+                    const itemName = info.event.extendedProps.itemName;
+                    const pct = qty > 0
+                        ? Math.round((built / qty) * 100)
+                        : null;
+
+                    const metaParts = [itemId, itemName].filter(Boolean);
+                    const metaText = metaParts.join(' — ');
+                    // Format Start & End Time
+                    const startTime = info.event.start
+                        ? info.event.start.toLocaleTimeString('en-GB', {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        })
+                        : '';
+                     const endTime = info.event.end
+                        ? info.event.end.toLocaleTimeString('en-GB', {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        })
+                        : '';
+
+                    return {
+                        html: `
+                            <div class="wo-box" title=" ${startTime} - ${endTime}${info.event.title}${metaText ? ' — ' + metaText : ''}">
+                                <span class="wo-title">
+                                    ${startTime} - ${endTime}
+                                    ${info.event.title}
+                                    ${metaText ? ` - <span class="wo-itemid">${metaText}</span>` : ''}
+                                </span>
+                                ${pct !== null ? `<span class="wo-pct">${pct}%</span>` : ''}
+                            </div>
+                        `
+                    };
+                },
+
+                eventDidMount: function (info) {
+
+                    info.el.setAttribute(
+                        'data-event-id',
+                        info.event.id
+                    );
+                },
+
+                eventClick: function (info) {
+
+                    document.getElementById('modalWONumber').innerText =
+                        info.event.title;
+
+                    JsBarcode("#woBarcode", info.event.title, {
+                        format: "CODE128",
+                        width: 2,
+                        height: 45,
+                        displayValue: true,
+                        fontSize: 12,
+                        textMargin: 2,
+                        margin: 0
+                    });
+                    document.getElementById('modalItemName').innerText =
+                        info.event.extendedProps.itemName ?? '';
+
+                    document.getElementById('modalItemId').innerText =
+                        info.event.extendedProps.itemId ?? '';
+
+                    document.getElementById('modalMachine').innerText =
+                        info.event.getResources()[0]?.title ?? '';
+
+                    document.getElementById('modalQty').innerText =
+                        info.event.extendedProps.qty ?? 0;
+
+                    document.getElementById('modalBuiltQty').innerText =
+                        info.event.extendedProps.builtQty ?? 0;
+
+                    const p = info.event.extendedProps;
+
+                    document.getElementById("modalStart").innerText =
+                        p.plannedStart
+                            ? new Date(p.plannedStart).toLocaleDateString('en-GB')
+                            : '';
+
+                    document.getElementById("modalEnd").innerText =
+                        p.plannedEnd
+                            ? new Date(p.plannedEnd).toLocaleDateString('en-GB')
+                            : '';
+
+                    document.getElementById("modalActualStart").innerText =
+                        p.actualStart
+                            ? new Date(p.actualStart).toLocaleDateString('en-GB')
+                            : '';
+
+                    document.getElementById("modalActualEnd").innerText =
+                        p.actualEnd
+                            ? new Date(p.actualEnd).toLocaleDateString('en-GB')
+                            : '';
+
+                        const approvalBadge = document.getElementById("approvalBadge");
+                        const approvalStatus = p.approvalStatus ?? "";
+
+                        approvalBadge.textContent = approvalStatus || "Not Approved";
+
+                        if (approvalStatus.toLowerCase() === "approved") {
+                            approvalBadge.className = "badge bg-light text-success border border-success";
+                        }
+                        else {
+                            approvalBadge.className = "badge bg-danger text-white";
+                        }
+                    // Product Information
+                    document.getElementById("modalProductType").innerText = p.productType ?? "";
+                    document.getElementById("modalCMYK").innerText = p.cmyk ?? "";
+                    document.getElementById("modalInk1").innerText = p.ink1 ?? "";
+                    document.getElementById("modalInk2").innerText = p.ink2 ?? "";
+                    document.getElementById("modalInk3").innerText = p.ink3 ?? "";
+                    document.getElementById("modalInk4").innerText = p.ink4 ?? "";
+                    document.getElementById("modalInk5").innerText = p.ink5 ?? "";
+                    document.getElementById("modalCyrelRef1").innerText = p.cyrelRef1 ?? "";
+                    document.getElementById("modalCyrelRef2").innerText = p.cyrelRef2 ?? "";
+                    document.getElementById("modalVarnish").innerText = p.varnish ?? "";
+                    document.getElementById("modalPrima").innerText = p.prima ?? "";
+                    document.getElementById("modalVarnish2").innerText = p.varnish2 ?? "";
+                    document.getElementById("modalLayout").innerText = p.layout ?? "";
+
+                    // Case Information
+                    document.getElementById("modalPICode").innerText = p.piCode ?? "";
+                    document.getElementById("modalOBPartNo").innerText = p.obPartNo ?? "";
+
+                    document.getElementById("modalInnerType").innerText = p.innerType ?? "";
+                    document.getElementById("modalInnerPartNo").innerText = p.innerPartNo ?? "";
+
+                    document.getElementById("modalInnerLayout").innerText = p.innerLayout ?? "";
+                    document.getElementById("modalQtyPerInnerLayer").innerText = p.qtyPerInnerLayer ?? "";
+
+                    document.getElementById("modalCaseWtNet").innerText = p.caseWtNet ?? "";
+                    document.getElementById("modalCaseWtGross").innerText = p.caseWtGross ?? "";
+
+                    document.getElementById("modalInnersPerCase").innerText = p.innersPerCase ?? "";
+                    document.getElementById("modalCaseBarcode").innerText = p.caseBarcode ?? "";
+
+                    // Pallet Information
+                    document.getElementById("modalPalletType").innerText = p.palletType ?? "";
+                    document.getElementById("modalPalletBarcode").innerText = p.palletBarcode ?? "";
+                    document.getElementById("modalPalletLayers").innerText = p.palletLayers ?? "";
+                    
+                    document.getElementById("modalQtyPerPallet").innerText = p.qtyPerPallet ?? "";
+
+                      // Pallet Information
+                    document.getElementById("modalQtyPerOuter").innerText =
+                        p.qtyPerOuter ?? "";
+
+                    document.getElementById("modalCasesPerLayer").innerText =
+                        p.casesPerLayer ?? "";
+
+                    document.getElementById("modalCasesPerPallet").innerText =
+                        p.casesPerPallet ?? "";
+
+                    document.getElementById("modalPackingDescription").innerText =
+                        p.packingDescription ?? "";
+
+                    document.getElementById("modalPalletSize").innerText =
+                        p.palletSize ?? "";
+
+                    document.getElementById("modalPalletWtNet").innerText =
+                        p.palletWtNet ?? "";
+
+                    document.getElementById("modalPalletWtGross").innerText =
+                        p.palletWtGross ?? "";
+
+                    document.getElementById("modalPalletHeight").innerText =
+                        p.palletHeight ?? "";
+
+                    document.getElementById("modalPalletDimension").innerText =
+                        p.palletDimension ?? "";
+
+
+                    // Notes
+                    document.getElementById("modalPrintNotes").innerText = p.printNotes ?? "";
+                    document.getElementById("modalHandStripping").innerText = p.handStripping ?? "";
+                    document.getElementById("modalProcessComments").innerText = p.processComments ?? "";
+                    document.getElementById("modalCustomerNotes").innerText = p.customerNotes ?? "";
+
+                    const internalId = info.event.id;
+                    const workOrderNo = info.event.title;
+
+                    document.getElementById("modalStartShift").href =
+                        `/Shift_Entry?id=${internalId}&workorder=${encodeURIComponent(info.event.title)}`;
+
+                    const artworkUrl =
+                        info.event.extendedProps.artworkUrl;
+
+                    const artworkBtn =
+                        document.getElementById('modalArtworkLink');
+                   
+
+                    if (artworkUrl) {
+
+                        artworkBtn.href = artworkUrl;
+                        artworkBtn.style.display = 'inline-block';
+
+                    } else {
+
+                        artworkBtn.href = '#';
+                        artworkBtn.style.display = 'none';
+                    }
+
+                    document.getElementById('modalBomLink').href =
+                        `https://5262984.app.netsuite.com/app/accounting/print/hotprint.nl?regular=T&sethotprinter=T&formnumber=171&trantype=workord&id=${internalId}&label=Bill+of+Materials&printtype=bom`;
+
+                    document.getElementById('modalNetSuiteLink').href =
+                        `https://5262984.app.netsuite.com/app/accounting/transactions/workord.nl?id=${internalId}&whence=`;
+
+                    new bootstrap.Modal(
+                        document.getElementById('workOrderModal')
+                    ).show();
+                    
+                    const tbody = document.getElementById("bomBody");
+                    tbody.innerHTML = "";
+
+                    fetch(`?handler=Bom&id=${internalId}`)
+                        .then(r => r.json())
+                        .then(rows => {
+
+                        tbody.innerHTML = "";
+
+                            rows.forEach(x => {
+
+                                tbody.innerHTML += `
+                                    <tr>
+                                        <td>${x.quantity}</td>
+
+                                        <td>
+                                            <div class="d-flex justify-content-between align-items-start">
+
+                                                <div class="flex-grow-1">
+                                                    <div class="fw-semibold">${x.item} - ${x.displayname}</div>
+
+                                                    ${x.description
+                                                        ? `<div class="text-muted small">${x.description}</div>`
+                                                        : ""}
+                                                </div>
+
+                                               <button class="btn btn-sm btn-warning ms-2 request-material-btn"
+                                                    data-item="${x.item}"
+                                                    data-desc="${x.description ?? ''}"
+                                                    data-qty="${Math.ceil(Math.abs(Number(x.quantity)))}"
+                                                    data-wo="${info.event.title}"
+                                                    data-machine="${info.event.getResources()[0]?.title ?? ''}">
+                                                    <i class="bi bi-box-seam"></i>
+                                                    Request
+                                                </button>
+
+                                            </div>
+                                        </td>
+                                    </tr>`;
+                            });
+
+                            document.querySelectorAll(".request-material-btn").forEach(btn => {
+
+                            btn.addEventListener("click", function () {
+
+                                const wo = this.dataset.wo;
+                                const item = this.dataset.item;
+                                const desc = this.dataset.desc;
+                                const machine = this.dataset.machine;
+                                const qty = this.dataset.qty;
+
+                                const url =
+                                    `/Request_Inventory?wo=${encodeURIComponent(wo)}`
+                                    + `&item=${encodeURIComponent(item)}`
+                                    + `&desc=${encodeURIComponent(desc)}`
+                                    + `&machine=${encodeURIComponent(machine)}`
+                                    + `&qty=${encodeURIComponent(qty)}`;
+
+                                window.open(url, "_blank");
+                            });
+
+                        });
+                            if (rows.length === 0) {
+                                tbody.innerHTML = `
+                                    <tr>
+                                        <td colspan="2" class="text-center text-muted">
+                                            No BOM items found.
+                                        </td>
+                                    </tr>`;
+                            }
+
+                        });
+                    },
+
+                eventDrop: function (info) {
+
+                    const payload = {
+
+                        WorkOrderId:
+                            info.event.id,
+
+                        MachineName:
+                            info.event.getResources()[0].id,
+
+                        StartDate:
+                            info.event.start,
+
+                        EndDate:
+                            info.event.end
+                    };
+
+                    fetch('/api/netsuite/workorder/update', {
+
+                        method: 'POST',
+
+                        headers: {
+                            'Content-Type':
+                                'application/json'
+                        },
+
+                        body:
+                            JSON.stringify(payload)
+
+                    })
+                        .then(r => {
+
+                            if (!r.ok)
+                                throw new Error();
+
+                        })
+                        .catch(() => {
+
+                            alert(
+                                'Failed to update work order'
+                            );
+
+                            info.revert();
+                        });
+                }
+
+            });
+
+        calendar.render();
+        // Refresh scheduler every 15 minutes
+           setInterval(async function () {
+
+            try {
+
+                const response = await fetch('?handler=SchedulerData');
+                const data = await response.json();
+
+                allResources.length = 0;
+                allResources.push(...data.resources);
+
+                allEvents.length = 0;
+                allEvents.push(...data.events);
+
+                applyFilters();
+
+                setTimeout(() => {
+
+                    const scrollers =
+                        calendarEl.querySelectorAll('.fc-scroller');
+
+                    scrollers.forEach(s => {
+                        s.scrollTop = 0;
+                    });
+
+                }, 300);
+
+            } catch (e) {
+                console.error(e);
+            }
+
+        }, 15 * 60 * 1000);
+
+        // ===================== SEARCH =====================
+
+        const searchBox = document.getElementById('searchBox');
+        const searchResults = document.getElementById('searchResults');
+
+        const searchIndex = calendar.getEvents().map(e => ({
+            id: e.id,
+            wo: e.title,
+            itemId: e.extendedProps.itemId || '',
+            itemName: e.extendedProps.itemName || '',
+            machine: e.getResources()[0]?.title || '',
+            start: e.start,
+            event: e
+        }));
+
+        // Remember where the user was before any search jump
+        const originalDate = calendar.getDate();
+        const originalView = calendar.view.type;
+        let highlightTimeout = null;
+
+        searchBox.addEventListener('input', function () {
+
+            const term = this.value.trim().toLowerCase();
+
+            if (term.length < 2) {
+                searchResults.style.display = 'none';
+
+                if (term.length === 0) {
+                    clearHighlightAndReset();
+                }
+
+                return;
+            }
+
+            const matches = searchIndex
+                .filter(x =>
+                    x.wo.toLowerCase().includes(term) ||
+                    x.itemId.toLowerCase().includes(term) ||
+                    x.itemName.toLowerCase().includes(term)
+                )
+                .slice(0, 10);
+
+            searchResults.innerHTML = '';
+
+            matches.forEach(match => {
+
+                const item = document.createElement('button');
+
+                item.type = 'button';
+
+                item.className =
+                    'list-group-item list-group-item-action';
+
+                item.innerHTML = `
+                    <div class="fw-bold">${match.wo}</div>
+
+                    <div class="small text-primary">
+                        ${match.itemId || ''}
+                    </div>
+
+                    <div class="small text-muted">
+                        ${match.itemName || ''}
+                    </div>
+
+                    <div class="small">
+                        <i class="bi bi-cpu"></i> ${match.machine}
+                    </div>
+                `;
+
+                item.onclick = () =>
+                    jumpToWorkOrder(match.event);
+
+                searchResults.appendChild(item);
+            });
+
+            searchResults.style.display =
+                matches.length ? 'block' : 'none';
+        });
+
+        function jumpToWorkOrder(event) {
+
+            searchResults.style.display = 'none';
+
+            searchBox.value = event.title;
+
+            calendar.gotoDate(event.start);
+
+            setTimeout(() => {
+
+                clearHighlight();
+
+                const eventEl =
+                    document.querySelector(
+                        `[data-event-id="${event.id}"]`
+                    );
+
+                if (eventEl) {
+
+                    eventEl.classList.add('search-highlight');
+
+                    eventEl.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center',
+                        inline: 'center'
+                    });
+
+                    highlightTimeout = setTimeout(() => {
+                        clearHighlight();
+                    }, 5000);
+                }
+
+            }, 300);
+        }
+
+        function clearHighlight() {
+
+            if (highlightTimeout) {
+                clearTimeout(highlightTimeout);
+                highlightTimeout = null;
+            }
+
+            document
+                .querySelectorAll('.search-highlight')
+                .forEach(x => {
+                    x.classList.remove('search-highlight');
+                    // force a clean reset so no residual scale/shadow lingers
+                    x.style.transform = '';
+                    x.style.boxShadow = '';
+                });
+        }
+
+        function clearHighlightAndReset() {
+            clearHighlight();
+            calendar.changeView(originalView, originalDate);
+        }
+
+        function buildMachineButtons() {
+
+        machineContainer.innerHTML = '';
+
+        let machines = allResources;
+
+        if (selectedLine) {
+            machines =
+                machines.filter(x =>
+                    x.machineLine === selectedLine);
+        }
+
+        const allBtn = document.createElement('button');
+
+        allBtn.className =
+            'btn btn-outline-success btn-sm filter-btn active';
+
+        allBtn.textContent = 'All Machines';
+
+        allBtn.onclick = () => {
+
+            selectedMachine = null;
+
+            machineContainer
+                .querySelectorAll('.filter-btn')
+                .forEach(b => b.classList.remove('active'));
+
+            allBtn.classList.add('active');
+
+            applyFilters();
+        };
+
+        machineContainer.appendChild(allBtn);
+
+        machines.forEach(machine => {
+
+            const btn = document.createElement('button');
+
+            btn.className =
+                'btn btn-outline-success btn-sm filter-btn';
+
+            btn.textContent = machine.title;
+
+            btn.onclick = () => {
+
+                selectedMachine = machine.id;
+
+                machineContainer
+                    .querySelectorAll('.filter-btn')
+                    .forEach(b => b.classList.remove('active'));
+
+                btn.classList.add('active');
+
+                applyFilters();
+            };
+
+            machineContainer.appendChild(btn);
+        });
+    }
+        
+    function applyFilters() {
+
+        let resources = allResources;
+
+        if (selectedLine) {
+
+            resources =
+                resources.filter(r =>
+                    r.machineLine === selectedLine);
+        }
+
+        if (selectedMachine) {
+
+            resources =
+                resources.filter(r =>
+                    r.id === selectedMachine);
+        }
+
+        const resourceIds =
+            resources.map(r => r.id);
+
+        const events =
+            allEvents.filter(e =>
+                resourceIds.includes(e.resourceId));
+
+        calendar.batchRendering(() => {
+
+            calendar.getResources()
+                .forEach(r => r.remove());
+
+            calendar.getEvents()
+                .forEach(e => e.remove());
+
+            resources.forEach(r =>
+                calendar.addResource(r));
+
+            events.forEach(e =>
+                calendar.addEvent(e));
+        });
+    }
+
+    const filterHeader =
+        document.getElementById("filterHeader");
+
+    const filterPanel =
+        document.getElementById("machineFilters");
+
+    const filterIcon =
+        document.getElementById("filterIcon");
+
+    filterHeader.addEventListener("click", () => {
+
+        if (filterPanel.style.display === "none") {
+
+            filterPanel.style.display = "block";
+            filterIcon.style.transform = "rotate(180deg)";
+
+        } else {
+
+            filterPanel.style.display = "none";
+            filterIcon.style.transform = "rotate(0deg)";
+        }
+    });
+
+    buildMachineButtons();
+
+        // Clicking outside the search box/results closes the dropdown
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('.scheduler-search')) {
+                searchResults.style.display = 'none';
+            }
+        });
+
+        // ===================== /SEARCH =====================
+
+        if (loadingEl) {
+            loadingEl.style.opacity = '0';
+            setTimeout(() => loadingEl.remove(), 250);
+        }
+    });
+           
+
+</script>

@@ -1,0 +1,83 @@
+﻿@page
+@model TPL_TM.Pages.DowntimeReasonEditModel
+
+<div class="modal fade show" id="editReasonModal" tabindex="-1" aria-hidden="true" style="display:block;">
+    <div class="modal-dialog modal-dialog-centered" style="margin-top:80px;">
+        <div class="modal-content">
+
+            <div class="modal-header bg-warning text-white">
+                <h5 class="modal-title"><i class="bi bi-pencil-square"></i> Edit Downtime Reason</h5>
+                <button type="button" class="btn-close" id="closeReasonModal"></button>
+            </div>
+
+            <div class="modal-body">
+
+                @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+                {
+                    <div class="alert alert-danger">@Model.ErrorMessage</div>
+                }
+
+                <form method="post">
+
+                    <input type="hidden" asp-for="Reason.Id" />
+
+                    <!-- Reason Name -->
+                    <div class="form-floating mb-3">
+                        <input asp-for="Reason.ReasonName" class="form-control" placeholder="Reason Name" required />
+                        <label>Reason Name</label>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="form-floating mb-3">
+                        <textarea asp-for="Reason.Description" class="form-control" placeholder="Description"></textarea>
+                        <label>Description</label>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Machine Type</label>
+                        <select asp-for="Reason.Machine_Type" class="form-select">
+                            <option value="">Select Machine Type</option>
+                            @foreach (var m in Model.MachineTypes)
+                            {
+                                <option value="@m" selected="@(Model.Reason.Machine_Type == m ? "selected" : null)">
+                                    @m
+                                </option>
+                            }
+                        </select>
+                    </div>
+                    <!-- Active Checkbox -->
+                    <div class="form-check mb-3">
+                        <input asp-for="Reason.Active" class="form-check-input" />
+                        <label class="form-check-label fw-bold">Active</label>
+                    </div>
+                    
+
+
+                    <button type="submit" class="btn btn-warning w-100 text-white">
+                        <i class="bi bi-save"></i> Update Reason
+                    </button>
+
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            var modal = new bootstrap.Modal(document.getElementById('editReasonModal'), {
+                backdrop: 'static',
+                keyboard: false
+            });
+
+            modal.show();
+
+            document.getElementById("closeReasonModal").addEventListener("click", function () {
+                window.location.href = "/DowntimeReasonList";
+            });
+        });
+    </script>
+}

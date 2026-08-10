@@ -1,0 +1,1104 @@
+﻿@page
+@model TPL_TM.Pages.Shift_DashboardModel
+@{
+    ViewData["Title"] = "Shift Dashboard";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shift Dashboard</title>
+
+    <!-- Bootstrap & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        .woBarcode {
+            max-width: 120px;
+        }
+        body {
+            background-color: #f5f7fa;
+        }
+
+        .dashboard-title {
+            font-weight: 700;
+            color: #198754;
+        }
+
+        .dashboard-subtitle {
+            color: #6c757d;
+        }
+
+        .shift-card {
+            background: linear-gradient(135deg, #e8f5e9, #ffffff);
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            max-width: 700px;
+            margin-inline: auto;
+        }
+
+            .shift-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+            }
+
+        .card-header {
+            background-color: #198754;
+            color: #fff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: none;
+            border-top-left-radius: 20px;
+            border-top-right-radius: 20px;
+        }
+
+        .card-title {
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        
+        .dropdown-menu {
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            font-size: 0.9rem;
+        }
+
+        .dropdown-item i {
+            color: #198754;
+        }
+
+        .dropdown-item:hover {
+            background-color: #e8f5e9;
+        }
+
+        .badge-active {
+            background-color: #28a745;
+            color: #fff;
+            font-weight: 500;
+            padding: 0.5em 0.75em;
+            border-radius: 8px;
+        }
+
+        .btn-outline-primary {
+            border: 1px solid #0d6efd;
+            color: #0d6efd;
+            font-weight: 500;
+            background-color: #f8faff;
+            border-radius: 0.75rem;
+            transition: all 0.2s ease-in-out;
+            width: 100%;
+        }
+
+            .btn-outline-primary:hover {
+                background-color: #0d6efd;
+                color: white;
+                box-shadow: 0 2px 8px rgba(13,110,253,0.2);
+            }
+
+        .materials-table-container {
+            max-height: 300px;
+            overflow-y: auto;
+            overflow-x: auto;
+        }
+
+        .materials-table {
+            border-radius: 0.75rem;
+            background: #f9fafb;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            font-size: 0.9rem;
+            width: max-content;
+        }
+
+            .materials-table thead {
+                background-color: #e9f5ff;
+                color: #0d6efd;
+                font-weight: 600;
+            }
+
+            .materials-table tbody tr:hover {
+                background-color: #f1f9ff;
+                transition: background-color 0.2s ease-in-out;
+            }
+
+        .chevron {
+            transition: transform 0.3s ease;
+        }
+
+            .chevron.rotate {
+                transform: rotate(180deg);
+            }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        @@media (min-width: 1920px) {
+            .container {
+                max-width: 1700px;
+            }
+        }
+        @@media (max-width: 991.98px) { /* md and below */
+            .shift-card
+
+        {
+            max-width: 100%;
+        }
+
+        }
+
+        @@keyframes flash {
+            0% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        .flash {
+            animation: flash 1s infinite;
+        }
+
+        .hover-shadow {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+            .hover-shadow:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+            }
+
+        .shift-card .card-footer {
+            background: transparent;
+            border-top: 1px dashed #dee2e6;
+            padding: 1rem;
+        }
+
+        .btn-end-shift {
+            border-radius: 12px;
+            font-weight: 600;
+        }
+
+
+    </style>
+</head>
+
+<body>
+    <div class="container mt-5">
+        <!-- Header -->
+        <div class="text-center mb-4">
+            <div class="d-flex justify-content-center align-items-center gap-2">
+                <h1 class="display-5 dashboard-title mb-0">
+                    📋 Shift Dashboard
+                </h1>
+
+                <a asp-page="/Shift_Entry"
+                   class="text-decoration-none fs-2"
+                   data-bs-toggle="tooltip"
+                   data-bs-placement="right"
+                   title="Create New Shift">
+                    ➕
+                </a>
+            </div>
+
+            <p class="lead dashboard-subtitle mt-2">
+                Monitor and manage all active shifts, materials, quality, and waste records in real-time.
+            </p>
+
+            <hr class="my-4" />
+        </div>
+
+        @* Show filter row only for Admin or Supervisor *@
+        @if (User.IsInRole("Admin") || User.IsInRole("Supervisor"))
+        {
+            <div class="card shadow mb-4 p-3" style="background: linear-gradient(135deg, #e8f5e9, #ffffff); border-radius: 20px;">
+                <div class="d-flex flex-wrap align-items-center gap-2">
+
+                    <!-- Search -->
+                    <div class="flex-grow-1 flex-sm-grow-0" style="max-width: 200px;">
+                        <input id="shiftSearch"
+                               class="form-control form-control-sm"
+                               placeholder="Search shifts…" />
+                    </div>
+
+                    <!-- Machine Line -->
+                    <div style="max-width: 150px;">
+                        <select id="machineLineFilter" class="form-select form-select-sm">
+                            <option value="">All Machine Lines</option>
+                        </select>
+                    </div>
+
+                    <!-- Machine Name -->
+                    <div style="max-width: 150px;">
+                        <select id="machineNameFilter" class="form-select form-select-sm">
+                            <option value="">All Machine Names</option>
+                        </select>
+                    </div>
+
+                    <!-- Product Line -->
+                    <div style="max-width: 150px;">
+                        <select id="productLineFilter" class="form-select form-select-sm">
+                            <option value="">All Product Lines</option>
+                        </select>
+                    </div>
+
+
+                    <!-- My Authorized Shifts -->
+                    <div class="form-check form-check-inline ms-auto">
+                        <input class="form-check-input" type="checkbox" id="myAuthorizedShifts" @(User.IsInRole("Supervisor") ? "checked" : "")>
+                        <label class="form-check-label small" for="myAuthorizedShifts">My Authorized Shifts</label>
+                    </div>
+                    <!-- Date Range -->
+                    <div style="max-width: 120px;">
+                        <select id="rangeSelect" class="form-select form-select-sm">
+                            <option value="7">Last 7 days</option>
+                            <option value="30">Last 30 days</option>
+                            <option value="all" selected>All</option>
+                            <option value="custom">Custom</option>
+                        </select>
+                    </div>
+                    <!-- Custom Dates -->
+                    <div style="max-width: 140px;">
+                        <input type="date" id="fromDate" class="form-control form-control-sm" disabled />
+                    </div>
+                    <div style="max-width: 140px;">
+                        <input type="date" id="toDate" class="form-control form-control-sm" disabled />
+                    </div>
+
+                    <!-- Apply Button -->
+                    <div style="min-width: 80px;">
+                        <button id="applyBtn" class="btn btn-info btn-sm w-100" disabled>Apply</button>
+                    </div>
+
+                </div>
+            </div>
+        }
+
+        <!-- Summary Cards -->
+        <div class="row g-4 mb-5 justify-content-center text-center">
+            <!-- Materials Used -->
+            <div class="col-6 col-md-4 col-lg-2">
+                <a class="js-nav-link text-decoration-none" asp-page="/Material_Consumption"
+                   asp-route-shiftId="@(Model.ActiveShifts.FirstOrDefault()?.Shift_Id)"
+                   asp-route-woNumber="@(Model.ActiveShifts.FirstOrDefault()?.WorkOrderNumber)"
+                   style="cursor:pointer;">
+                    <div class="card shadow-sm border-0 rounded-4 bg-primary text-white h-100 hover-shadow">
+                        <div class="card-body d-flex flex-column justify-content-center">
+                            <i class="bi bi-box-seam fs-2 mb-2"></i>
+                            <h6 class="fw-bold">Materials Used</h6>
+                            <h3 class="mb-0" id="summaryMaterials">@Model.TotalMaterialsUsed</h3>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Quality Checked -->
+            <div class="col-6 col-md-4 col-lg-2">
+                <a class="js-nav-link text-decoration-none" asp-page="/Quality_Check"
+                   asp-route-shiftId="@(Model.ActiveShifts.FirstOrDefault()?.Shift_Id)"
+                   asp-route-productCategory="@(Model.ActiveShifts.FirstOrDefault()?.Machine_Line)"
+                   style="cursor:pointer;">
+                    <div class="card shadow-sm border-0 rounded-4 bg-success text-white h-100 hover-shadow" id="qualityCard"
+                         data-last-check="@Model.LastQualityCheckedOn?.ToString("o")">
+                        <div class="card-body d-flex flex-column justify-content-center">
+                            <i class="bi bi-clipboard-check fs-2 mb-2"></i>
+                            <h6 class="fw-bold">Quality Checked</h6>
+                            <h3 class="mb-0" id="summaryQuality">@Model.TotalQualityChecked</h3>
+                            @if (Model.LastQualityCheckedOn.HasValue)
+                            {
+                                <p class="small mt-2 mb-0">
+                                    <i class="bi bi-clock me-1"></i>
+                                    Last Checked: @Model.LastQualityCheckedOn.Value.ToString("t")
+                                </p>
+                            }
+                            else
+                            {
+                                <p class="small mt-2 mb-0 text-warning fst-italic">
+                                    No checks yet
+                                </p>
+                            }
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Waste Collected -->
+            <div class="col-6 col-md-4 col-lg-2">
+                <a class="js-nav-link text-decoration-none" asp-page="/Waste_Entry"
+                   asp-route-shiftId="@(Model.ActiveShifts.FirstOrDefault()?.Shift_Id)"
+                   style="cursor:pointer;">
+                    <div class="card shadow-sm border-0 rounded-4 bg-danger text-white h-100 hover-shadow">
+                        <div class="card-body d-flex flex-column justify-content-center">
+                            <i class="bi bi-trash3 fs-2 mb-2"></i>
+                            <h6 class="fw-bold">Waste Collected (kg)</h6>
+                            <h3 class="mb-0" id="summaryWaste">@Model.TotalWasteCollected</h3>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Total Downtime -->
+            <div class="col-6 col-md-4 col-lg-2">
+                <a class="js-nav-link text-decoration-none" asp-page="/Downtime_Entry"
+                   asp-route-shiftId="@(Model.ActiveShifts.FirstOrDefault()?.Shift_Id)"
+                   style="cursor:pointer;">
+                    <div class="card shadow-sm border-0 rounded-4 bg-warning text-dark h-100 hover-shadow">
+                        <div class="card-body d-flex flex-column justify-content-center text-dark">
+                            <i class="bi bi-clock-history fs-2 mb-2"></i>
+                            <h6 class="fw-bold">Total Downtime</h6>
+                            <h3 class="mb-0" id="summaryDowntime">
+                                @{
+                                    int totalMinutes = Model.TotalDowntimeMinutes;
+                                    int hours = totalMinutes / 60;
+                                    int minutes = totalMinutes % 60;
+                                }
+                                @($"{hours}h {minutes}m")
+                            </h3>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Total Production -->
+            <div class="col-6 col-md-4 col-lg-2">
+                <a class="js-nav-link text-decoration-none" asp-page="/Production_Entry"
+                   asp-route-shiftId="@(Model.ActiveShifts.FirstOrDefault()?.Shift_Id)"
+                   asp-route-woNumber="@(Model.ActiveShifts.FirstOrDefault()?.WorkOrderNumber)"
+                   style="cursor:pointer;">
+                    <div class="card shadow-sm border-0 rounded-4 bg-info text-white h-100 hover-shadow">
+                        <div class="card-body d-flex flex-column justify-content-center">
+                            <i class="bi bi-speedometer2 fs-2 mb-2"></i>
+                            <h6 class="fw-bold">Total Production</h6>
+                            <h3 class="mb-0" id="summaryProduction">@Model.TotalProductionCount</h3>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+       
+        <!-- Active Shifts -->
+        <div class="row justify-content-center g-4 row-cols-1 row-cols-md-1 row-cols-lg-2 row-cols-xxl-3">
+            @if (!Model.ActiveShifts.Any())
+            {
+                <div class="col-12">
+                    <div class="alert alert-info text-center">No active shifts currently.</div>
+                </div>
+            }
+            else
+            {
+                @foreach (var shift in Model.ActiveShifts)
+                {
+                    <div class="col shift-card-wrapper"
+                         data-shift-id="@shift.Shift_Id"
+                         data-shift-letter="@shift.Shift_Letter"
+                         data-machine-line="@shift.Machine_Line"
+                         data-machine-name="@shift.Machine_Name"
+                         data-product-line="@shift.Product_Line"
+                         data-created-by="@shift.Created_By"
+                         data-authorized-by="@shift.Authorized_By"
+                         data-start-date="@shift.Shift_Start_Time?.ToString("yyyy-MM-dd")">
+
+
+                        <div class="card shift-card h-100">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">@shift.Machine_Name
+                                    (@shift.Product_Line) Shift ID: @shift.Shift_Id
+                                    Shift @shift.Shift_Letter
+                                </h5>
+                                
+                                <!-- Dropdown -->
+                                <div class="dropdown">
+                                    <button class="btn btn-sm text-white border-0" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="background: transparent;">
+                                        <i class="bi bi-three-dots-vertical fs-5"></i>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end shadow">
+                                        <li>
+                                            <a class="dropdown-item js-nav-link"
+                                               asp-page="/Material_Consumption"
+                                               asp-route-shiftId="@shift.Shift_Id"
+                                               asp-route-woNumber="@shift.WorkOrderNumber">
+                                                <i class="bi bi-box-seam me-2 text-success"></i> Consume Materials
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item js-nav-link" asp-page="/Quality_Check" asp-route-shiftId="@shift.Shift_Id" asp-route-productCategory="@shift.Machine_Line">
+                                                <i class="bi bi-clipboard-check me-2 text-success"></i> Check Quality
+                                            </a>
+                                        </li>
+
+                                        <li>
+                                            <a class="dropdown-item js-nav-link" asp-page="/Waste_Entry" asp-route-shiftId="@shift.Shift_Id">
+                                                <i class="bi bi-trash3 me-2 text-success"></i> Clear Waste
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item js-nav-link" asp-page="/Downtime_Entry" asp-route-shiftId="@shift.Shift_Id">
+                                                <i class="bi bi-exclamation-octagon me-2 text-success"></i> Record Downtime
+                                            </a>
+                                        </li>
+
+                                        <li>
+                                            <a class="dropdown-item js-nav-link" asp-page="/Production_Entry" asp-route-shiftId="@shift.Shift_Id">
+                                                <i class="bi bi-speedometer2 me-2 text-success"></i> Count Production
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item js-nav-link text-danger"
+                                               asp-page="/Shift_End"
+                                               asp-route-shiftId="@shift.Shift_Id">
+                                                <i class="bi bi-stop-circle me-2 text-danger"></i> End Shift
+                                            </a>
+                                        </li>
+
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="card-body">
+                               
+                                <!-- ✅ New Work Order Fields -->
+                                @if (!string.IsNullOrEmpty(shift.WorkOrderNumber))
+                                {
+                                    <p><span class="fw-bold">WO Number:</span> @shift.WorkOrderNumber
+                                        <svg class="woBarcode"
+                                             data-workorder="@shift.WorkOrderNumber">
+                                        </svg>
+                                    </p>
+
+                                    <p><span class="fw-bold">Item:</span> @shift.WorkOrderItem</p>
+
+                                    
+                                    <p><span class="fw-bold">Description:</span> @shift.WorkOrderDescription</p>                                    
+                                }
+                                <p>
+                                    <span class="fw-bold">Start:</span> @shift.Shift_Start_Time?.ToString("g") <br />
+                                    <span class="fw-bold">End:</span> @(shift.Shift_End_Time.HasValue? shift.Shift_End_Time?.ToString("g") : "Ongoing")
+                                </p>
+                                <p><span class="fw-bold">Created By:</span> @shift.Created_By</p>
+                                <p class="mb-1">
+                                    <span class="badge bg-success text-white">
+                                        <i class="bi bi-check-circle me-1"></i> Authorized by @shift.Authorized_By
+                                    </span>
+                                </p>
+
+
+                                @if (shift.Handover_Rating > 0)
+                                {
+                                    <p class="mt-2 mb-1">
+                                        <span class="fw-bold">Handover Rating:</span>
+                                        @for (int i = 0; i < shift.Handover_Rating; i++)
+                                        {
+                                            <i class="bi bi-star-fill text-warning"></i>
+                                        }
+                                    </p>
+                                }
+
+                                <hr />
+                                <span class="badge badge-active">Active</span>
+
+                                <!-- Consumed Materials -->
+                                <div class="mt-3">
+                                    @{
+                                        var materialCount = shift.ConsumedMaterials.Count;
+                                        var totalQuantity = shift.ConsumedMaterials.Sum(m => m.Quantity_Consumed);
+                                        var distinctMaterials = shift.ConsumedMaterials
+                                        .Select(m => m.Material_Id)
+                                        .Distinct()
+                                        .Count();
+                                    }
+
+                                    @if (shift.ConsumedMaterials.Any())
+                                    {
+                                        <button class="btn btn-outline-primary btn-sm d-flex justify-content-between align-items-center toggle-btn"
+                                                type="button"
+                                                data-bs-toggle="collapse"
+                                                data-bs-target="#materials-@shift.Shift_Id">
+                                            <span>
+                                                <i class="bi bi-box-seam me-1"></i> Consumed Materials
+                                                <span class="text-muted small ms-2">
+                                                    (Units: @materialCount | Quantity: @totalQuantity.ToString("N0"))
+                                                </span>
+                                            </span>
+                                            <i class="bi bi-chevron-down chevron"></i>
+                                        </button>
+
+                                        <div class="collapse mt-2" id="materials-@shift.Shift_Id">
+                                            <div class="materials-table-container mt-2">
+                                                <table class="table table-sm table-hover align-middle materials-table">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Work Order</th>
+                                                            <th>Material ID</th>
+                                                            <th>Description</th>
+                                                            <th>Quantity</th>
+                                                            <th>By</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @foreach (var mat in shift.ConsumedMaterials)
+                                                        {
+                                                            <tr>
+                                                                <td>@mat.Wo_Number</td>
+                                                                <td>@mat.Material_Id</td>
+                                                                <td>@mat.Material_Description</td>
+                                                                <td>@mat.Quantity_Consumed</td>
+                                                                <td>@mat.Created_By</td>
+                                                            </tr>
+                                                        }
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <p class="text-muted small fst-italic mt-2 mb-0">No materials recorded yet.</p>
+                                    }
+                                </div>
+
+                                <!-- Quality Checks -->
+                                <div class="mt-3">
+                                    @{
+                                        var totalChecks = shift.QualityChecks.Count;
+                                        var failedChecks = shift.QualityChecks.Count(q => q.Fail);
+                                    }
+
+                                    @if (shift.QualityChecks.Any())
+                                    {
+                                        <button class="btn btn-outline-primary btn-sm d-flex justify-content-between align-items-center toggle-btn"
+                                                type="button"
+                                                data-bs-toggle="collapse"
+                                                data-bs-target="#quality-@shift.Shift_Id"
+                                                aria-expanded="false"
+                                                aria-controls="quality-@shift.Shift_Id">
+                                            <span>
+                                                <i class="bi bi-clipboard-check me-1"></i> Quality Checks
+                                                <span class="text-muted small ms-2">
+                                                    (Total: @totalChecks | Failed: @failedChecks)
+                                                </span>
+                                            </span>
+                                            <i class="bi bi-chevron-down chevron"></i>
+                                        </button>
+
+
+                                        <div class="collapse mt-2" id="quality-@shift.Shift_Id">
+                                            <div class="materials-table-container mt-2">
+                                                <table class="table table-sm table-hover align-middle materials-table">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Test Name</th>
+                                                            <th>Test Type</th>
+                                                            <th>Check Time</th>
+                                                            <th>Status</th>
+                                                            <th>Fail</th>
+                                                            <th>Weights</th>
+                                                            <th>Comment</th>
+                                                            <th>By</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @foreach (var qc in shift.QualityChecks)
+                                                        {
+                                                            <tr>
+                                                                <td>@qc.Test_Name</td>
+                                                                <td>@qc.Test_Type</td>
+                                                                <td>@(qc.Check_Time.HasValue? qc.Check_Time.Value.ToString(@"hh\:mm") : "-")</td>
+                                                                <td>@qc.Status</td>
+                                                                <td>@(qc.Fail ? "Yes" : "No")</td>
+                                                                <td>@qc.Weights</td>
+                                                                <td>@qc.Comment</td>
+                                                                <td>@qc.Created_By</td>
+                                                            </tr>
+                                                        }
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <p class="text-muted small fst-italic mt-2 mb-0">No quality checks recorded yet.</p>
+                                    }
+                                </div>
+
+                                <!-- Clear Waste -->
+                                <div class="mt-3">
+                                    @{
+                                        var wasteEntries = shift.WasteEntries.Count;
+                                        var totalWasteWeight = shift.WasteEntries.Sum(w => w.Waste_Weight ?? 0);
+                                    }
+
+                                    @if (shift.WasteEntries.Any())
+                                    {
+                                        <button class="btn btn-outline-primary btn-sm d-flex justify-content-between align-items-center toggle-btn"
+                                                type="button"
+                                                data-bs-toggle="collapse"
+                                                data-bs-target="#waste-@shift.Shift_Id"
+                                                aria-expanded="false"
+                                                aria-controls="waste-@shift.Shift_Id">
+                                            <span>
+                                                <i class="bi bi-trash3 me-1"></i> Waste
+                                                <span class="text-muted small ms-2">
+                                                    (Entries: @wasteEntries | Total: @totalWasteWeight kg)
+                                                </span>
+                                            </span>
+                                            <i class="bi bi-chevron-down chevron"></i>
+                                        </button>
+
+                                        <div class="collapse mt-2" id="waste-@shift.Shift_Id">
+                                            <div class="materials-table-container mt-2">
+                                                <table class="table table-sm table-hover align-middle materials-table">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Waste Type</th>
+                                                            <th>Weight (kg)</th>
+                                                            <th>Created On</th>
+                                                            <th>By</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @foreach (var w in shift.WasteEntries)
+                                                        {
+                                                            <tr>
+                                                                <td>@w.Waste_Type</td>
+                                                                <td>@w.Waste_Weight</td>
+                                                                <td>@(w.Created_At?.ToString("g") ?? "-")</td>
+                                                                <td>@w.Created_By</td>
+                                                            </tr>
+                                                        }
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <p class="text-muted small fst-italic mt-2 mb-0">No waste cleared yet.</p>
+                                    }
+                                </div>
+
+                                <!-- Downtime Records -->
+                                <div class="mt-3">
+                                    @{
+                                        var downtimeEntries = shift.DowntimeEntries.Count;
+                                        var totalDowntimeMinutes = shift.DowntimeEntries.Sum(d => d.Downtime ?? 0);
+                                    }
+
+                                    @if (shift.DowntimeEntries.Any())
+                                    {
+                                        <button class="btn btn-outline-primary btn-sm d-flex justify-content-between align-items-center toggle-btn"
+                                                type="button"
+                                                data-bs-toggle="collapse"
+                                                data-bs-target="#downtime-@shift.Shift_Id"
+                                                aria-expanded="false"
+                                                aria-controls="downtime-@shift.Shift_Id">
+                                            <span>
+                                                <i class="bi bi-exclamation-octagon me-1"></i> Downtime
+                                                <span class="text-muted small ms-2">
+                                                    (Entries: @downtimeEntries | Total: @totalDowntimeMinutes min)
+                                                </span>
+                                            </span>
+                                            <i class="bi bi-chevron-down chevron"></i>
+                                        </button>
+
+                                        <div class="collapse mt-2" id="downtime-@shift.Shift_Id">
+                                            <div class="materials-table-container mt-2">
+                                                <table class="table table-sm table-hover align-middle materials-table">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Downtime (min)</th>
+                                                            <th>Reason</th>
+                                                            <th>Comment</th>
+                                                            <th>Created On</th>
+                                                            <th>By</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @foreach (var d in shift.DowntimeEntries)
+                                                        {
+                                                            <tr>
+                                                                <td>@d.Downtime</td>
+                                                                <td>@d.Reason</td>
+                                                                <td>@d.Comment</td>
+                                                                <td>@(d.Created_On?.ToString("g") ?? "-")</td>
+                                                                <td>@d.Created_By</td>
+                                                            </tr>
+                                                        }
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <p class="text-muted small fst-italic mt-2 mb-0">No downtime recorded yet.</p>
+                                    }
+                                </div>
+
+                                <!-- Production Count -->
+                                <div class="mt-3">
+                                    @{
+                                        var productionEntries = shift.ProductionEntries.Count;
+                                        var totalProductionQty = shift.ProductionEntries.Sum(p => p.Product_Count);
+                                    }
+
+                                    @if (shift.ProductionEntries.Any())
+                                    {
+                                        <button class="btn btn-outline-primary btn-sm d-flex justify-content-between align-items-center toggle-btn"
+                                                type="button"
+                                                data-bs-toggle="collapse"
+                                                data-bs-target="#prod-@shift.Shift_Id"
+                                                aria-expanded="false"
+                                                aria-controls="prod-@shift.Shift_Id">
+                                            <span>
+                                                <i class="bi bi-speedometer2 me-1"></i> Production
+                                                <span class="text-muted small ms-2">
+                                                    (Entries: @productionEntries | Qty: @totalProductionQty.ToString("N0"))
+                                                </span>
+                                            </span>
+                                            <i class="bi bi-chevron-down chevron"></i>
+                                        </button>
+
+                                        <div class="collapse mt-2" id="prod-@shift.Shift_Id">
+                                            <div class="materials-table-container mt-2">
+                                                <table class="table table-sm table-hover align-middle materials-table">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>WO Number</th>
+                                                            <th>Case Number</th>
+                                                            <th>Product</th>
+                                                            <th>Description</th>
+                                                            <th>Count</th>
+                                                            <th>Created By</th>
+                                                            <th>Created on</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @foreach (var p in shift.ProductionEntries)
+                                                        {
+                                                            <tr>
+                                                                <td>@p.Wo_Number</td>
+                                                                <td>@p.Batch_Identifier</td>
+                                                                <td>@p.Part_Number</td>
+                                                                <td>@p.Item_Description</td>
+                                                                <td>@p.Product_Count</td>
+                                                                <td>@p.Username</td>
+                                                                <td>@p.Timestamp_Start?.ToString("g")</td>
+                                                            </tr>
+                                                        }
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <p class="text-muted small fst-italic mt-2 mb-0">No production recorded yet.</p>
+                                    }
+                                </div>
+                            </div>
+                            
+                            <div class="card-footer text-center">
+                                <a class="btn btn-danger btn-end-shift w-100 js-nav-link"
+                                   asp-page="/Shift_End"
+                                   asp-route-shiftId="@shift.Shift_Id"
+                                   onclick="return confirm('Are you sure you want to end this shift?');">
+                                    <i class="bi bi-stop-circle me-2"></i> End Shift
+                                </a>
+                            </div>
+
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+
+    
+    <script>
+        document.querySelectorAll('.toggle-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const chevron = btn.querySelector('.chevron');
+                chevron.classList.toggle('rotate');
+            });
+        });
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const qualityCard = document.getElementById("qualityCard");
+            if (!qualityCard) return;
+
+            const lastCheckAttr = qualityCard.getAttribute("data-last-check");
+            const lastCheck = lastCheckAttr ? new Date(lastCheckAttr) : null;
+            const OVERDUE_MINUTES = 15;
+
+            function startFlashing() {
+                qualityCard.classList.add("flash");
+            }
+
+            function stopFlashing() {
+                qualityCard.classList.remove("flash");
+            }
+
+            function evaluateFlash() {
+                const now = new Date();
+                if (!lastCheck) {
+                    startFlashing();
+                    return;
+                }
+                const diffMinutes = (now - lastCheck) / 1000 / 60;
+                if (diffMinutes > OVERDUE_MINUTES) startFlashing();
+                else stopFlashing();
+            }
+
+            // Check immediately on load
+            evaluateFlash();
+
+            // Re-evaluate every minute (so it auto-starts when overdue without refresh)
+            setInterval(evaluateFlash, 60000);
+        });
+    </script>
+
+    
+
+    <!-- Moment.js (required for date filtering) -->
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            /* =======================
+               DOM REFERENCES
+            ======================= */
+            const machineLineFilter = document.getElementById('machineLineFilter');
+            const machineNameFilter = document.getElementById('machineNameFilter');
+            const productLineFilter = document.getElementById('productLineFilter');
+            const rangeSelect = document.getElementById('rangeSelect');
+            const fromDate = document.getElementById('fromDate');
+            const toDate = document.getElementById('toDate');
+            const applyBtn = document.getElementById('applyBtn');
+            const searchInput = document.getElementById('shiftSearch');
+
+            /* =======================
+               HELPERS
+            ======================= */
+            function normalize(v) {
+                return (v || '').toLowerCase().trim();
+            }
+
+            /* =======================
+               POPULATE MACHINE LINE (TOP LEVEL)
+            ======================= */
+            (function populateMachineLines() {
+                const set = new Set();
+
+                document.querySelectorAll('.shift-card-wrapper').forEach(card => {
+                    if (card.dataset.machineLine)
+                        set.add(card.dataset.machineLine);
+                });
+
+                [...set].sort().forEach(v => {
+                    machineLineFilter.add(new Option(v, v));
+                });
+            })();
+
+            /* =======================
+               CASCADING FILTERS
+            ======================= */
+            function populateDependentFilters() {
+
+                const selectedLine = normalize(machineLineFilter.value);
+
+                machineNameFilter.length = 1; // keep "All"
+                productLineFilter.length = 1;
+
+                const machineSet = new Set();
+                const productSet = new Set();
+
+                document.querySelectorAll('.shift-card-wrapper').forEach(card => {
+
+                    const line = normalize(card.dataset.machineLine);
+                    if (selectedLine && line !== selectedLine) return;
+
+                    if (card.dataset.machineName)
+                        machineSet.add(card.dataset.machineName);
+
+                    if (card.dataset.productLine)
+                        productSet.add(card.dataset.productLine);
+                });
+
+                [...machineSet].sort().forEach(v => {
+                    machineNameFilter.add(new Option(v, v));
+                });
+
+                [...productSet].sort().forEach(v => {
+                    productLineFilter.add(new Option(v, v));
+                });
+            }
+
+            /* =======================
+               APPLY FILTERS
+            ======================= */
+            function applyFilters() {
+                const search = normalize(searchInput.value);
+                const line = normalize(machineLineFilter.value);
+                const machine = normalize(machineNameFilter.value);
+                const product = normalize(productLineFilter.value);
+                const myAuthFilter = document.getElementById('myAuthorizedShifts').checked;
+
+                let minDate = null, maxDate = null;
+
+                if (rangeSelect.value === '7') minDate = moment().subtract(7, 'days');
+                if (rangeSelect.value === '30') minDate = moment().subtract(30, 'days');
+                if (rangeSelect.value === 'custom') {
+                    if (fromDate.value) minDate = moment(fromDate.value);
+                    if (toDate.value) maxDate = moment(toDate.value).endOf('day');
+                }
+
+                document.querySelectorAll('.shift-card-wrapper').forEach(card => {
+                    let visible = true;
+                    const text = normalize(card.innerText);
+                    const startDate = moment(card.dataset.startDate);
+
+                    if (search && !text.includes(search)) visible = false;
+                    if (line && normalize(card.dataset.machineLine) !== line) visible = false;
+                    if (machine && normalize(card.dataset.machineName) !== machine) visible = false;
+                    if (product && normalize(card.dataset.productLine) !== product) visible = false;
+                    if (minDate && startDate.isBefore(minDate)) visible = false;
+                    if (maxDate && startDate.isAfter(maxDate)) visible = false;
+
+                    // 🔥 New: Filter by logged-in supervisor
+                    if (myAuthFilter) {
+                        const loggedInSupervisor = '@User.Identity.Name'; // Razor variable with logged-in username
+                        if (normalize(card.dataset.createdBy) !== normalize(loggedInSupervisor) &&
+                            normalize(card.dataset.authorizedBy) !== normalize(loggedInSupervisor)) {
+                            visible = false;
+                        }
+                    }
+
+                    card.style.display = visible ? '' : 'none';
+                });
+
+                updateSummaryCards();
+            }
+
+            /* =======================
+               UPDATE SUMMARY CARDS
+            ======================= */
+            function updateSummaryCards() {
+                let materials = 0, quality = 0, waste = 0, downtimeMinutes = 0, production = 0;
+
+                document.querySelectorAll('.shift-card-wrapper').forEach(card => {
+                    const shiftId = card.dataset.shiftId;
+                    if (!shiftId || card.style.display === 'none') return;
+
+                    // MATERIALS
+                    card.querySelectorAll(`#materials-${shiftId} tbody tr`)
+                        .forEach(r => { materials += parseFloat(r.children[3]?.innerText) || 0; });
+
+                    // QUALITY
+                    quality += card.querySelectorAll(`#quality-${shiftId} tbody tr`).length;
+
+                    // WASTE
+                    card.querySelectorAll(`#waste-${shiftId} tbody tr`)
+                        .forEach(r => { waste += parseFloat(r.children[1]?.innerText) || 0; });
+
+                    // DOWNTIME
+                    card.querySelectorAll(`#downtime-${shiftId} tbody tr`)
+                        .forEach(r => { downtimeMinutes += parseInt(r.children[0]?.innerText) || 0; });
+
+                    // PRODUCTION
+                    card.querySelectorAll(`#prod-${shiftId} tbody tr`)
+                        .forEach(r => { production += parseInt(r.children[4]?.innerText) || 0; });
+                });
+                
+                document.getElementById('summaryMaterials').innerText = materials.toLocaleString();
+                document.getElementById('summaryQuality').innerText = quality;
+                document.getElementById('summaryWaste').innerText = waste.toLocaleString();
+                document.getElementById('summaryDowntime').innerText = `${Math.floor(downtimeMinutes/60)}h ${downtimeMinutes%60}m`;
+                document.getElementById('summaryProduction').innerText = production.toLocaleString();
+            }
+
+
+            /* =======================
+               EVENTS
+            ======================= */
+            document.getElementById('myAuthorizedShifts').addEventListener('change', applyFilters);
+
+            machineLineFilter.addEventListener('change', () => {
+                machineNameFilter.value = '';
+                productLineFilter.value = '';
+                populateDependentFilters();
+                
+                // 🔥 Force default filter for Supervisor
+                const isSupervisor = @User.IsInRole("Supervisor").ToString().ToLower();
+                if (isSupervisor) {
+                    document.getElementById('myAuthorizedShifts').checked = true;
+                }
+                applyFilters();
+            });
+
+            [searchInput, machineNameFilter, productLineFilter, rangeSelect]
+                .forEach(el => el.addEventListener('change', applyFilters));
+
+            applyBtn.addEventListener('click', applyFilters);
+
+            rangeSelect.addEventListener('change', () => {
+                const isCustom = rangeSelect.value === 'custom';
+                fromDate.disabled = !isCustom;
+                toDate.disabled = !isCustom;
+                applyBtn.disabled = !isCustom;
+                if (!isCustom) applyFilters();
+            });
+
+            /* =======================
+               INITIAL LOAD
+            ======================= */
+            populateDependentFilters();
+            applyFilters();
+
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            document.querySelectorAll(".woBarcode").forEach(function (barcode) {
+
+                const workOrder = barcode.dataset.workorder;
+
+                if (workOrder) {
+                    JsBarcode(barcode, workOrder, {
+                        format: "CODE128",
+                        width: 2,
+                        height: 45,
+                        displayValue: false,
+                        fontSize: 12,
+                        textMargin: 2,
+                        margin: 0
+                    });
+                }
+            });
+
+        });
+    </script>
+    
+</body>
+</html>

@@ -1,0 +1,1070 @@
+﻿@page
+@model TPL_TM.Pages.Workorder_Schedule_NetSuiteModel
+@{
+    ViewData["Title"] = "Work Order Schedule";
+    var next7Days = Enumerable.Range(0, 7).Select(offset => Model.SelectedStartDate.AddDays(offset)).ToList();
+    var hours = Enumerable.Range(0, 24).ToList();
+
+    var ordersByDay = Model.ScheduledWorkOrders
+        .Where(w => next7Days.Contains(w.WO_StartDate.Date))
+        .GroupBy(w => w.WO_StartDate.Date)
+        .ToDictionary(g => g.Key, g => g.ToList());
+
+    var renderedOrders = new Dictionary<string, int>();
+    var remainingSpans = new Dictionary<string, int>();
+    var colorMap = new Dictionary<string, string>();
+    var colorPalette = new[] {
+        "#06B6D4", "#F59E0B", "#8B5CF6", "#10B981", "#F97316",
+        "#EC4899", "#3B82F6", "#14B8A6", "#EF4444", "#A3E635"
+    };
+    int colorIndex = 0;
+}
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+    /* ── Tokens ─────────────────────────────────────────────── */
+    :root {
+        --steel-950: #0F1923;
+        --steel-900: #141F2B;
+        --steel-800: #1E2D3D;
+        --steel-700: #263649;
+        --steel-600: #334d66;
+        --steel-400: #5b7fa6;
+        --steel-200: #8fafc9;
+        --steel-100: #b8cfe0;
+        --steel-050: #e2ecf5;
+        --amber: #F59E0B;
+        --amber-dim: #92600A;
+        --cyan: #06B6D4;
+        --cyan-dim: #065f74;
+        --red: #EF4444;
+        --red-dim: #7f1d1d;
+        --orange: #F97316;
+        --orange-dim: #7c2d12;
+        --green: #10B981;
+        --green-dim: #064e35;
+        --text-bright: #E8EDF2;
+        --text-mid: #8fafc9;
+        --text-dim: #4a6580;
+        --font-display: 'Rajdhani', sans-serif;
+        --font-body: 'Inter', sans-serif;
+        --radius-card: 6px;
+        --radius-pill: 999px;
+    }
+
+    /* ── Light mode token overrides ─────────────────────────── */
+    html[data-theme="light"] {
+        --steel-950: #f0f4f8;
+        --steel-900: #ffffff;
+        --steel-800: #e8edf2;
+        --steel-700: #d0dbe6;
+        --steel-600: #b8cfe0;
+        --steel-400: #5b7fa6;
+        --text-bright: #0f1923;
+        --text-mid: #334d66;
+        --text-dim: #5b7fa6;
+    }
+
+    /* ── Page shell ──────────────────────────────────────────── */
+    body {
+        background: var(--steel-950);
+        color: var(--text-bright);
+        font-family: var(--font-body);
+        font-size: 13px;
+    }
+
+    .schedule-shell {
+        background: var(--steel-950);
+        min-height: 100vh;
+        padding: 24px 20px;
+    }
+
+    /* ── Toolbar ─────────────────────────────────────────────── */
+    .toolbar {
+        background: var(--steel-900);
+        border: 1px solid var(--steel-700);
+        border-radius: 10px;
+        padding: 18px 24px;
+        margin-bottom: 20px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        align-items: flex-start;
+    }
+
+    .toolbar-title {
+        flex: 0 0 auto;
+    }
+
+        .toolbar-title h2 {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 22px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--text-bright);
+            margin: 0;
+            line-height: 1.2;
+        }
+
+            .toolbar-title h2 span {
+                color: var(--cyan);
+            }
+
+        .toolbar-title small {
+            color: var(--text-dim);
+            font-size: 11px;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+    .toolbar-controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+        flex: 1;
+    }
+
+    /* ── Inputs ──────────────────────────────────────────────── */
+    .ctrl-input, .ctrl-select {
+        background: var(--steel-800);
+        border: 1px solid var(--steel-600);
+        border-radius: 6px;
+        color: var(--text-bright);
+        font-family: var(--font-body);
+        font-size: 12px;
+        height: 34px;
+        padding: 0 10px;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        outline: none;
+    }
+
+        .ctrl-input:focus, .ctrl-select:focus {
+            border-color: var(--cyan);
+            box-shadow: 0 0 0 2px rgba(6,182,212,0.15);
+        }
+
+        .ctrl-input::placeholder {
+            color: var(--text-dim);
+        }
+
+    input[type="date"].ctrl-input::-webkit-calendar-picker-indicator {
+        filter: invert(0.6);
+        cursor: pointer;
+    }
+
+    /* ── Pill tabs ───────────────────────────────────────────── */
+    .machine-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 14px;
+        padding-top: 14px;
+        border-top: 1px solid var(--steel-700);
+    }
+
+    .machine-tab {
+        font-family: var(--font-display);
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        background: var(--steel-800);
+        border: 1px solid var(--steel-600);
+        color: var(--text-mid);
+        border-radius: var(--radius-pill);
+        padding: 5px 14px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        line-height: 1;
+    }
+
+        .machine-tab:hover {
+            background: var(--steel-700);
+            color: var(--text-bright);
+            border-color: var(--cyan);
+        }
+
+        .machine-tab.active {
+            background: linear-gradient(135deg, var(--cyan-dim), #0a3a50);
+            border-color: var(--cyan);
+            color: var(--cyan);
+            box-shadow: 0 0 10px rgba(6,182,212,0.25);
+        }
+
+    /* ── Action buttons ──────────────────────────────────────── */
+    .btn-add {
+        font-family: var(--font-display);
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        background: var(--cyan);
+        color: #000;
+        border: none;
+        border-radius: 6px;
+        padding: 7px 16px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: background 0.2s, box-shadow 0.2s;
+        cursor: pointer;
+    }
+
+        .btn-add:hover {
+            background: #22d3ee;
+            box-shadow: 0 0 14px rgba(6,182,212,0.4);
+            color: #000;
+        }
+
+    .btn-export {
+        font-family: var(--font-display);
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        background: transparent;
+        color: var(--text-mid);
+        border: 1px solid var(--steel-600);
+        border-radius: 6px;
+        padding: 7px 16px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        text-decoration: none;
+        transition: all 0.2s;
+        cursor: pointer;
+    }
+
+        .btn-export:hover {
+            border-color: var(--amber);
+            color: var(--amber);
+            box-shadow: 0 0 10px rgba(245,158,11,0.2);
+        }
+
+    /* ── Theme toggle ────────────────────────────────────────── */
+    .theme-switch {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        user-select: none;
+    }
+
+        .theme-switch input {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+    .theme-track {
+        width: 46px;
+        height: 26px;
+        background: var(--steel-800);
+        border: 1px solid var(--steel-600);
+        border-radius: var(--radius-pill);
+        position: relative;
+        transition: background 0.25s, border-color 0.25s;
+        flex-shrink: 0;
+    }
+
+        .theme-track::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--steel-400);
+            transition: transform 0.25s, background 0.25s;
+        }
+
+    .theme-switch input:checked + .theme-track {
+        background: var(--steel-050);
+        border-color: var(--steel-200);
+    }
+
+        .theme-switch input:checked + .theme-track::after {
+            transform: translateX(20px);
+            background: var(--steel-800);
+        }
+
+    .theme-icon {
+        font-size: 14px;
+        color: var(--text-dim);
+        transition: color 0.2s;
+    }
+
+    .icon-sun {
+        color: var(--text-dim);
+    }
+
+    .icon-moon {
+        color: var(--steel-200);
+    }
+
+    html[data-theme="light"] .icon-sun {
+        color: var(--amber);
+    }
+
+    html[data-theme="light"] .icon-moon {
+        color: var(--text-dim);
+    }
+
+    /* ── Schedule table wrapper ──────────────────────────────── */
+    .schedule-wrap {
+        background: var(--steel-900);
+        border: 1px solid var(--steel-700);
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .table-scroll {
+        overflow-x: auto;
+    }
+
+    /* ── Table ───────────────────────────────────────────────── */
+    #workOrderTable {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+    }
+
+        #workOrderTable thead tr {
+            background: var(--steel-800);
+            border-bottom: 2px solid var(--cyan);
+        }
+
+        #workOrderTable thead th {
+            font-family: var(--font-display);
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-mid);
+            padding: 12px 10px;
+            border-right: 1px solid var(--steel-700);
+            text-align: center;
+            white-space: nowrap;
+            position: sticky;
+            top: 0;
+            z-index: 5;
+            background: var(--steel-800);
+        }
+
+            #workOrderTable thead th:first-child {
+                width: 70px;
+                color: var(--cyan);
+            }
+
+            #workOrderTable thead th.today-col {
+                color: var(--amber);
+                border-bottom: 2px solid var(--amber);
+            }
+
+        #workOrderTable tbody tr {
+            border-bottom: 1px solid var(--steel-800);
+            transition: background 0.1s;
+        }
+
+            #workOrderTable tbody tr:hover > td:not(.droppable-cell[rowspan]) {
+                background: rgba(255,255,255,0.02);
+            }
+
+        /* Hour cell */
+        #workOrderTable tbody td:first-child {
+            font-family: var(--font-display);
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            color: var(--text-dim);
+            text-align: center;
+            padding: 6px 4px;
+            border-right: 1px solid var(--steel-700);
+            background: var(--steel-900);
+            white-space: nowrap;
+            position: sticky;
+            left: 0;
+            z-index: 2;
+        }
+
+    /* Empty / droppable cells */
+    .droppable-cell {
+        padding: 4px;
+        vertical-align: top;
+        border-right: 1px solid var(--steel-800);
+        border-bottom: 1px solid var(--steel-800) !important;
+        cursor: default;
+        min-width: 130px;
+        background: var(--steel-900);
+        transition: background 0.15s;
+    }
+
+        .droppable-cell:hover {
+            background: var(--steel-800);
+        }
+
+    .placeholder-cell {
+        visibility: hidden;
+        pointer-events: none;
+        border: none !important;
+    }
+
+    /* ── Work order card — FULL COLOUR FILL ──────────────────── */
+    .workorder-card {
+        height: 100%;
+        min-height: 100%;
+        border-radius: var(--radius-card);
+        padding: 8px 10px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+        box-sizing: border-box;
+        transition: transform 0.18s ease, box-shadow 0.18s ease;
+        /* background-color set inline via --card-bg */
+        background-color: var(--card-bg, var(--steel-800));
+    }
+
+        /* Subtle inner highlight shimmer */
+        .workorder-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(160deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.04) 40%, transparent 70%);
+            pointer-events: none;
+        }
+
+        /* Dark tint stripe at bottom for time / button row legibility */
+        .workorder-card::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 36px;
+            background: linear-gradient(to top, rgba(0,0,0,0.35) 0%, transparent 100%);
+            pointer-events: none;
+            border-radius: 0 0 var(--radius-card) var(--radius-card);
+        }
+
+        .workorder-card:hover {
+            transform: translateY(-2px) scale(1.015);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.55), 0 0 0 2px rgba(255,255,255,0.25);
+            z-index: 20;
+        }
+
+        /* Text layers — sit above ::before/::after */
+        .workorder-card > * {
+            position: relative;
+            z-index: 1;
+        }
+
+    /* Typography on coloured background */
+    .wo-number {
+        font-family: var(--font-display);
+        font-size: 15px;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        color: #fff;
+        margin-bottom: 2px;
+        text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+    }
+
+    .wo-desc {
+        font-size: 11px;
+        color: rgba(255,255,255,0.85);
+        line-height: 1.35;
+        margin-bottom: 4px;
+    }
+
+        .wo-desc strong {
+            color: #fff;
+        }
+
+    .wo-data-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 3px 10px;
+        font-size: 10px;
+        color: rgba(255,255,255,0.75);
+        margin-bottom: 3px;
+    }
+
+        .wo-data-row strong {
+            color: #fff;
+            font-weight: 600;
+        }
+
+    .wo-time {
+        font-family: var(--font-display);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        color: rgba(255,255,255,0.9);
+    }
+
+    /* Status badges — semi-transparent dark pill so colour doesn't fight bg */
+    .wo-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-family: var(--font-display);
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 2px 8px;
+        border-radius: var(--radius-pill);
+        margin-top: 4px;
+        backdrop-filter: blur(4px);
+    }
+
+    .badge-complete {
+        background: rgba(0,0,0,0.35);
+        color: #fff;
+        border: 1px solid rgba(255,255,255,0.4);
+    }
+
+    .badge-overbuilt {
+        background: rgba(239,68,68,0.6);
+        color: #fff;
+        border: 1px solid rgba(239,68,68,0.9);
+    }
+
+    .badge-pending {
+        background: rgba(239,68,68,0.55);
+        color: #fff;
+        border: 1px solid rgba(255,80,80,0.9);
+    }
+
+    .badge-partial {
+        background: rgba(249,115,22,0.55);
+        color: #fff;
+        border: 1px solid rgba(249,115,22,0.9);
+    }
+
+    /* NetSuite link button */
+    .wo-link-btn {
+        font-family: var(--font-display);
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        background: rgba(0,0,0,0.3);
+        border: 1px solid rgba(255,255,255,0.25);
+        color: rgba(255,255,255,0.9);
+        border-radius: 4px;
+        padding: 3px 8px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        transition: all 0.15s;
+        align-self: flex-start;
+    }
+
+        .wo-link-btn:hover {
+            background: rgba(0,0,0,0.5);
+            border-color: rgba(255,255,255,0.6);
+            color: #fff;
+        }
+
+    /* ── Status cell overrides ───────────────────────────────── */
+    td.status-complete .workorder-card {
+        opacity: 0.5;
+        filter: saturate(0.3) brightness(0.85);
+    }
+
+    td.status-flash-red .workorder-card {
+        animation: pulse-red 2s infinite;
+        box-shadow: 0 0 0 2px rgba(239,68,68,0.7);
+    }
+
+    @@keyframes pulse-red {
+        0%, 100% {
+            box-shadow: 0 0 0 2px rgba(239,68,68,0.5);
+        }
+
+        50% {
+            box-shadow: 0 0 0 4px rgba(239,68,68,0.9), 0 0 14px rgba(239,68,68,0.5);
+        }
+    }
+
+    td.status-flash-orange .workorder-card {
+        animation: pulse-orange 2s infinite;
+        box-shadow: 0 0 0 2px rgba(249,115,22,0.7);
+    }
+
+    @@keyframes pulse-orange {
+        0%, 100% {
+            box-shadow: 0 0 0 2px rgba(249,115,22,0.5);
+        }
+
+        50% {
+            box-shadow: 0 0 0 4px rgba(249,115,22,0.9), 0 0 14px rgba(249,115,22,0.5);
+        }
+    }
+
+    /* ── Stats bar ───────────────────────────────────────────── */
+    .stats-bar {
+        display: flex;
+        gap: 1px;
+        background: var(--steel-700);
+        border-bottom: 1px solid var(--steel-700);
+    }
+
+    .stat-chip {
+        flex: 1;
+        background: var(--steel-900);
+        padding: 10px 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .stat-chip-value {
+        font-family: var(--font-display);
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--text-bright);
+        line-height: 1;
+    }
+
+    .stat-chip-label {
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        color: var(--text-dim);
+    }
+
+    .stat-chip.cyan .stat-chip-value {
+        color: var(--cyan);
+    }
+
+    .stat-chip.amber .stat-chip-value {
+        color: var(--amber);
+    }
+
+    .stat-chip.red .stat-chip-value {
+        color: var(--red);
+    }
+
+    .stat-chip.green .stat-chip-value {
+        color: var(--green);
+    }
+
+    /* ── Drag ghost ──────────────────────────────────────────── */
+    .ui-draggable-dragging {
+        opacity: 0.9 !important;
+        box-shadow: 0 16px 48px rgba(0,0,0,0.7) !important;
+        z-index: 9999 !important;
+    }
+
+    /* ── Scrollbar ───────────────────────────────────────────── */
+    ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: var(--steel-950);
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: var(--steel-600);
+        border-radius: 3px;
+    }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--steel-400);
+        }
+</style>
+
+<div class="schedule-shell">
+
+    <!-- ── Toolbar ── -->
+    <div class="toolbar">
+
+        <div class="toolbar-title">
+            <h2><i class="bi bi-grid-3x3-gap-fill me-2" style="font-size:18px;"></i>Production <span>Schedule</span></h2>
+            <small>Real-time manufacturing floor view</small>
+        </div>
+
+        <div class="toolbar-controls ms-auto">
+
+            <form method="get" id="filterForm" style="display:contents;">
+                <input type="date"
+                       id="startDatePicker"
+                       name="startDate"
+                       class="ctrl-input"
+                       value="@Model.SelectedStartDate.ToString("yyyy-MM-dd")" />
+
+                <select id="machineNameSelector"
+                        name="SelectedMachineName"
+                        class="ctrl-select">
+                    @foreach (var machine in Model.AvailableMachineNames)
+                    {
+                        <option value="@machine" selected="@(machine == Model.SelectedMachineName)">@machine</option>
+                    }
+                </select>
+
+                <input type="text"
+                       id="searchBox"
+                       class="ctrl-input"
+                       style="min-width:180px;"
+                       placeholder="&#xF52A;  Search orders…" />
+            </form>
+
+            <a href="Workorder_Schedule" class="btn-add">
+                <i class="bi bi-plus-lg"></i> New Order
+            </a>
+
+            <a id="exportBtn" class="btn-export">
+                <i class="bi bi-download"></i> Export
+            </a>
+
+            <label class="theme-switch" aria-label="Toggle light/dark theme">
+                <input type="checkbox" id="themeToggle" />
+                <span class="theme-track"></span>
+                <i class="bi bi-sun-fill theme-icon icon-sun"></i>
+                <i class="bi bi-moon-fill theme-icon icon-moon"></i>
+            </label>
+
+        </div>
+
+        <!-- Machine line tabs -->
+        <div class="machine-tabs w-100">
+            <form method="get" id="lineForm" style="display:contents;">
+                <input type="hidden" name="startDate" value="@Model.SelectedStartDate.ToString("yyyy-MM-dd")" />
+                <input type="hidden" name="SelectedMachineName" value="@Model.SelectedMachineName" />
+                @foreach (var line in Model.AvailableMachineLines)
+                {
+                    <button type="submit"
+                            form="lineForm"
+                            name="SelectedMachineLine"
+                            value="@line"
+                            class="machine-tab @(line == Model.SelectedMachineLine ? "active" : "")">
+                        @line
+                    </button>
+                }
+            </form>
+        </div>
+
+    </div>
+
+    <!-- ── Stats bar ── -->
+    @{
+        var totalOrders = Model.ScheduledWorkOrders.Count;
+        var completed = Model.ScheduledWorkOrders.Count(w => w.Built_Qty >= w.Qty);
+        var notStarted = Model.ScheduledWorkOrders.Count(w => w.Built_Qty == 0);
+        var inProgress = totalOrders - completed - notStarted;
+    }
+    <div class="schedule-wrap mb-0" style="border-radius:10px 10px 0 0; border-bottom:none;">
+        <div class="stats-bar">
+            <div class="stat-chip cyan">
+                <span class="stat-chip-value">@totalOrders</span>
+                <span class="stat-chip-label">Total Orders</span>
+            </div>
+            <div class="stat-chip green">
+                <span class="stat-chip-value">@completed</span>
+                <span class="stat-chip-label">Completed</span>
+            </div>
+            <div class="stat-chip amber">
+                <span class="stat-chip-value">@inProgress</span>
+                <span class="stat-chip-label">In Progress</span>
+            </div>
+            <div class="stat-chip red">
+                <span class="stat-chip-value">@notStarted</span>
+                <span class="stat-chip-label">Not Started</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Schedule table ── -->
+    <div class="schedule-wrap" style="border-radius:0 0 10px 10px; border-top:none;">
+        <div class="table-scroll">
+            <table id="workOrderTable">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        @foreach (var day in next7Days)
+                        {
+                            bool isToday = day.Date == DateTime.Today;
+                            <th class="@(isToday ? "today-col" : "")">
+                                @if (isToday)
+                                {
+                                    <span style="color:var(--amber);">★ </span>
+                                }
+                                @day.ToString("ddd").ToUpper()
+                                <br />
+                                <span style="font-size:14px; font-weight:700; color:var(--text-bright);">@day.ToString("MMM d")</span>
+                            </th>
+                        }
+                    </tr>
+                </thead>
+                <tbody id="workOrderBody">
+                    @foreach (var hour in hours)
+                    {
+                        <tr>
+                            <td>@hour.ToString("00"):00</td>
+                            @foreach (var day in next7Days)
+                            {
+                                var key = $"{day:yyyyMMdd}-{hour}";
+                                if (remainingSpans.TryGetValue(key, out var skip) && skip > 0)
+                                {
+                                    remainingSpans[key] = skip - 1;
+                                    <td class="placeholder-cell"></td>
+                                    continue;
+                                }
+
+                                if (ordersByDay.TryGetValue(day, out var workOrders))
+                                {
+                                    var order = workOrders.FirstOrDefault(w => w.WO_StartTime.Hours == hour);
+                                    if (order != null)
+                                    {
+                                        var orderKey = $"{order.WO_Number}-{day:yyyyMMdd}";
+                                        if (!renderedOrders.ContainsKey(orderKey))
+                                        {
+                                            double start = order.WO_StartTime.TotalHours;
+                                            double end = order.WO_EndTime.TotalHours;
+                                            int span = Math.Max(1, (int)Math.Ceiling(end - start));
+                                            renderedOrders[orderKey] = span;
+
+                                            for (int i = 1; i < span; i++)
+                                            {
+                                                string skipKey = $"{day:yyyyMMdd}-{hour + i}";
+                                                remainingSpans[skipKey] = 1;
+                                            }
+
+                                            if (!colorMap.ContainsKey(order.WO_Number))
+                                            {
+                                                colorMap[order.WO_Number] = colorPalette[colorIndex % colorPalette.Length];
+                                                colorIndex++;
+                                            }
+                                            var accentColor = colorMap[order.WO_Number];
+
+                                            int remainingQty = order.Qty - order.Built_Qty;
+                                            string statusText = "";
+                                            string badgeClass = "";
+                                            string cardClass = "";
+                                            string statusDot = "●";
+
+                                            if (order.Built_Qty >= order.Qty)
+                                            {
+                                                statusText = order.Built_Qty > order.Qty ? "Over Build" : "Complete";
+                                                badgeClass = order.Built_Qty > order.Qty ? "badge-overbuilt" : "badge-complete";
+                                                cardClass = "status-complete";
+                                            }
+                                            else if (order.Built_Qty == 0)
+                                            {
+                                                statusText = $"Not Started · Need {remainingQty}";
+                                                badgeClass = "badge-pending";
+                                                cardClass = "status-flash-red";
+                                            }
+                                            else
+                                            {
+                                                statusText = $"Build {remainingQty} remaining";
+                                                badgeClass = "badge-partial";
+                                                cardClass = "status-flash-orange";
+                                            }
+
+                                            <td rowspan="@span"
+                                                class="droppable-cell @cardClass"
+                                                data-date="@day.ToString("yyyy-MM-dd")">
+
+                                                <div class="workorder-card"
+                                                     style="--card-bg:@accentColor;"
+                                                     data-internal-id="@order.InternalId"
+                                                     data-order-id="@order.WO_Number"
+                                                     data-date="@day.ToString("yyyy-MM-dd")"
+                                                     data-start-hour="@start.ToString("0.##")"
+                                                     data-end-hour="@end.ToString("0.##")"
+                                                     data-pdf-url="@(string.IsNullOrEmpty(order.JobBag_Link) ? "#" : order.JobBag_Link)"
+                                                     title="Click to open job bag">
+
+                                                    <div>
+                                                        <div class="wo-number">@order.WO_Number</div>
+                                                        <div class="wo-desc">
+                                                            <strong>@order.Description</strong><br />
+                                                            @order.ItemName
+                                                        </div>
+
+                                                        <div class="wo-data-row">
+                                                            <span><strong>W/O:</strong> @order.Qty @order.Unit</span>
+                                                            <span><strong>Built:</strong> @order.Built_Qty @order.Unit</span>
+                                                        </div>
+
+                                                        <div class="wo-data-row">
+                                                            <span>@order.MachineLine</span>
+                                                            <span>@order.MachineName</span>
+                                                        </div>
+
+                                                        <span class="wo-badge @badgeClass">@statusDot @statusText</span>
+                                                    </div>
+
+                                                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px; position:relative; z-index:1;">
+                                                        <span class="wo-time">
+                                                            @order.WO_StartTime.ToString(@"hh\:mm") – @order.WO_EndTime.ToString(@"hh\:mm")
+                                                        </span>
+                                                        <a href="https://5262984.app.netsuite.com/app/accounting/transactions/workord.nl?id=@order.InternalId&whence="
+                                                           target="_blank"
+                                                           class="wo-link-btn"
+                                                           onclick="event.stopPropagation()">
+                                                            <i class="bi bi-box-arrow-up-right"></i> NS
+                                                        </a>
+                                                    </div>
+
+                                                </div>
+                                            </td>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <td class="droppable-cell" data-date="@day.ToString("yyyy-MM-dd")"></td>
+                                    }
+                                }
+                                else
+                                {
+                                    <td class="droppable-cell" data-date="@day.ToString("yyyy-MM-dd")"></td>
+                                }
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+    <script>
+        $(function () {
+            let dragStarted = false;
+
+            // ── Theme toggle ──────────────────────────────────
+            const toggle = document.getElementById('themeToggle');
+            const saved  = localStorage.getItem('scheduleTheme');
+            if (saved === 'light') {
+                document.documentElement.setAttribute('data-theme', 'light');
+                toggle.checked = true;
+            }
+            toggle.addEventListener('change', function () {
+                if (this.checked) {
+                    document.documentElement.setAttribute('data-theme', 'light');
+                    localStorage.setItem('scheduleTheme', 'light');
+                } else {
+                    document.documentElement.removeAttribute('data-theme');
+                    localStorage.setItem('scheduleTheme', 'dark');
+                }
+            });
+
+            // ── Auto-submit on control change ─────────────────
+            $('#startDatePicker, #machineNameSelector').on('change', function () {
+                $('#filterForm').submit();
+            });
+
+            // ── Search filter ─────────────────────────────────
+            $('#searchBox').on('keyup', function () {
+                const value = $(this).val().toLowerCase();
+                $('#workOrderBody tr').each(function () {
+                    const text = $(this).text().toLowerCase();
+                    $(this).toggle(value === '' || text.indexOf(value) > -1);
+                });
+            });
+
+            // ── Export to Excel ───────────────────────────────
+            $('#exportBtn').on('click', function () {
+                const wb = XLSX.utils.table_to_book(document.getElementById("workOrderTable"), { sheet: "Work Orders" });
+                XLSX.writeFile(wb, "WorkOrder_Schedule.xlsx");
+            });
+
+            // ── Cards: draggable + clickable ──────────────────
+            $(".workorder-card").each(function () {
+                const card = $(this);
+                const rowH = card.closest("tr").height();
+                const colW = card.closest("td").outerWidth();
+
+                card.draggable({
+                    grid: [colW, rowH],
+                    containment: "#workOrderTable",
+                    start: function () { dragStarted = true; },
+                    stop: function (event, ui) {
+                        setTimeout(() => dragStarted = false, 100);
+
+                        const cx  = ui.offset.left + card.width()  / 2;
+                        const cy  = ui.offset.top  + card.height() / 2;
+                        const $td = $(document.elementFromPoint(cx, cy)).closest("td");
+
+                        if (!$td.length) return;
+                        const newDate = $td.data("date");
+                        if (!newDate) return;
+
+                        const newHour  = parseInt($td.closest("tr").find("td:first").text().split(":")[0], 10);
+                        if (isNaN(newHour)) return;
+
+                        const oldStart = parseInt(card.data("start-hour"), 10);
+                        const oldEnd   = parseInt(card.data("end-hour"),   10);
+                        const delta    = newHour - oldStart;
+
+                        updateWorkOrder(card, newDate, oldStart + delta, oldEnd + delta);
+                    }
+                });
+
+                card.on("click", function () {
+                    if (dragStarted) return;
+                    let pdfUrl     = card.data("pdf-url");
+                    let internalId = card.data("internal-id");
+
+                    if (pdfUrl && pdfUrl !== "#") {
+                        const ts = Date.now();
+                        window.open(pdfUrl + (pdfUrl.includes("?") ? "&" : "?") + "_ts=" + ts, "jobBag_" + ts);
+                    } else if (internalId) {
+                        window.open(`https://5262984.app.netsuite.com/app/accounting/transactions/workord.nl?id=${internalId}&whence=`, "_blank");
+                    } else {
+                        alert("No Job Bag PDF or Work Order ID found.");
+                    }
+                });
+            });
+
+            // ── NetSuite REST update ──────────────────────────
+            function updateWorkOrder(card, newDate, newStartHour, newEndHour) {
+                const internalId = parseInt(card.data("internal-id"), 10);
+                if (!internalId) return;
+
+                const payload = {
+                    WorkOrderId: internalId,
+                    StartDate:   newDate,
+                    EndDate:     newDate,
+                    StartHour:   newStartHour,
+                    EndHour:     newEndHour
+                };
+
+                fetch("/api/netsuite/workorder/update", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                })
+                .then(r => r.ok ? r.json() : r.text().then(t => Promise.reject(t)))
+                .then(() => {
+                    card.data("start-hour", newStartHour);
+                    card.data("end-hour",   newEndHour);
+                    card.data("date",       newDate);
+                })
+                .catch(err => alert("Failed to update work order: " + err));
+            }
+        });
+    </script>
+}

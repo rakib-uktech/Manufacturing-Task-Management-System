@@ -1,0 +1,127 @@
+﻿@page
+@model TPL_TM.Pages.Edit_TaskScheduleModel
+@{
+}
+<div class="modal fade show" id="taskEditModal" tabindex="-1" aria-labelledby="taskEditModalLabel" aria-hidden="true" style="display:block;">
+    <div class="modal-dialog modal-dialog-centered" style="margin-top: 80px;">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title" id="taskEditModalLabel">Edit Task</h5>
+                <a class="btn-close" href="ScheduleCalendar" aria-label="Close" id="closeEditTaskModal"></a>
+            </div>
+            <div class="modal-body">
+                <form method="post" novalidate>
+                    <input type="hidden" asp-for="TaskInfo.Id" />
+                    <div class="form-floating mb-3">
+                        <input class="form-control" list="Edit_Task_NamelistOptions" id="Edit_Task_Name" name="Task_Name" value="@Model.TaskInfo.Task_Name" required placeholder="Task Name" />
+                        <datalist id="Edit_Task_NamelistOptions">
+                            @foreach (var task in Model.TaskList)
+                            {
+                                <option value="@task.Task_Name" data-description="@task.Task_Description">@task.Task_Name</option>
+                            }
+                        </datalist>
+                        <label>Task Name</label>
+                        <div class="invalid-feedback">Task Name is required.</div>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <input class="form-control" id="Edit_Task_Description" name="Task_Description" value="@Model.TaskInfo.Task_Description" required placeholder="Task Description" />
+                        <label>Task Description</label>
+                        <div class="invalid-feedback">Task Description is required.</div>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input asp-for="TaskInfo.Assign_To" class="form-control" required />
+                        <label>Assign To</label>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input asp-for="TaskInfo.Qty" type="number" class="form-control" required min="1" />
+                        <label>Quantity</label>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <select asp-for="TaskInfo.Unit" class="form-select" required>
+                            <option value="">Select Unit</option>
+                            <option value="Piece">Piece</option>
+                            <option value="Case">Case</option>
+                            <option value="Pallet">Pallet</option>
+                            <option value="Kilogram">Kilogram</option>
+                        </select>
+                        <label>Unit</label>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input asp-for="TaskInfo.Task_Date" type="date" class="form-control" required />
+                        <label>Task Date</label>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input asp-for="TaskInfo.Task_StartTime" type="time" class="form-control" required />
+                        <label>Start Time</label>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input asp-for="TaskInfo.Task_EndTime" type="time" class="form-control" required />
+                        <label>End Time</label>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <select asp-for="TaskInfo.Priority_Level" class="form-select" required>
+                            <option value="">Select Priority</option>
+                            <option value="High">High</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Low">Low</option>
+                        </select>
+                        <label>Priority Level</label>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <textarea asp-for="TaskInfo.Comments" class="form-control" placeholder="Comments"></textarea>
+                        <label>Comments</label>
+                    </div>
+
+                    <button type="submit" class="w-100 btn btn-lg btn-warning">Update Task</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var myModal = new bootstrap.Modal(document.getElementById('taskEditModal'), {
+                backdrop: 'static',
+                keyboard: false
+            });
+            myModal.show();
+
+            document.getElementById("closeEditTaskModal").addEventListener("click", function () {
+                window.location.href = "ScheduleCalendr";
+            });
+
+            // Form validation
+            (function () {
+                'use strict';
+                var form = document.getElementById('assign-task-form');
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            })();
+        });
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const taskNameInput = document.getElementById('Edit_Task_Name');
+            const taskDescriptionInput = document.getElementById('Edit_Task_Description');
+            const taskOptions = Array.from(document.querySelectorAll('#Edit_Task_NamelistOptions option'));
+
+            function updateDescription() {
+                const selectedName = taskNameInput.value.trim();
+                const matched = taskOptions.find(option => option.value === selectedName);
+                if (matched) {
+                    taskDescriptionInput.value = matched.getAttribute('data-description') || '';
+                }
+            }
+            taskNameInput.addEventListener('input', updateDescription);
+            taskNameInput.addEventListener('change', updateDescription);
+        });
+    </script>
+}

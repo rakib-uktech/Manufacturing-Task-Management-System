@@ -1,0 +1,75 @@
+﻿@page
+@model TPL_TM.Pages.DowntimeReasonModel
+
+<div class="modal fade show" style="display:block;" id="downtimeReasonModal">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:450px;">
+        <div class="modal-content shadow-lg rounded-4">
+
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Add Downtime Reason</h5>
+                <a href="/DowntimeReasonList" class="btn-close btn-close-white"></a>
+            </div>
+
+            <div class="modal-body">
+
+                @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+                {
+                    <div class="alert alert-danger">@Model.ErrorMessage</div>
+                }
+
+                @if (!string.IsNullOrEmpty(Model.SuccessMessage))
+                {
+                    <div class="alert alert-success">@Model.SuccessMessage</div>
+                }
+
+                <form method="post">
+
+                    <!-- Reason Name -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Reason Name</label>
+                        <input asp-for="ReasonName" class="form-control" placeholder="e.g. Maintenance" required />
+                    </div>
+
+                    <!-- Description -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Description</label>
+                        <textarea asp-for="Description" class="form-control" placeholder="Optional description"></textarea>
+                    </div>
+
+                    <!-- Machine Type -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Machine Type</label>
+                        <select asp-for="Machine_Type" class="form-select">
+                            <option value="">Select Machine Type</option>
+                            @foreach (var m in Model.MachineTypes)
+                            {
+                                <option value="@m">@m</option>
+                            }
+                        </select>
+                    </div>
+
+                    <!-- Active Checkbox -->
+                    <div class="mb-3 form-check">
+                        <input asp-for="Active" class="form-check-input" />
+                        <label class="form-check-label fw-bold">Active</label>
+                    </div>
+
+                    <button class="btn btn-primary w-100">
+                        <i class="bi bi-plus-circle me-1"></i>Add Downtime Reason
+                    </button>
+
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const modal = new bootstrap.Modal(document.getElementById("downtimeReasonModal"), {
+            backdrop: "static", keyboard: false
+        });
+        modal.show();
+    });
+</script>

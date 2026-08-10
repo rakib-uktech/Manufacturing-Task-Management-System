@@ -1,0 +1,567 @@
+﻿@page
+@model TPL_TM.Pages.Production_DashboardModel
+@using System.Text.RegularExpressions
+@{
+    Layout = null; // remove if you use a shared layout
+}
+@functions {
+    string GetShiftRowClass(string shiftLetter)
+    {
+        return shiftLetter switch
+        {
+            "A" => "table-success",
+            "B" => "table-warning",
+            "C" => "table-info",
+            _ => "table-light"
+        };
+    }
+}
+@{
+    var shiftCardColors = new[] { "#f0f8ff", "#ffe4e1", "#e6ffe6", "#fffacd", "#d8bfd8" };
+    int colorIndex = 0;
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Production Count Summary</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
+
+    <style>
+        .table td, .table th {
+            vertical-align: middle !important;
+        }
+
+        .machine-breakdown td, .machine-breakdown th {
+            border-left: 1px solid #dee2e6;
+            border-right: 1px solid #dee2e6;
+        }
+
+            .machine-breakdown td:first-child {
+                background-color: #f8f9fa;
+                font-weight: 600;
+            }
+
+        .icon-inherit {
+            color: inherit;
+            transition: color 0.2s ease-in-out;
+        }
+
+        .btn-primary:hover .icon-inherit {
+            color: inherit;
+        }
+
+        .chart-container {
+            width: 100%;
+            height: 220px;
+        }
+
+        @@media (max-width: 576px) {
+            .chart-container {
+                height: 160px;
+            }
+        }
+
+        .shift-card {
+            background-clip: padding-box;
+        }
+
+            .shift-card .table-area {
+                display: flex;
+                flex-direction: column;
+                flex: 1 1 auto;
+                min-height: 0;
+                overflow: hidden;
+            }
+
+                .shift-card .table-area .table-responsive {
+                    overflow-y: auto;
+                }
+
+        .dataTables_filter {
+            text-align: left !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid mt-4">
+
+        <!-- Header -->
+        <div class="card shadow p-3 mb-4">
+            <div class="container-fluid bg-success text-white py-3 mb-4 rounded shadow">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h2 class="mb-0"><i class="bi bi-bar-chart-line me-2"></i> Production Count Summary</h2>
+                        <p class="mb-0">Monitor and track all production records efficiently.</p>
+                    </div>
+                    <div class="col-md-4 text-md-end mt-3 mt-md-0 d-flex justify-content-end align-items-center">
+                        <form method="get" class="d-flex align-items-center mb-0 me-2">
+                            <input asp-for="FilterDate" type="date" class="form-control form-control-sm me-2"
+                                   style="width:150px" value="@(Model.FilterDate?.ToString("yyyy-MM-dd"))" />
+                            <button type="submit" class="btn btn-light btn-sm d-flex align-items-center justify-content-center text-primary">
+                                <i class="bi bi-calendar-check icon-inherit"></i>
+                            </button>
+                        </form>
+                        <a id="exportSummaryBtn" class="btn btn-light text-primary"><i class="bi bi-download me-1"></i> Export Summary</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cards -->
+        <div class="position-relative mb-5">
+            <button class="btn btn-light shadow position-absolute top-50 start-0 translate-middle-y z-3"
+                    style="border-radius: 50%;" onclick="scrollCards('left')">
+                ‹
+            </button>
+
+            <div id="cardsContainer" class="d-flex flex-row flex-nowrap overflow-x-auto overflow-y-hidden"
+                 style="scroll-behavior: smooth; -webkit-overflow-scrolling: touch;">
+                @foreach (var summary in Model.listSummary)
+                {
+                    var bgColor = shiftCardColors[colorIndex % shiftCardColors.Length];
+                    colorIndex++;
+
+                    <div class="col-lg-4 col-md-6 mb-4 p-2" style="flex: 0 0 auto; min-width: 360px;">
+                        @{
+                            string machineKey = Regex.Replace((summary.Machine_Line ?? "").Trim().ToUpper(), @"[^A-Z0-9]", "_");
+
+                            // Shift-wise breakdown aggregation
+                            var selectedDate = Model.FilterDate?.Date ?? DateTime.Today;
+                            var targetLookup = Model.listTargetSummary
+                            .GroupBy(t => t.Machine_Name)
+                            .ToDictionary(g => g.Key, g => g.Sum(x => x.Target_Count));
+
+                            var machineData = Model.listDailySummary
+                            .Where(d => d.Machine_Line == summary.Machine_Line && d.Production_Date.Date == selectedDate)
+                            .GroupBy(d => d.Shift_Letter)
+                            .ToDictionary(
+                            g => g.Key,
+                            g => g.GroupBy(x => x.Machine_Name)
+                            .Select(mg => new
+                            {
+                                Machine_Name = mg.Key,
+                                Units = mg.Sum(x => x.Total_Product_Count),
+                                Target = targetLookup.ContainsKey(mg.Key) ? targetLookup[mg.Key] : 0
+                            }).ToList()
+                            );
+
+                            // Daily totals for top summary
+                            int totalActual = (int)machineData.Values.SelectMany(s => s).Sum(m => m.Units);
+                            int totalTarget = (int)machineData.Values.SelectMany(s => s).Sum(m => m.Target);
+                            double achievementPercent = totalTarget > 0 ? Math.Round((double)totalActual / totalTarget * 100, 1) : 0;
+
+                            string cardColor, barColor;
+                            if (achievementPercent < 80) { cardColor = "#dc3545"; barColor = "#b02a37"; }
+                            else if (achievementPercent < 95) { cardColor = "#ffc107"; barColor = "#d39e00"; }
+                            else { cardColor = "#198754"; barColor = "#146c43"; }
+
+                            string titleTextColor = achievementPercent >= 80 && achievementPercent < 95 ? "text-dark" : "text-white";
+
+                            int shiftCount = machineData.Keys.Count;
+
+                            // Machine chart list
+                            var machineChartList = machineData.SelectMany(kv => kv.Value)
+                            .GroupBy(x => x.Machine_Name)
+                            .Select(g => new { name = g.Key, actual = g.Sum(x => x.Units), target = g.Sum(x => x.Target) })
+                            .ToList();
+                        }
+
+                        <!-- Shift-wise card (NOW ON TOP) -->
+                        <div class="card mt-2 shadow-sm shift-card" style="background-color:@bgColor;">
+                            <div class="card-body p-2 d-flex flex-column" data-machinekey="@machineKey">
+
+                                <!-- ✅ MACHINE LINE HEADER (NEW - LIKE TOP SUMMARY) -->
+                                <h5 class="card-title fw-bold text-center mb-2">
+                                    @summary.Machine_Line
+                                </h5>
+
+                                <h6 class="card-title text-center mb-2">
+                                    Machine-wise Target vs Actual
+                                </h6>
+
+                                <!-- Chart -->
+                                <div class="chart-container mb-2">
+                                    <canvas id="machineChart_@machineKey" style="width:100%; height:100%;"></canvas>
+                                </div>
+
+                                <hr class="my-2" />
+
+                                <div class="table-area">
+                                    <h6 class="card-title text-center mb-2">Shift-wise Breakdown</h6>
+
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-bordered align-middle text-start mb-0 machine-breakdown"
+                                               style="background-color:@bgColor;">
+
+                                            <thead style="background-color:@bgColor; color: inherit;">
+                                                <tr>
+                                                    <th style="width:25%;">Day / Date</th>
+                                                    <th style="width:20%;">Shift</th>
+                                                    <th style="width:25%;">Machine Name</th>
+                                                    <th style="width:15%;">Actual</th>
+                                                    <th style="width:15%;">Target</th>
+                                                </tr>
+                                            </thead>
+
+                                            <tbody>
+                                                @{
+                                                    var allShifts = new[] { "A", "B", "C" };
+                                                    var renderedShifts = allShifts.Where(s => machineData.ContainsKey(s)).ToList();
+                                                    var dayName = selectedDate.ToString("dddd");
+                                                }
+
+                                            @functions {
+                                                string GetPerformanceColor(long actual, long target)
+                                                {
+                                                    if (target <= 0) return "text-secondary";
+
+                                                    double percent = (double)actual / target * 100;
+
+                                                    if (percent < 80) return "text-danger fw-bold";
+                                                    else if (percent < 95) return "text-warning fw-bold";
+                                                    else return "text-success fw-bold";
+                                                }
+                                            }
+
+                                            @for (int i = 0; i < renderedShifts.Count; i++)
+                                            {
+                                                var shiftLetter = renderedShifts[i];
+                                                var machines = machineData[shiftLetter];
+
+                                                var machineRows = machines.Select(m => new
+                                                {
+                                                    Name = m.Machine_Name,
+                                                    Actual = m.Units,
+                                                    Target = m.Target,
+                                                    ColorClass = GetPerformanceColor(m.Units, m.Target)
+                                                }).ToList();
+
+                                                var machineNamesText = string.Join("<br>", machineRows.Select(m =>
+                                                $"<span class='{m.ColorClass}'>{m.Name}</span>"));
+
+                                                var actualText = string.Join("<br>", machineRows.Select(m =>
+                                                $"<span class='{m.ColorClass}'>{m.Actual:N0}</span>"));
+
+                                                var targetText = string.Join("<br>", machineRows.Select(m =>
+                                                $"<span class='{m.ColorClass}'>{m.Target:N0}</span>"));
+                                                <tr>
+
+                                                    @if (i == 0)
+                                                    {
+                                                        <td class="align-middle text-center fw-bold"
+                                                            rowspan="@renderedShifts.Count"
+                                                            style="background-color:@bgColor;">
+                                                            <div>@dayName</div>
+                                                            <div class="small">@selectedDate.ToString("dd/MM/yyyy")</div>
+                                                        </td>
+                                                    }
+
+                                                    <td class="align-middle text-center" style="background-color:@bgColor;">
+                                                        <strong>@shiftLetter</strong>
+                                                    </td>
+
+                                                    <td class="align-middle text-center" style="background-color:@bgColor;">
+                                                        @Html.Raw(machineNamesText)
+                                                    </td>
+
+                                                    <td class="align-middle text-end" style="background-color:@bgColor;">
+                                                        @Html.Raw(actualText)
+                                                    </td>
+
+                                                    <td class="align-middle text-end" style="background-color:@bgColor;">
+                                                        @Html.Raw(targetText)
+                                                    </td>
+                                                </tr>
+                                            }
+
+                                            <!-- Daily totals -->
+                                            <tr class="fw-bold" style="border-top:2px solid #000;">
+                                                <td colspan="3" class="text-end" style="background-color:@bgColor;">
+                                                    Daily Total:
+                                                </td>
+                                                <td class="text-end" style="background-color:@bgColor;">
+                                                    @totalActual.ToString("N0")
+                                                </td>
+                                                <td class="text-end" style="background-color:@bgColor;">
+                                                    @totalTarget.ToString("N0")
+                                                </td>
+                                            </tr>
+
+                                            <tr class="fw-bold">
+                                                <td colspan="3" class="text-end" style="background-color:@bgColor;">
+                                                    Achievement:
+                                                </td>
+                                                <td colspan="2" class="text-end" style="background-color:@bgColor;">
+                                                    @achievementPercent %
+                                                </td>
+                                            </tr>
+
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+
+                        <!-- Top summary card (NOW BELOW) -->
+                        <div class="card mt-3 shadow border-0" style="background-color:@cardColor; color:#fff;">
+                            <div class="card-body text-center">
+                                <h5 class="card-title fw-bold mb-2 @titleTextColor">@summary.Machine_Line</h5>
+
+                                <div class="d-flex justify-content-around align-items-center mb-3">
+                                    <div>
+                                        <h6 class="mb-1 text-light">🎯 Target</h6>
+                                        <h4 class="fw-bold text-light">@totalTarget.ToString("N0")</h4>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1 text-light">⚙️ Produced</h6>
+                                        <h4 class="fw-bold text-white">@totalActual.ToString("N0")</h4>
+                                    </div>
+                                </div>
+
+                                <div class="progress mb-2" style="height:10px;border-radius:5px;background-color: rgba(255,255,255,0.25);">
+                                    <div class="progress-bar" role="progressbar"
+                                         style="width:@achievementPercent%; background-color:@barColor;"
+                                         aria-valuenow="@achievementPercent" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+
+                                <p class="mb-2 small">
+                                    Achievement: <strong>@achievementPercent%</strong> |
+                                    Date: <span class="fw-semibold">@selectedDate.ToString("dd/MM/yyyy")</span>
+                                </p>
+
+                                <!-- Top aggregated chart -->
+                                <div class="card mt-2 shadow-sm" style="background: rgba(255,255,255,0.95); color:#000;">
+                                    <div class="card-body p-2">
+                                        <h6 class="card-title text-center mb-2">Target vs Production - @summary.Machine_Line</h6>
+                                        <div style="height:250px;">
+                                            <canvas id="chart_@machineKey" style="width:100%; height:100%;"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <script>
+                            (function () {
+                                if (!window.machineDataByLine) window.machineDataByLine = {};
+                                window.machineDataByLine["@machineKey"] =
+                                    @Html.Raw(System.Text.Json.JsonSerializer.Serialize(machineChartList));
+                            })();
+                        </script>
+
+                    </div>
+                }
+            </div>
+
+            <button class="btn btn-light shadow position-absolute top-50 end-0 translate-middle-y z-3"
+                    style="border-radius:50%;" onclick="scrollCards('right')">
+                ›
+            </button>
+        </div>
+        <!-- Detailed production table -->
+        <div class="card shadow p-3 mt-4">
+            <div class="container-fluid bg-primary text-white py-3 mb-4 rounded shadow">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h2 class="mb-0"><i class="bi bi-bar-chart-fill me-2"></i> Production Count Details</h2>
+                        <p class="mb-0">Monitor and track all production records efficiently.</p>
+                    </div>
+                    <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                        <a id="exportBtn" class="btn btn-light text-primary"><i class="bi bi-download me-1"></i> Export Data</a>
+                    </div>
+                </div>
+            </div>
+
+            <input type="text" id="prodSearch" class="form-control mb-3" placeholder="Search production records...">
+
+            <div class="table-responsive">
+                <table id="prodTable" class="table table-striped table-bordered table-hover w-100">
+                    <thead class="bg-primary text-white">
+                        <tr>
+                            <th>ID</th>
+                            <th>Shift Letter</th>
+                            <th>Start Time</th>
+                            <th>End Time</th>
+                            <th>Username</th>
+                            <th>Product Count</th>
+                            <th>Machine Line</th>
+                            <th>Machine Name</th>
+                            <th>Product Line</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var record in Model.listProduction)
+                        {
+                            <tr>
+                                <td>@record.Id</td>
+                                <td>@record.Shift_Letter</td>
+                                <td>@record.TimestampStartDisplay</td>
+                                <td>@record.TimestampEndDisplay</td>
+                                <td>@record.Username</td>
+                                <td>@record.Product_Count</td>
+                                <td>@record.Machine_Line</td>
+                                <td>@record.Machine_Name</td>
+                                <td>@record.Product_Line</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Scripts: jQuery, Bootstrap, Chart.js, DataTables -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css" />
+
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+
+    <script>
+        $(document).ready(function () {
+
+            // ----------------------------
+            // Helper functions
+            // ----------------------------
+            function normalizeKey(s) {
+                return (s || '').toString().trim().toUpperCase().replace(/[^A-Z0-9]/g, '_');
+            }
+
+            function renderChart(canvas, labels, datasets, opts = {}) {
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+                if (canvas._chartInstance) canvas._chartInstance.destroy();
+
+                const defaultOptions = {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const val = context.formattedValue;
+                                    return `${context.dataset.label}: ${val && val.toString ? val.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") : val}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, title: { display: true, text: 'Units' }, ticks: { callback: v => Number(v).toLocaleString() } },
+                        x: { ticks: { callback: function(v){ const lbl=this.getLabelForValue?this.getLabelForValue(v):v; return lbl.length>20?lbl.substring(0,18)+'…':lbl; } } }
+                    }
+                };
+
+                const options = $.extend(true, {}, defaultOptions, opts);
+                canvas._chartInstance = new Chart(ctx, { type: 'bar', data: { labels, datasets }, options });
+            }
+
+            // ----------------------------
+            // Top summary charts
+            // ----------------------------
+            document.querySelectorAll('canvas[id^="chart_"]').forEach(canvas => {
+                const key = canvas.id.substring(6);
+                const data = window.machineDataByLine?.[key] || [];
+                if (!data || data.length === 0) return;
+
+                const totalTarget = data.reduce((sum, x) => sum + (x.target || 0), 0);
+                const totalActual = data.reduce((sum, x) => sum + (x.actual || 0), 0);
+
+                renderChart(canvas, ['Daily Total'], [
+                    { label: 'Target', data: [totalTarget], backgroundColor: 'rgba(255,193,7,0.85)', borderColor: 'rgba(255,193,7,1)', borderWidth: 1 },
+                    { label: 'Actual', data: [totalActual], backgroundColor: 'rgba(25,135,84,0.85)', borderColor: 'rgba(25,135,84,1)', borderWidth: 1 }
+                ], { plugins: { legend: { display: false } } });
+            });
+
+            // ----------------------------
+            // Shift-wise machine charts
+            // ----------------------------
+            if (window.machineDataByLine) {
+                Object.keys(window.machineDataByLine).forEach(machineKey => {
+                    const canvas = document.getElementById(`machineChart_${machineKey}`);
+                    if (!canvas) return;
+
+                    const list = window.machineDataByLine[machineKey];
+                    if (!list || list.length === 0) return;
+
+                    const labels = list.map(x => x.name);
+                    const colors = ['#FF6384','#36A2EB','#FFCE56','#4BC0C0','#9966FF','#FF9F40','#8AC926','#1982C4','#6A4C93','#F72585'];
+                    const targetColors = list.map((_, idx) => colors[idx % colors.length]);
+                    const actualColors = list.map((_, idx) => colors[(idx+3) % colors.length]);
+
+                    renderChart(canvas, labels, [
+                        { label: 'Target', data: list.map(x=>x.target||0), backgroundColor: targetColors, borderColor: targetColors, borderWidth: 1 },
+                        { label: 'Actual', data: list.map(x=>x.actual||0), backgroundColor: actualColors, borderColor: actualColors, borderWidth: 1 }
+                    ], { plugins: { legend: { position: 'top' } } });
+                });
+            }
+
+            // ----------------------------
+            // Normalize shift-card heights
+            // ----------------------------
+            function normalizeShiftCardHeights() {
+                const cards = document.querySelectorAll('.shift-card');
+                let max = 0;
+                cards.forEach(c => { c.style.height='auto'; const h=c.offsetHeight; if(h>max) max=h; });
+                cards.forEach(c => c.style.height=max+'px');
+            }
+            setTimeout(normalizeShiftCardHeights, 600);
+            window.addEventListener('resize', () => setTimeout(normalizeShiftCardHeights, 250));
+
+            // ----------------------------
+            // Horizontal scroll for cards
+            // ----------------------------
+            window.scrollCards = function(direction){
+                const container = document.getElementById("cardsContainer");
+                const cardEl = container.querySelector(".col-lg-4");
+                if(!container || !cardEl) return;
+                container.scrollBy({ left: direction==='left'? -cardEl.offsetWidth-16: cardEl.offsetWidth+16, behavior:'smooth' });
+            };
+
+            // ----------------------------
+            // DataTable initialization
+            // ----------------------------
+            if ($.fn.DataTable) {
+                var table = $('#prodTable').DataTable({
+                    pageLength: 10,
+                    lengthMenu: [10, 25, 50, 100],
+                    ordering: true,
+                    dom: '<"d-flex justify-content-between align-items-center mb-2"lfB>rtip',
+                    buttons: [
+                        { extend: 'excel', text: '<i class="bi bi-file-earmark-excel"></i> Excel', className: 'btn btn-success btn-sm' },
+                        { extend: 'csv', text: '<i class="bi bi-filetype-csv"></i> CSV', className: 'btn btn-primary btn-sm' },
+                        { extend: 'pdf', text: '<i class="bi bi-file-earmark-pdf"></i> PDF', className: 'btn btn-danger btn-sm' },
+                        { extend: 'print', text: '<i class="bi bi-printer"></i> Print', className: 'btn btn-secondary btn-sm' }
+                    ]
+                });
+
+                // Custom search input outside table
+                $('#prodSearch').on('keyup', function () {
+                    table.search(this.value).draw();
+                });
+
+                // Hide old export button if not used
+                $('#exportBtn').hide();
+            }
+
+        });
+    </script>
+</body>
+</html>

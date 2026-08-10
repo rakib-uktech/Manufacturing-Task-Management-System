@@ -1,0 +1,56 @@
+﻿@page
+@model TPLPLM.Areas.Identity.Pages.Account.Manage.DeleteUserModel
+@{
+    ViewData["Title"] = "Delete User";
+}
+
+<div class="modal fade show" id="deleteUserModal" tabindex="-1" aria-labelledby="deleteUserModalLabel" aria-hidden="true" style="display: block;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header bg-danger text-white rounded-top-4">
+                <h5 class="modal-title" id="deleteUserModalLabel">
+                    <i class="bi bi-person-x me-2"></i> Delete User
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" id="closeDeleteUserModal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="alert alert-warning">
+                    <p><strong>Are you sure you want to delete this user? This action cannot be undone.</strong></p>
+                </div>
+                <div class="mb-3">
+                    <p><strong>User:</strong> @Model.UserName (@Model.UserEmail)</p>
+                </div>
+
+                <form method="post">
+                    <input type="hidden" asp-for="Input.UserId" />
+
+                    <div class="form-floating mb-3">
+                        <input asp-for="Input.AdminPassword" class="form-control" type="password" placeholder="Enter your admin password" />
+                        <label asp-for="Input.AdminPassword">Admin Password</label>
+                        <span asp-validation-for="Input.AdminPassword" class="text-danger"></span>
+                    </div>
+
+                    <button type="submit" class="btn btn-danger w-100">Delete User</button>
+                    <a asp-page="./UserList" class="btn btn-secondary w-100 mt-2">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var modal = new bootstrap.Modal(document.getElementById('deleteUserModal'), {
+                backdrop: 'static',
+                keyboard: false
+            });
+            modal.show();
+
+            document.getElementById("closeDeleteUserModal").addEventListener("click", function () {
+                window.location.href = "/Identity/Account/Manage/UserList";
+            });
+        });
+    </script>
+}

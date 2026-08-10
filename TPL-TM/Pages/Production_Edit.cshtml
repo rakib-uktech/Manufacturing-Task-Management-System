@@ -1,0 +1,133 @@
+﻿@page
+@model TPL_TM.Pages.Production_EditModel
+@{
+}
+
+<!-- Production Edit Modal -->
+<div class="modal fade show" id="editProductionModal" tabindex="-1" aria-labelledby="editProductionModalLabel" aria-hidden="true" style="display: block;">
+    <div class="modal-dialog modal-dialog-centered" style="margin-top: 80px;">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="editProductionModalLabel">
+                    @(Model.Production.Id > 0 ? "Update Production Record" : "Add Production Record")
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="closeEditProductionModal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="edit-production-form" method="post" novalidate>
+                    <input type="hidden" name="Id" value="@Model.Production.Id" />
+
+                    <div class="form-floating mb-3">
+                        <input class="form-control" list="ShiftLetterList" name="Shift_Letter" value="@Model.Production.Shift_Letter" required placeholder="Shift Letter" />
+                        <datalist id="ShiftLetterList">
+                            @foreach (var shift in Model.ShiftLetters)
+                            {
+                                <option value="@shift"></option>
+                            }
+                        </datalist>
+                        <label>Shift Letter</label>
+                        <div class="invalid-feedback">Shift Letter is required.</div>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <input class="form-control" name="Wo_Number" value="@Model.Production.Wo_Number" required placeholder="WO Number" />
+                        <label>WO Number</label>
+                        <div class="invalid-feedback">WO Number is required.</div>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <input class="form-control" name="Batch_Identifier" value="@Model.Production.Batch_Identifier" required placeholder="Batch ID" />
+                        <label>Batch ID</label>
+                        <div class="invalid-feedback">Batch ID is required.</div>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <input type="datetime-local" class="form-control" name="Timestamp_Start" value="@(Model.Production.Timestamp_Start?.ToString("yyyy-MM-ddTHH:mm"))" placeholder="Start Time" />
+                        <label>Start Time</label>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <input type="datetime-local" class="form-control" name="Timestamp_End" value="@(Model.Production.Timestamp_End?.ToString("yyyy-MM-ddTHH:mm"))" placeholder="End Time" />
+                        <label>End Time</label>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <input type="number" class="form-control" name="Product_Count" value="@Model.Production.Product_Count" min="0" required placeholder="Count" />
+                        <label>Count</label>
+                        <div class="invalid-feedback">Count must be at least 0.</div>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <input class="form-control" name="Machine_Line" value="@Model.Production.Machine_Line" placeholder="Machine Line" />
+                        <label>Machine Line</label>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <input class="form-control" list="MachineNameList" name="Machine_Name" value="@Model.Production.Machine_Name" placeholder="Machine Name" />
+                        <datalist id="MachineNameList">
+                            @foreach (var machine in Model.MachineNames)
+                            {
+                                <option value="@machine"></option>
+                            }
+                        </datalist>
+                        <label>Machine Name</label>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <input class="form-control" name="Product_Line" value="@Model.Production.Product_Line" placeholder="Product Line" />
+                        <label>Product Line</label>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <input class="form-control" name="Part_Number" value="@Model.Production.Part_Number" placeholder="Part Number" />
+                        <label>Part Number</label>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <input class="form-control" name="Item_Description" value="@Model.Production.Item_Description" placeholder="Item Description" />
+                        <label>Item Description</label>
+                    </div>
+
+                    <button type="submit" class="w-100 btn btn-lg btn-success">
+                        @(Model.Production.Id > 0 ? "Update Production" : "Submit Production")
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const isUser = @User.IsInRole("User").ToString().ToLower();
+
+            var myModal = new bootstrap.Modal(document.getElementById('editProductionModal'), {
+                backdrop: 'static',
+                keyboard: false
+            });
+            myModal.show();
+
+            document
+            .getElementById("closeEditProductionModal")
+            .addEventListener("click", function () {
+
+                if (isUser) {
+                    window.location.href = "/Operator_Index";
+                } else {
+                    window.location.href = "/ProductionReport";
+                }
+            });
+
+            // Update modal title and button text dynamically
+            var prodId = document.querySelector('input[name="Id"]').value;
+            if (prodId > 0) {
+                document.getElementById('editProductionModalLabel').innerText = "Update Production Record";
+                document.querySelector('button[type="submit"]').innerText = "Update Production";
+            } else {
+                document.getElementById('editProductionModalLabel').innerText = "Add Production Record";
+                document.querySelector('button[type="submit"]').innerText = "Submit Production";
+            }
+        });
+    </script>
+}

@@ -1,0 +1,215 @@
+﻿@page
+@model TPL_TM.Pages.Shift_EditModel
+@{
+    ViewData["Title"] = "Edit Shift";
+}
+
+<div class="modal fade show" id="shiftEditModal" tabindex="-1" aria-labelledby="shiftEditModalLabel" aria-hidden="true" style="display:block;">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 600px; margin-top:80px;">
+        <div class="modal-content shadow-lg border-0 rounded-4">
+            <div class="modal-header bg-primary text-white d-flex align-items-center rounded-top-4">
+                <i class="bi bi-clock-history me-2 fs-4"></i>
+                <h5 class="modal-title fw-semibold" id="shiftEditModalLabel">Edit Shift</h5>
+                <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal" aria-label="Close" id="closeShiftEditModal"></button>
+            </div>
+
+            <div class="modal-body p-4">
+                @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+                {
+                    <div class="alert alert-danger">@Model.ErrorMessage</div>
+                }
+
+                <form id="shift-edit-form" method="post" novalidate class="needs-validation">
+                    <input type="hidden" asp-for="Id" />
+
+                    <!-- Work Order -->
+                    <div class="mb-3">
+                        <label class="form-label">Work Order #</label>
+                        <input class="form-control" list="WorkOrderOptions" id="Wo_Number" asp-for="WorkOrderNumber" required />
+                        <datalist id="WorkOrderOptions">
+                            @foreach (var wo in Model.WorkOrders)
+                            {
+                                <option value="@wo.WorkOrder"
+                                        data-part="@wo.PartNumber"
+                                        data-desc="@wo.ItemDescription"
+                                        data-machine="@wo.MachineName"
+                                        data-machineline="@wo.MachineLine"
+                                        data-productline="@wo.ProductLine">
+                                </option>
+                            }
+                        </datalist>
+                    </div>
+
+                    <!-- Assembly Item -->
+                    <div class="mb-3">
+                        <label class="form-label">Assembly Item</label>
+                        <input class="form-control" id="Assembly_Item" asp-for="WorkOrderItem" readonly />
+                    </div>
+
+                    <!-- Item Description -->
+                    <div class="mb-3">
+                        <label class="form-label">Item Description</label>
+                        <input class="form-control" id="Assembly_Description" asp-for="WorkOrderDescription" readonly />
+                    </div>
+
+                    <!-- Machine Line -->
+                    <div class="mb-3">
+                        <label class="form-label">Machine Line</label>
+                        <select class="form-select" asp-for="Machine_Line" id="ShiftInfo_Machine_Line" required>
+                            <option value="">Select Machine Line</option>
+                            @foreach (var ml in Model.MachineLineList)
+                            {
+                                <option value="@ml.Value" selected="@(ml.Selected ? "selected" : null)">@ml.Text</option>
+                            }
+                        </select>
+                    </div>
+
+                    <!-- Machine Name -->
+                    <div class="mb-3">
+                        <label class="form-label">Machine Name</label>
+                        <select class="form-select" asp-for="Machine_Name" id="ShiftInfo_Machine_Name" required>
+                            <option value="">Select Machine Name</option>
+                            @foreach (var mn in Model.MachineNameList)
+                            {
+                                <option value="@mn.Value" selected="@(mn.Selected ? "selected" : null)">@mn.Text</option>
+                            }
+                        </select>
+                    </div>
+
+                    <!-- Product Line -->
+                    <div class="mb-3">
+                        <label class="form-label">Product Line</label>
+                        <select class="form-select" asp-for="Product_Line" id="ShiftInfo_Product_Line" required>
+                            <option value="">Select Product Line</option>
+                            @foreach (var pl in Model.ProductLineList)
+                            {
+                                <option value="@pl.Value" selected="@(pl.Selected ? "selected" : null)">@pl.Text</option>
+                            }
+                        </select>
+                    </div>
+
+                    <!-- Shift Start -->
+                    <div class="form-floating mb-3">
+                        <input type="datetime-local" class="form-control" asp-for="Shift_Start_Time"
+                               value="@(Model.Shift_Start_Time?.ToString("yyyy-MM-ddTHH:mm"))" required />
+                        <label>Shift Start Time</label>
+                        <div class="invalid-feedback">Please enter a valid start time.</div>
+                    </div>
+
+                    <!-- Shift End -->
+                    <div class="form-floating mb-3">
+                        <input type="datetime-local" class="form-control" asp-for="Shift_End_Time"
+                               value="@(Model.Shift_End_Time?.ToString("yyyy-MM-ddTHH:mm"))" />
+                        <label>Shift End Time</label>
+                    </div>
+
+                    <!-- Shift Active -->
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" asp-for="Shift_Active" id="ShiftActiveCheck">
+                        <label class="form-check-label" for="ShiftActiveCheck">Shift Active</label>
+                    </div>
+
+                    <!-- Handover Rating -->
+                    <div class="form-floating mb-3">
+                        <input type="number" class="form-control" asp-for="Handover_Rating" min="0" max="10" />
+                        <label>Handover Rating</label>
+                    </div>
+
+                    <!-- Created By -->
+                    <div class="form-floating mb-3">
+                        <input type="text" class="form-control" asp-for="Created_By" />
+                        <label>Created By</label>
+                    </div>
+
+                    <!-- Authorized By -->
+                    <div class="form-floating mb-3">
+                        <input type="text" class="form-control" asp-for="Authorized_By" />
+                        <label>Authorized By</label>
+                    </div>
+
+                    <!-- Comment -->
+                    <div class="form-floating mb-3">
+                        <textarea class="form-control" asp-for="Comment" rows="4"></textarea>
+                        <label>Comment</label>
+                    </div>
+
+                    <button type="submit" class="btn btn-lg btn-success w-100 shadow-sm rounded-3">
+                        <i class="bi bi-check-circle me-2"></i>Update Shift
+                    </button>
+                    <a href="/Shift_Report" class="btn btn-secondary w-100 mt-2 shadow-sm rounded-3 text-center">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const modal = new bootstrap.Modal(document.getElementById('shiftEditModal'), { backdrop: 'static', keyboard: false });
+            modal.show();
+
+            document.getElementById("closeShiftEditModal").addEventListener("click", function () {
+                window.location.href = "/Shift_Report";
+            });
+
+            // Form validation
+            (function () {
+                'use strict';
+                const form = document.getElementById('shift-edit-form');
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            })();
+        });
+    </script>
+
+    <script>
+                document.addEventListener("DOMContentLoaded", function () {
+            const woInput = document.getElementById("Wo_Number");
+            const asmInput = document.getElementById("Assembly_Item");
+            const descInput = document.getElementById("Assembly_Description");
+
+            const machineNameSelect = document.getElementById("ShiftInfo_Machine_Name");
+            const machineLineSelect = document.getElementById("ShiftInfo_Machine_Line");
+            const productLineSelect = document.getElementById("ShiftInfo_Product_Line");
+
+            const options = Array.from(document.querySelectorAll("#WorkOrderOptions option"));
+
+            function setSelectValue(select, value) {
+                if (!value) return;
+                let optionExists = Array.from(select.options).some(o => o.value === value);
+                if (!optionExists) {
+                    const newOpt = new Option(value, value, true, true);
+                    select.add(newOpt);
+                }
+                select.value = value;
+            }
+
+            woInput.addEventListener("input", function () {
+                const match = options.find(o => o.value === woInput.value);
+
+                if (!match) {
+                    asmInput.value = "";
+                    descInput.value = "";
+                    machineNameSelect.value = "";
+                    machineLineSelect.value = "";
+                    productLineSelect.value = "";
+                    return;
+                }
+
+                asmInput.value = match.dataset.part || "";
+                descInput.value = match.dataset.desc || "";
+
+                setSelectValue(machineNameSelect, match.dataset.machine);
+                setSelectValue(machineLineSelect, match.dataset.machineline);
+                setSelectValue(productLineSelect, match.dataset.productline);
+            });
+        });
+    </script>
+}

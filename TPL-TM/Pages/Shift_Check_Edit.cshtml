@@ -1,0 +1,78 @@
+﻿@page
+@model TPL_TM.Pages.Shift_Check_EditModel
+
+<div class="modal fade show" id="editShiftCheckModal" tabindex="-1" aria-hidden="true" style="display:block;">
+    <div class="modal-dialog modal-dialog-centered" style="margin-top:80px;">
+        <div class="modal-content">
+
+            <div class="modal-header bg-warning text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-pencil-square"></i> Edit Shift Check
+                </h5>
+                <button type="button" class="btn-close" id="closeShiftCheckModal"></button>
+            </div>
+
+            <div class="modal-body">
+                @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+                {
+                    <div class="alert alert-danger">@Model.ErrorMessage</div>
+                }
+
+                <form method="post">
+
+                    <input type="hidden" asp-for="ShiftCheck.Id" />
+
+                    <!-- Check Name -->
+                    <div class="form-floating mb-3">
+                        <input asp-for="ShiftCheck.Check_Name" class="form-control" required />
+                        <label>Check Name</label>
+                    </div>
+
+                    <!-- Status -->
+                    <div class="form-floating mb-3">
+                        <select asp-for="ShiftCheck.Check_Status" class="form-select">
+                            <option value="true">Yes</option>
+                            <option value="false">No</option>
+                        </select>
+                        <label>Status</label>
+                    </div>
+
+                    <!-- Comment -->
+                    <div class="form-floating mb-3">
+                        <textarea asp-for="ShiftCheck.Check_Comment" class="form-control" style="height:100px"></textarea>
+                        <label>Comment</label>
+                    </div>
+
+                    <!-- Created By -->
+                    <div class="form-floating mb-3">
+                        <input asp-for="ShiftCheck.Check_Created_By" class="form-control" />
+                        <label>Created By</label>
+                    </div>
+
+                    <button type="submit" class="btn btn-warning w-100 text-white">
+                        <i class="bi bi-save"></i> Update Shift Check
+                    </button>
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            var modal = new bootstrap.Modal(document.getElementById('editShiftCheckModal'), {
+                backdrop: 'static',
+                keyboard: false
+            });
+
+            modal.show();
+
+            document.getElementById("closeShiftCheckModal").addEventListener("click", function () {
+                window.location.href = "/Shift_Check_Report";
+            });
+        });
+    </script>
+}

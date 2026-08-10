@@ -1,0 +1,165 @@
+﻿@page "/Shift_Report"
+@model TPL_TM.Pages.Shift_ReportModel
+
+<div class="container-fluid">
+    <div class="card shadow p-3">
+
+        <!-- HEADER -->
+        <div class="bg-success text-white p-3 mb-3 rounded">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <h4 class="mb-0">
+                        <i class="bi bi-clock-history"></i> Shift Report
+                    </h4>
+                    <small>View, edit, or delete shift records</small>
+                </div>
+                <div>
+                    <a href="/Shift_Edit" class="btn btn-light btn-sm me-2">
+                        <i class="bi bi-plus-circle"></i> Add
+                    </a>
+                    <button id="exportBtn" class="btn btn-outline-light btn-sm">
+                        <i class="bi bi-download"></i> Export
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- FILTERS -->
+        <div class="d-flex gap-2 mb-3">
+            <input id="shiftSearch" class="form-control form-control-sm" placeholder="Search..." />
+
+            <select id="rangeSelect" class="form-select form-select-sm w-auto">
+                <option value="7">Last 7 days</option>
+                <option value="30">Last 30 days</option>
+                <option value="all" selected>All</option>
+                <option value="custom">Custom</option>
+            </select>
+
+            <input type="date" id="fromDate" class="form-control form-control-sm" disabled />
+            <input type="date" id="toDate" class="form-control form-control-sm" disabled />
+            <button id="applyBtn" class="btn btn-success btn-sm" disabled>Apply</button>
+
+            <select id="pageLength" class="form-select form-select-sm w-auto ms-auto">
+                <option value="5">5</option>
+                <option value="10" selected>10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+            </select>
+        </div>
+
+        <!-- TABLE -->
+        <div class="table-responsive">
+            <table id="shiftTable" class="table table-striped table-bordered w-100">
+                <thead class="bg-success text-white">
+                    <tr>
+                        <th>Actions</th>
+                        <th>WO Number</th>
+                        <th>Item</th>
+                        <th>Description</th>
+                        <th>Machine Line</th>
+                        <th>Machine Name</th>
+                        <th>Product Line</th>
+                        <th>Start</th>
+                        <th>End</th>
+                        <th>Active</th>
+                        <th>Rating</th>
+                        <th>Created By</th>
+                        <th>Authorized By</th>
+                        <th>Comment</th>
+                        <th>Created Date</th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+
+    <script>
+        $(function () {
+
+            var table = $('#shiftTable').DataTable({
+                processing: true,
+                serverSide: true,
+                searching: false,
+                pageLength: 10,
+
+                ajax: {
+                    url: '@Url.Page("/Shift_Report", "LoadData")',
+                    type: 'GET',
+                    data: function (d) {
+                        return {
+                            draw: d.draw,
+                            start: d.start,
+                            length: d.length,
+                            search: $('#shiftSearch').val(),
+                            range: $('#rangeSelect').val(),
+                            fromDate: $('#fromDate').val(),
+                            toDate: $('#toDate').val()
+                        };
+                    }
+                },
+
+                columns: [
+                    {
+                        data: 'actions',
+                        orderable: false,
+                        render: function (id) {
+                            return `
+                            <div class="dropdown text-center">
+                                <a href="#" data-bs-toggle="dropdown">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" href="/Shift_Edit?id=${id}">Edit</a></li>
+                                    <li><a class="dropdown-item text-danger" href="/Shift_Delete?id=${id}" onclick="return confirm('Are you sure?')">Delete</a></li>
+                                </ul>
+                            </div>`;
+                        }
+                    },
+                    { data: 'wo' },
+                    { data: 'item' },
+                    { data: 'desc' },
+                    { data: 'machineLine' },
+                    { data: 'machineName' },
+                    { data: 'productLine' },
+                    { data: 'start' },
+                    { data: 'end' },
+                    { data: 'active' },
+                    { data: 'rating' },
+                    { data: 'createdBy' },
+                    { data: 'authorizedBy' },
+                    { data: 'comment' },
+                    { data: 'createdAt' }
+                ]
+            });
+
+            $('#shiftSearch').keyup(() => table.draw());
+            $('#pageLength').change(function () { table.page.len(this.value).draw(); });
+
+            $('#rangeSelect').change(function () {
+                let isCustom = this.value === "custom";
+                $('#fromDate,#toDate,#applyBtn').prop('disabled', !isCustom);
+                if (!isCustom) table.draw();
+            });
+
+            $('#applyBtn').click(() => table.draw());
+
+            $('#exportBtn').click(function () {
+                const params = new URLSearchParams({
+                    search: $('#shiftSearch').val(),
+                    range: $('#rangeSelect').val(),
+                    fromDate: $('#fromDate').val(),
+                    toDate: $('#toDate').val()
+                });
+
+                window.location = '@Url.Page("/Shift_Report", "Export")' + '&' + params.toString();
+            });
+
+        });
+    </script>
+}

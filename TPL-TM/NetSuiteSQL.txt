@@ -1,0 +1,97 @@
+Select a.bom, c.name, a.assemblyitem, b.itemid, b.displayname, d.billofmaterials, d.name, d.id, e.bomrevision, e.displayname, e.id
+From [NETSUITE].[Transcend Packaging Limited].[Transcend - Senior Supply Chain Manager].[BomAssemblyItemMap] a
+INNER JOIN [NETSUITE].[Transcend Packaging Limited].[Transcend - Senior Supply Chain Manager].[item] b ON a.assemblyitem = b.id
+INNER JOIN [NETSUITE].[Transcend Packaging Limited].[Transcend - Senior Supply Chain Manager].[bom] c ON a.bom = c.id
+INNER JOIN [NETSUITE].[Transcend Packaging Limited].[Transcend - Senior Supply Chain Manager].[bomRevision] d ON a.bom = d.billofmaterials
+INNER JOIN [NETSUITE].[Transcend Packaging Limited].[Transcend - Senior Supply Chain Manager].[bomRevisionComponentMember] e ON d.id = e.bomrevision
+
+
+SELECT 
+	f.assemblyitem,
+	d.billofmaterials,
+	e.name,
+    a.bomrevision, 
+	c.itemid AS c_itemid,
+	c.displayname AS c_displayname,
+    a.displayname AS a_displayname, 
+    b.displayname AS b_displayname, 
+    a.description AS a_description, 
+    b.description AS b_description -- Added a comma here
+   
+FROM
+    [NETSUITE].[Transcend Packaging Limited].[Transcend - Senior Supply Chain Manager].[bomRevisionComponent] a
+JOIN 
+    [NETSUITE].[Transcend Packaging Limited].[Transcend - Senior Supply Chain Manager].[bomRevisionComponentMember] b
+ON 
+    a.bomrevision = b.bomrevision
+JOIN 
+    [NETSUITE].[Transcend Packaging Limited].[Transcend - Senior Supply Chain Manager].[item] c
+ON 
+    a.item = c.id
+JOIN 
+    [NETSUITE].[Transcend Packaging Limited].[Transcend - Senior Supply Chain Manager].[bomRevision] d
+ON 
+   a.bomrevision = d.id
+JOIN 
+    [NETSUITE].[Transcend Packaging Limited].[Transcend - Senior Supply Chain Manager].[bom] e
+ON 
+   d.billofmaterials= e.id
+JOIN 
+    [NETSUITE].[Transcend Packaging Limited].[Transcend - Senior Supply Chain Manager].[BomAssemblyItemMap] f
+ON 
+  f.bom= e.id
+
+
+SELECT 
+	a.assemblyitem,
+	b.itemid,
+	b.displayname,
+	c.name,
+	d.name,
+	e.displayname,
+    g.description,
+	g.displayname,
+    e.description,
+	e.item,
+	f.itemid,
+	f.displayname
+FROM
+    [NETSUITE].[Transcend Packaging Limited].[Transcend - Senior Supply Chain Manager].[BomAssemblyItemMap] a
+JOIN 
+    [NETSUITE].[Transcend Packaging Limited].[Transcend - Senior Supply Chain Manager].[item] b
+ON 
+    a.assemblyitem = b.id
+JOIN 
+    [NETSUITE].[Transcend Packaging Limited].[Transcend - Senior Supply Chain Manager].[bom] c
+ON 
+    a.bom = c.id
+JOIN 
+    [NETSUITE].[Transcend Packaging Limited].[Transcend - Senior Supply Chain Manager].[bomRevision] d
+ON 
+    c.id = d.billofmaterials
+JOIN 
+    [NETSUITE].[Transcend Packaging Limited].[Transcend - Senior Supply Chain Manager].[bomRevisionComponent] e
+ON 
+    d.id = e.bomrevision
+JOIN 
+    [NETSUITE].[Transcend Packaging Limited].[Transcend - Senior Supply Chain Manager].[item] f
+ON 
+    e.item = f.id
+
+JOIN 
+    [NETSUITE].[Transcend Packaging Limited].[Transcend - Senior Supply Chain Manager].[bomRevisionComponentMember] g
+ON 
+    e.bomrevision = g.bomrevision
+
+Where b.itemid='FG-22094-90119'
+
+
+SELECT a.tranid, 
+       MIN(c.itemid) AS itemid, 
+       MIN(c.displayname) AS displayname
+FROM transaction a
+INNER JOIN transactionLine b ON a.id = b.createdfrom
+INNER JOIN item c ON b.item = c.id
+WHERE RTRIM(a.recordtype) = 'workorder' AND a.createddate >= {{d '{lastMonthDate}'}}
+GROUP BY a.tranid
+ORDER BY a.tranid DESC";

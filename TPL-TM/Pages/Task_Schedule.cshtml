@@ -1,0 +1,280 @@
+﻿@page
+@model TPL_TM.Pages.Schedule_TaskModel
+@{
+}
+
+<!-- Task Schedule Modal -->
+<div class="modal fade show" id="taskScheduleModal" tabindex="-1" aria-labelledby="taskScheduleModalLabel" aria-hidden="true" style="display: block;">
+    <div class="modal-dialog modal-dialog-centered" style="margin-top: 80px;">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="taskScheduleModalLabel">Schedule New Task</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="closeTaskScheduleModal"></button>
+            </div>
+            <div class="modal-body">
+                @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+                {
+                    <div class="alert alert-danger">
+                        @Model.ErrorMessage
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(Model.SuccessMessage))
+                {
+                    <div class="alert alert-success">
+                        @Model.SuccessMessage
+                    </div>
+                }
+
+                <form id="task-schedule-form" method="post" novalidate>
+                    <div class="form-floating mb-3">
+                        <input class="form-control" list="Task_NamelistOptions" id="Schedule_Task_Name" name="Task_Name" required placeholder="Task Name" />
+                        <datalist id="Task_NamelistOptions">
+                            @foreach (var task in Model.TaskList)
+                            {
+                                <option value="@task.Task_Name" data-description="@task.Task_Description">@task.Task_Name</option>
+                            }
+                        </datalist>
+                        <label>Task Name</label>
+                        <div class="invalid-feedback">Task Name is required.</div>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <input class="form-control" id="Schedule_Task_Description" name="Task_Description" required placeholder="Task Description" />
+                        <label>Task Description</label>
+                        <div class="invalid-feedback">Task Description is required.</div>
+                    </div>
+                    
+                    <div class="form-floating mb-3">
+                        <input class="form-control" list="Assign_TolistOptions" id="Schedule_Assign_To" name="Assign_To" required placeholder="Assign To" />
+                        <datalist id="Assign_TolistOptions">
+                            @foreach (var task in Model.AssignTolist)
+                            {
+                                <option value="@task.Assign_To">@task.Assign_To</option>
+                            }
+                        </datalist>
+                        <label>Assign To</label>
+                        <div class="invalid-feedback">Please specify the assignee.</div>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <input type="number" name="Qty" class="form-control" required placeholder="Quantity" min="1" />
+                        <label>Quantity</label>
+                        <div class="invalid-feedback">Quantity must be at least 1.</div>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <select name="Unit" class="form-select" required>
+                            <option value="">Select Unit</option>
+                            <option value="Piece">Piece</option>
+                            <option value="Case">Case</option>
+                            <option value="Pallet">Pallet</option>
+                            <option value="Kilogram">Kilogram</option>
+                            <option value="Sheet">Sheet</option>
+                        </select>
+                        <label>Unit</label>
+                        <div class="invalid-feedback">Please select a unit.</div>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <input type="date" name="Task_Date" class="form-control" required />
+                        <label>Task Date</label>
+                        <div class="invalid-feedback">Please select a valid date.</div>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <input type="date" name="Task_EndDate" class="form-control" required />
+                        <label>Task End Date</label>
+                        <div class="invalid-feedback">Please select a valid date.</div>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <input type="time" name="Task_StartTime" class="form-control" required />
+                        <label>Start Time</label>
+                        <div class="invalid-feedback">Please select a valid start time.</div>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <input type="time" name="Task_EndTime" class="form-control" required />
+                        <label>End Time</label>
+                        <div class="invalid-feedback">Please select a valid end time.</div>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <select name="Priority_Level" class="form-select" required>
+                            <option value="">Select Priority Level</option>
+                            <option value="High">High</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Low">Low</option>
+                        </select>
+                        <label>Priority Level</label>
+                        <div class="invalid-feedback">Please select a priority level.</div>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <textarea name="Comments" class="form-control" placeholder="Comments"></textarea>
+                        <label>Comments</label>
+                    </div>
+
+                    <button type="submit" class="w-100 btn btn-lg btn-primary">Schedule Task</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const form = document.getElementById('task-schedule-form');
+            const taskDateInput = form.Task_Date;
+            const taskEndDateInput = form.Task_EndDate;
+            const taskStartTimeInput = form.Task_StartTime;
+            const taskEndTimeInput = form.Task_EndTime;
+            const assignToInput = form.Assign_To;
+
+            const taskNameInput = document.getElementById('Schedule_Task_Name');
+            const taskDescriptionInput = document.getElementById('Schedule_Task_Description');
+            const taskOptions = Array.from(document.querySelectorAll('#Task_NamelistOptions option'));
+
+            const existingTasks = [
+        @foreach (var task in Model.ScheduledTasks)
+        {
+            if (task.Task_Date.HasValue && task.Task_EndDate.HasValue && task.Task_StartTime.HasValue && task.Task_EndTime.HasValue)
+            {
+                <text>{
+                                    startDate: "@task.Task_Date.Value:yyyy-MM-dd",
+                                    endDate: "@task.Task_EndDate.Value:yyyy-MM-dd",
+                                    startTime: "@task.Task_StartTime.Value:hh\\:mm",
+                                    endTime: "@task.Task_EndTime.Value:hh\\:mm",
+                                    assignTo: "@task.Assign_To"
+                                },</text>
+            }
+        }
+            ];
+
+            // === 1. Auto-fill Description ===
+            function updateDescription() {
+                const selectedName = taskNameInput.value.trim();
+                const matched = taskOptions.find(option => option.value === selectedName);
+                if (matched) {
+                    taskDescriptionInput.value = matched.getAttribute('data-description') || '';
+                }
+            }
+            taskNameInput.addEventListener('input', updateDescription);
+            taskNameInput.addEventListener('change', updateDescription);
+
+            // === 2. Date Linking ===
+            taskDateInput.addEventListener("change", function () {
+                taskEndDateInput.value = taskDateInput.value;
+                taskEndDateInput.setAttribute("min", taskDateInput.value);
+                validateScheduleInputs();
+            });
+
+            // === 3. Conflict Validation ===
+            function validateScheduleInputs() {
+                clearInvalids();
+
+                const assignTo = assignToInput.value.trim();
+                const startDate = taskDateInput.value;
+                const endDate = taskEndDateInput.value;
+                const startTime = taskStartTimeInput.value;
+                const endTime = taskEndTimeInput.value;
+
+             if (!assignTo || !startDate || !endDate || !startTime || !endTime) {
+                return; // Don’t validate until all fields are filled
+            }
+
+
+                const newStart = new Date(`${startDate}T${startTime}`);
+                const newEnd = new Date(`${endDate}T${endTime}`);
+
+                if (newStart >= newEnd) {
+                    taskStartTimeInput.classList.add('is-invalid');
+                    taskEndTimeInput.classList.add('is-invalid');
+                    alert("Start time must be earlier than end time.");
+                    return;
+                }
+
+                for (const task of existingTasks) {
+                    if (task.assignTo !== assignTo) continue;
+
+                    const existingStart = new Date(`${task.startDate}T${task.startTime}`);
+                    const existingEnd = new Date(`${task.endDate}T${task.endTime}`);
+
+                    if (newStart < existingEnd && newEnd > existingStart) {
+                        taskStartTimeInput.classList.add('is-invalid');
+                        taskEndTimeInput.classList.add('is-invalid');
+                        assignToInput.classList.add('is-invalid');
+                        alert(`Conflict detected:\n${assignTo} already has a task from ${task.startTime} to ${task.endTime} on ${task.startDate}`);
+                        return;
+                    }
+                }
+
+                // 🎉 No conflict
+                console.log("✅ No scheduling conflict.");
+                alert("✅ Schedule is available. You may proceed.");
+            }
+
+            // === 4. Clear Validation Styling ===
+            function clearInvalids() {
+                [taskStartTimeInput, taskEndTimeInput, assignToInput].forEach(el => el.classList.remove('is-invalid'));
+            }
+
+            // === 5. Event Listeners for Live Validation ===
+            const watchedInputs = [taskStartTimeInput, taskEndTimeInput, taskDateInput, taskEndDateInput, assignToInput];
+            watchedInputs.forEach(input => {
+                input.addEventListener("change", () => {
+                    // Delay to ensure all fields are updated before validation
+                    setTimeout(validateScheduleInputs, 100);
+                });
+            });
+
+
+            // === 6. Submit Check (still required) ===
+            form.addEventListener('submit', function (event) {
+                const assignTo = assignToInput.value.trim();
+                const startDate = taskDateInput.value;
+                const endDate = taskEndDateInput.value;
+                const startTime = taskStartTimeInput.value;
+                const endTime = taskEndTimeInput.value;
+
+                const startDateTime = new Date(`${startDate}T${startTime}`);
+                const endDateTime = new Date(`${endDate}T${endTime}`);
+
+                if (endDate < startDate) {
+                    event.preventDefault();
+                    alert("End Date cannot be earlier than Start Date.");
+                    taskEndDateInput.classList.add('is-invalid');
+                    return;
+                }
+
+                if (startDateTime >= endDateTime) {
+                    event.preventDefault();
+                    alert("Start time must be earlier than end time.");
+                    taskStartTimeInput.classList.add('is-invalid');
+                    taskEndTimeInput.classList.add('is-invalid');
+                    return;
+                }
+
+                for (const task of existingTasks) {
+                    if (task.assignTo !== assignTo) continue;
+
+                    const existingStart = new Date(`${task.startDate}T${task.startTime}`);
+                    const existingEnd = new Date(`${task.endDate}T${task.endTime}`);
+
+                    if (startDateTime < existingEnd && endDateTime > existingStart) {
+                        event.preventDefault();
+                        alert(`Cannot submit: Overlaps with task from ${task.startTime} to ${task.endTime}`);
+                        assignToInput.classList.add('is-invalid');
+                        return;
+                    }
+                }
+
+                form.classList.add('was-validated');
+            });
+        });
+    </script>
+}
+
+
+
+

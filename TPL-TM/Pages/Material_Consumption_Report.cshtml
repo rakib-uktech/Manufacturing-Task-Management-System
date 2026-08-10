@@ -1,0 +1,136 @@
+﻿@page "/Material_Consumption_Report"
+@model TPL_TM.Pages.Material_Consumption_ReportModel
+
+<div class="container-fluid">
+    <div class="card shadow p-3">
+
+        <!-- Header -->
+        <div class="bg-success text-white p-3 mb-3 rounded d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="mb-0"><i class="bi bi-clipboard-data"></i> Material Consumption Report</h4>
+                <small>View material usage details</small>
+            </div>
+            <div>
+                <button id="exportBtn" class="btn btn-outline-light btn-sm"><i class="bi bi-download me-1"></i> Export</button>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="d-flex gap-2 mb-3 align-items-center flex-nowrap">
+            <input id="materialSearch" class="form-control form-control-sm" placeholder="Search..." />
+            <select id="rangeSelect" class="form-select form-select-sm w-auto">
+                <option value="7">Last 7 days</option>
+                <option value="30">Last 30 days</option>
+                <option value="all" selected>All</option>
+                <option value="custom">Custom</option>
+            </select>
+            <input type="date" id="fromDate" class="form-control form-control-sm" disabled />
+            <input type="date" id="toDate" class="form-control form-control-sm" disabled />
+            <button id="applyBtn" class="btn btn-success btn-sm" disabled>Apply</button>
+            <select id="pageLength" class="form-select form-select-sm w-auto ms-auto">
+                <option value="5">5</option>
+                <option value="10" selected>10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+            </select>
+        </div>
+
+        <!-- Table -->
+        <div class="table-responsive">
+            <table id="materialTable" class="table table-striped table-bordered table-hover w-100">
+                <thead class="bg-success text-white">
+                    <tr>
+                        <th>Actions</th>
+                        <th>ID</th>
+                        <th>Shift ID</th>
+                        <th>WO Number</th>
+                        <th>Material ID</th>
+                        <th>Description</th>
+                        <th>Quantity Consumed</th>
+                        <th>Created By</th>
+                        <th>Created At</th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script>
+        $(function () {
+            var table = $('#materialTable').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: {
+                    url: '@Url.Page("/Material_Consumption_Report", "LoadData")',
+                    type: 'GET',
+                    data: function(d) {
+                        return {
+                            draw: d.draw,
+                            start: d.start,
+                            length: d.length,
+                            search: $('#materialSearch').val(),
+                            range: $('#rangeSelect').val(),
+                            fromDate: $('#fromDate').val(),
+                            toDate: $('#toDate').val()
+                        };
+                    }
+                },
+                columns: [
+                    {
+                        data: 'id',
+                        orderable: false,
+                        render: function(id) {
+                            return `
+                                <div class="dropdown text-center">
+                                    <a href="#" data-bs-toggle="dropdown" class="d-inline-flex align-items-center justify-content-center" style="width:28px;height:28px">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </a>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li><a class="dropdown-item" href="/Material_Consumption_Edit?id=${id}"><i class="fas fa-edit text-primary me-2"></i>Edit</a></li>
+                                        <li><a class="dropdown-item text-danger" href="/Material_Consumption_Delete?id=${id}" onclick="return confirm('Are you sure?')"><i class="fas fa-trash me-2"></i>Delete</a></li>
+                                    </ul>
+                                </div>`;
+                        }
+                    },
+                    { data: 'id' },
+                    { data: 'shiftId' },
+                    { data: 'woNumber' },
+                    { data: 'materialId' },
+                    { data: 'materialDescription' },
+                    { data: 'quantityConsumed' },
+                    { data: 'createdBy' },
+                    { data: 'createdAt' }
+                ],
+                pageLength: 10,
+                lengthMenu: [5,10,25,50],
+                scrollX: true
+            });
+
+            $('#materialSearch').on('keyup', function() { table.draw(); });
+            $('#pageLength').change(function() { table.page.len(this.value).draw(); });
+            $('#rangeSelect').change(function() {
+                var isCustom = this.value === 'custom';
+                $('#fromDate,#toDate,#applyBtn').prop('disabled', !isCustom);
+                if(!isCustom) table.draw();
+            });
+            $('#applyBtn').click(() => table.draw());
+
+            $('#exportBtn').click(function() {
+                const params = new URLSearchParams({
+                    search: $('#materialSearch').val(),
+                    range: $('#rangeSelect').val(),
+                    fromDate: $('#fromDate').val(),
+                    toDate: $('#toDate').val()
+                });
+                window.location = '@Url.Page("/Material_Consumption_Report", "Export")' + '&' + params.toString();
+            });
+        });
+    </script>
+}

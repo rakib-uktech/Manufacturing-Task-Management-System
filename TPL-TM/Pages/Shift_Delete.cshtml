@@ -1,0 +1,56 @@
+﻿@page
+@model TPL_TM.Pages.Shift_DeleteModel
+
+<div class="modal fade show" id="deleteShiftModal" tabindex="-1" aria-hidden="true" style="display:block;">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:500px;">
+        <div class="modal-content">
+
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Confirm Shift Delete</h5>
+                <button type="button" class="btn-close" onclick="window.location.href='/Shift_Report'"></button>
+            </div>
+
+            <div class="modal-body">
+
+                @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+                {
+                    <div class="alert alert-danger">@Model.ErrorMessage</div>
+                }
+                else
+                {
+                    <h5 class="text-danger">Are you sure you want to delete this shift record?</h5>
+
+                    <table class="table table-bordered table-sm mt-3">
+                        <tr><th>Machine Line</th><td>@Model.Shift.Machine_Line</td></tr>
+                        <tr><th>Machine Name</th><td>@Model.Shift.Machine_Name</td></tr>
+                        <tr><th>Product Line</th><td>@Model.Shift.Product_Line</td></tr>
+                        <tr><th>Start Time</th><td>@Model.Shift.Shift_Start_Time?.ToString("dd/MM/yyyy HH:mm")</td></tr>
+                        <tr><th>End Time</th><td>@Model.Shift.Shift_End_Time?.ToString("dd/MM/yyyy HH:mm")</td></tr>
+                        <tr><th>Active</th><td>@(Model.Shift.Shift_Active ? "Yes" : "No")</td></tr>
+                        <tr><th>Handover Rating</th><td>@Model.Shift.Handover_Rating</td></tr>
+                    </table>
+
+                    <form method="post" asp-page-handler="DeleteShift">
+                        <input type="hidden" name="id" value="@Model.Shift.Id" />
+
+                        <button class="btn btn-danger w-100" type="submit">Delete Shift</button>
+                        <a href="/Shift_Report" class="btn btn-secondary w-100 mt-2">Cancel</a>
+                    </form>
+                }
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var modal = new bootstrap.Modal(document.getElementById('deleteShiftModal'), {
+                backdrop: 'static',
+                keyboard: false
+            });
+            modal.show();
+        });
+    </script>
+}

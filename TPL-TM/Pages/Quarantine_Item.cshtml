@@ -1,0 +1,140 @@
+﻿@page
+@model TPL_TM.Pages.Quarantine_ItemModel
+@{
+}
+<!-- Quarantine Item Modal -->
+<div class="modal fade show" id="quarantineItemModal" tabindex="-1" aria-labelledby="quarantineItemModalLabel" aria-hidden="true" style="display: block;">
+    <div class="modal-dialog modal-dialog-centered" style="margin-top: 80px;">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="quarantineItemModalLabel">Quarantine Item</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="closeQuarantineItemModal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="quarantine-item-form" method="post" novalidate>
+                    <!-- Item Name -->
+                    <div class="form-floating mb-3">
+                        <input class="form-control" list="Item_NamelistOptions" id="Item_Name" name="Item_Name" required placeholder="Item Name" />
+                        <datalist id="Item_NamelistOptions">
+                            @foreach (var item in Model.ItemList)
+                            {
+                                <option value="@item.Task_Name" data-description="@item.Task_Description" data-refno="@item.Ref_No">@item.Task_Name</option>
+                            }
+                        </datalist>
+                        <label>Item Name</label>
+                        <div class="invalid-feedback">Item Name is required.</div>
+                    </div>
+
+                    <!-- Item Description (Auto-filled based on Item Name) -->
+                    <div class="form-floating mb-3">
+                        <input class="form-control" id="Item_Description" name="Item_Description" required placeholder="Item Description" readonly />
+                        <label>Item Description</label>
+                        <div class="invalid-feedback">Item Description is required.</div>
+                    </div>
+                   
+                    <!-- Item Location -->
+                    <div class="form-floating mb-3">
+                        <input class="form-control" list="Item_LocationListOptions" id="Item_Location" name="Item_Location" required placeholder="Item Location" />
+                        <datalist id="Item_LocationListOptions">
+                            @foreach (var location in Model.LocationList)
+                            {
+                                <option value="@location.Assign_To">@location.Assign_To</option>
+                            }
+                        </datalist>
+                        <label>Item Location</label>
+                        <div class="invalid-feedback">Item Location is required.</div>
+                    </div>
+
+                    <!-- Quantity -->
+                    <div class="form-floating mb-3">
+                        <input type="number" name="Qty" class="form-control" required placeholder="Quantity" min="1" />
+                        <label>Quantity</label>
+                        <div class="invalid-feedback">Quantity must be at least 1.</div>
+                    </div>
+
+                    <!-- Unit -->
+                    <div class="form-floating mb-3">
+                        <select name="Unit" class="form-select" required>
+                            <option value="">Select Unit</option>
+                            <option value="Piece">Piece</option>
+                            <option value="Case">Case</option>
+                            <option value="Pallet">Pallet</option>
+                            <option value="Kilogram">Kilogram</option>
+                            <option value="Sheet">Sheet</option>
+                        </select>
+                        <label>Unit</label>
+                        <div class="invalid-feedback">Please select a unit.</div>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <select name="Priority_Level" class="form-select" required>
+                            <option value="">Select Priority Level</option>
+                            <option value="High">High</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Low">Low</option>
+                        </select>
+                        <label>Priority Level</label>
+                        <div class="invalid-feedback">Please select a priority level.</div>
+                    </div>
+                                        
+                    <!-- Reason for Quarantine -->
+                    <div class="form-floating mb-3">
+                        <textarea name="Quarantine_Reason" class="form-control" placeholder="Reason for Quarantine" required></textarea>
+                        <label>Reason for Quarantine</label>
+                        <div class="invalid-feedback">Please provide a reason for quarantine.</div>
+                    </div>
+                  
+                    <!-- Submit Button -->
+                    <button type="submit" class="w-100 btn btn-lg btn-danger">Quarantine Item</button>
+
+
+                  
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var myModal = new bootstrap.Modal(document.getElementById('quarantineItemModal'), {
+                backdrop: 'static',
+                keyboard: false
+            });
+            myModal.show();
+
+            document.getElementById("closeQuarantineItemModal").addEventListener("click", function () {
+                window.location.href = "/Index";  // Redirect after modal close
+            });
+
+            // Form validation
+            (function () {
+                'use strict';
+                var form = document.getElementById('quarantine-item-form');
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            })();
+
+            // Auto-fill Item Description
+            const itemNameInput = document.getElementById('Item_Name');
+            const itemDescriptionInput = document.getElementById('Item_Description');
+            const itemOptions = Array.from(document.querySelectorAll('#Item_NamelistOptions option'));
+
+            function updateItemDescription() {
+                const selectedItem = itemOptions.find(option => option.value === itemNameInput.value.trim());
+                itemDescriptionInput.value = selectedItem ? selectedItem.getAttribute('data-description') : '';
+            }
+
+            itemNameInput.addEventListener('input', updateItemDescription);
+            itemNameInput.addEventListener('change', updateItemDescription);
+
+            // Optional: AJAX fetch logic similar to Move_Item if needed
+        });
+    </script>
+}

@@ -1,0 +1,384 @@
+﻿@page
+@model TPL_TM.Pages.Production_SummaryModel
+@using System.Linq
+
+<div class="container-fluid mt-4">
+
+    <!-- HEADER -->
+    <div class="card shadow p-3 mb-4">
+        <div class="container-fluid bg-success text-white py-3 mb-4 rounded shadow">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h2 class="mb-0"><i class="bi bi-bar-chart-line me-2"></i> Production Summary</h2>
+                    <p class="mb-0">Machine-wise and shift-wise production summary.</p>
+                </div>
+                <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                    <a id="exportBtn" class="btn btn-outline-light" href="javascript:void(0);">
+                        <i class="bi bi-download me-1"></i> Export
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FILTERS -->
+    <div class="card shadow mb-4 p-3">
+        <div class="d-flex gap-2 align-items-center flex-nowrap">
+
+            <input type="text" id="summarySearch" class="form-control form-control-sm" placeholder="Search…" />
+
+            <select id="machineLineFilter" class="form-select form-select-sm w-auto">
+                <option value="">All Machine Lines</option>
+            </select>
+
+            <select id="machineNameFilter" class="form-select form-select-sm w-auto">
+                <option value="">All Machine Names</option>
+            </select>
+
+            <select id="rangeSelect" class="form-select form-select-sm w-auto">
+                <option value="1" selected>Today</option>
+                <option value="7">Last 7 days</option>
+                <option value="30">Last 30 days</option>
+                <option value="all">All</option>
+                <option value="custom">Custom Range</option>
+            </select>
+
+            <input type="date" id="fromDate" class="form-control form-control-sm" disabled />
+            <input type="date" id="toDate" class="form-control form-control-sm" disabled />
+
+            <button id="applyBtn" class="btn btn-info btn-sm" disabled>Apply</button>
+
+            <select id="pageLength" class="form-select form-select-sm w-auto ms-auto">
+                <option value="5">5</option>
+                <option value="10" selected>10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+            </select>
+
+        </div>
+    </div>
+
+    <!-- SUMMARY CARDS -->
+    <div class="card shadow p-3 mb-4">
+        <h5 class="mb-3 text-success">
+            <i class="bi bi-grid-3x3-gap me-1"></i> Shift-wise Production Summary
+        </h5>
+        <div class="row" id="shiftSummaryContainer"></div>
+    </div>
+
+    <!-- DETAILED TABLE -->
+    <div class="card shadow p-3 mt-4">
+        <div class="table-responsive">
+            <table id="summaryTable" class="table table-striped table-bordered table-hover w-100">
+                <thead class="bg-success text-white">
+                    <tr>
+                        <th>ID</th>
+                        <th>Machine Line</th>
+                        <th>Machine Name</th>
+                        <th>Work Order</th>
+                        <th>Part Number</th>
+                        <th>Batch ID</th>
+                        <th>Shift</th>
+                        <th>Start Time</th>
+                        <th>End Time</th>
+                        <th>Produced Units</th>
+                        <th>Created By</th>
+                        <th>Created At</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<!-- SCRIPTS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<script>
+    $(function () {
+
+        // =========================
+        // 🔹 GET FILTER VALUES
+        // =========================
+        function getFilters() {
+            return {
+                search: $('#summarySearch').val(),
+                range: $('#rangeSelect').val(),
+                fromDate: $('#fromDate').val(),
+                toDate: $('#toDate').val(),
+                machineLine: $('#machineLineFilter').val(),
+                machineName: $('#machineNameFilter').val()
+            };
+        }
+
+        // =========================
+        // 🔹 DATATABLE INIT
+        // =========================
+        const table = $('#summaryTable').DataTable({
+            processing: true,
+            serverSide: true,
+            deferRender: true,
+            pageLength: 10,
+            searching: false,
+            destroy: true,
+
+            ajax: {
+                url: '/Production_Summary?handler=LoadData', // ✅ HARD URL (fix IIS routing)
+                type: 'GET',
+                data: function (d) {
+                    return {
+                        draw: d.draw,
+                        start: d.start,
+                        length: d.length,
+                        ...getFilters()
+                    };
+                },
+                error: function (xhr) {
+                    console.error("🔥 DataTable Error:", xhr.responseText);
+                }
+            },
+
+            columns: [
+                { data: 'id' },
+                { data: 'machineLine' },
+                { data: 'machineName' },
+                { data: 'wo' },
+                { data: 'part' },
+                { data: 'batch' },
+                { data: 'shift' },
+                { data: 'start' },
+                { data: 'end' },
+                { data: 'qty', className: "text-end",
+                    render: data => data ? data.toLocaleString() : "0"
+                },
+                { data: 'createdBy' },
+                { data: 'createdAt' }
+            ]
+        });
+
+        // =========================
+        // 🔹 REFRESH ALL
+        // =========================
+        function refreshAll() {
+            table.draw(false);
+            loadSummary();
+        }
+
+        // =========================
+        // 🔹 SUMMARY API CALL
+        // =========================
+        function loadSummary() {
+            $.get('@Url.Page("Production_Summary", "Summary")', getFilters(), function (data) {
+                renderSummary(data);
+            });
+        }
+
+        // =========================
+        // 🔹 SUMMARY RENDER
+        // =========================
+        function renderSummary(data) {
+
+            const container = $('#shiftSummaryContainer');
+            container.empty();
+
+            let grouped = {};
+
+            data.forEach(row => {
+                const shift = row.shift || 'N/A';
+                const line = row.machineLine || 'N/A';
+                const machine = row.machineName || 'N/A';
+                const wo = row.wo || 'N/A';
+                const part = row.part || 'N/A';
+                const qty = parseInt(row.qty) || 0;
+
+                grouped[shift] ??= {};
+                grouped[shift][line] ??= {};
+                grouped[shift][line][machine] ??= {};
+                grouped[shift][line][machine][wo] ??= {};
+                grouped[shift][line][machine][wo][part] ??= 0;
+
+                grouped[shift][line][machine][wo][part] += qty;
+            });
+
+            Object.keys(grouped).sort().forEach(shift => {
+
+                let shiftTotal = 0;
+
+                const shiftCard = $('<div class="col-md-4 mb-3"></div>');
+                const card = $(`
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header bg-success text-white fw-bold">
+                            Shift ${shift}
+                        </div>
+                        <div class="card-body"></div>
+                    </div>
+                `);
+
+                const body = card.find('.card-body');
+
+                Object.keys(grouped[shift]).sort().forEach(line => {
+
+                    let lineTotal = 0;
+                    body.append(`<h6 class="mt-3 fw-semibold text-secondary">${line}</h6>`);
+
+                    Object.keys(grouped[shift][line]).sort().forEach(machine => {
+
+                        const workOrders = grouped[shift][line][machine];
+                        let machineTotal = 0;
+
+                        const tableEl = $(`
+                            <table class="table table-sm table-bordered mb-3">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Machine</th>
+                                        <th>Work Order</th>
+                                        <th>Part Number</th>
+                                        <th class="text-end">Qty</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        `);
+
+                        const tbody = tableEl.find('tbody');
+                        let firstMachine = true;
+
+                        Object.keys(workOrders).forEach(wo => {
+                            const parts = workOrders[wo];
+                            let firstWo = true;
+
+                            Object.keys(parts).forEach(part => {
+
+                                const qty = parts[part];
+                                machineTotal += qty;
+                                lineTotal += qty;
+                                shiftTotal += qty;
+
+                                const tr = $('<tr></tr>');
+
+                                if (firstMachine) {
+                                    const count = Object.values(workOrders)
+                                        .reduce((a, p) => a + Object.keys(p).length, 0);
+                                    tr.append(`<td rowspan="${count}" class="align-middle fw-semibold">${machine}</td>`);
+                                    firstMachine = false;
+                                }
+
+                                if (firstWo) {
+                                    tr.append(`<td rowspan="${Object.keys(parts).length}" class="align-middle">${wo}</td>`);
+                                    firstWo = false;
+                                }
+
+                                tr.append(`
+                                    <td>${part}</td>
+                                    <td class="text-end">${qty.toLocaleString()}</td>
+                                `);
+
+                                tbody.append(tr);
+                            });
+                        });
+
+                        tbody.append(`
+                            <tr class="fw-bold bg-secondary text-white">
+                                <td colspan="3" class="text-end">Machine Total</td>
+                                <td class="text-end">${machineTotal.toLocaleString()}</td>
+                            </tr>
+                        `);
+
+                        body.append(tableEl);
+                    });
+
+                    body.append(`<div class="fw-bold text-success text-end mt-2">Machine Line Total: ${lineTotal.toLocaleString()}</div>`);
+                });
+
+                body.append(`<div class="fw-bold text-success text-end mt-2">Shift Total: ${shiftTotal.toLocaleString()}</div>`);
+
+                shiftCard.append(card);
+                container.append(shiftCard);
+            });
+        }
+
+        // =========================
+        // 🔹 FILTER EVENTS
+        // =========================
+        function debounce(fn, delay = 400) {
+            let t;
+            return () => {
+                clearTimeout(t);
+                t = setTimeout(fn, delay);
+            };
+        }
+
+        function loadFilters(machineLine = "") {
+            $.get('@Url.Page("Production_Summary", "Filters")', { machineLine }, function (data) {
+
+                const line = $('#machineLineFilter');
+                const name = $('#machineNameFilter');
+
+                if (!machineLine) {
+                    line.empty().append('<option value="">All Machine Lines</option>');
+                    data.machineLines.forEach(x => line.append(`<option value="${x}">${x}</option>`));
+                }
+
+                name.empty().append('<option value="">All Machine Names</option>');
+                data.machineNames.forEach(x => name.append(`<option value="${x}">${x}</option>`));
+            });
+        }
+
+        $('#summarySearch').keyup(debounce(refreshAll));
+        $('#machineLineFilter, #machineNameFilter').change(refreshAll);
+
+        $('#rangeSelect').change(function () {
+            const isCustom = this.value === "custom";
+            $('#fromDate,#toDate,#applyBtn').prop('disabled', !isCustom);
+            refreshAll();
+        });
+
+        $('#applyBtn').click(refreshAll);
+
+        $('#pageLength').change(function () {
+            table.page.len(this.value).draw();
+        });
+
+        $('#machineLineFilter').change(function () {
+            loadFilters($(this).val());
+            refreshAll();
+        });
+
+        // =========================
+        // 🔹 EXPORT
+        // =========================
+        $('#exportBtn').click(function () {
+
+            $.get('@Url.Page("Production_Summary", "Summary")', getFilters(), function (data) {
+
+                if (!data.length) return alert('No data to export!');
+
+                const wsData = [["Shift","Machine Line","Machine Name","WO","Part","Qty"]];
+
+                data.forEach(r => {
+                    wsData.push([r.shift, r.machineLine, r.machineName, r.wo, r.part, r.qty]);
+                });
+
+                const wb = XLSX.utils.book_new();
+                const ws = XLSX.utils.aoa_to_sheet(wsData);
+                XLSX.utils.book_append_sheet(wb, ws, "ProductionSummary");
+
+                XLSX.writeFile(wb, `Production_Summary_${moment().format("YYYYMMDD_HHmmss")}.xlsx`);
+            });
+        });
+
+        // =========================
+        // 🔹 INIT
+        // =========================
+        $('#rangeSelect').val('1');
+        loadFilters();
+        refreshAll();
+    });
+</script>

@@ -1,0 +1,479 @@
+﻿@page
+@model TPL_TM.Pages.AI_AssistantModel
+@{
+    ViewData["Title"] = "AI Manufacturing Assistant";
+}
+
+<div class="container-fluid py-3">
+    <form method="post">
+
+        @Html.AntiForgeryToken()
+
+    </form>
+    <div class="card shadow-lg border-0 ai-card">
+
+        <!-- Header -->
+        <div class="card-header ai-header">
+
+            <div class="d-flex justify-content-between align-items-center">
+
+                <div class="d-flex align-items-center">
+
+                    <div class="ai-avatar me-3">
+                        <i class="bi bi-robot"></i>
+                    </div>
+
+                    <div>
+
+                        <h4 class="mb-0 fw-bold">
+                            AI Manufacturing Assistant
+                        </h4>
+
+                        <small class="text-light opacity-75">
+                            Powered by OpenAI • Manufacturing Task Management
+                        </small>
+
+                    </div>
+
+                </div>
+
+                <button class="btn btn-light btn-sm" id="btnNewChat">
+
+                    <i class="bi bi-plus-circle"></i>
+
+                    New Chat
+
+                </button>
+
+            </div>
+
+        </div>
+
+        <!-- Chat Body -->
+
+        <div id="chatContainer">
+
+            <div id="chatMessages">
+
+                <!-- Welcome -->
+
+                <div class="assistant-message">
+
+                    <div class="message-icon">
+
+                        <i class="bi bi-robot"></i>
+
+                    </div>
+
+                    <div class="message-content">
+
+                        <h5 class="fw-bold">
+
+                            Welcome 👋
+
+                        </h5>
+
+                        <p>
+
+                            I'm your Manufacturing AI Assistant.
+
+                        </p>
+
+                        <div class="row g-3 mt-2">
+
+                            <div class="col-md-6">
+
+                                <button class="suggestion btn btn-outline-success">
+
+                                    How do I start a shift?
+
+                                </button>
+
+                            </div>
+
+                            <div class="col-md-6">
+
+                                <button class="suggestion btn btn-outline-success">
+
+                                    Explain CAPA procedure
+
+                                </button>
+
+                            </div>
+
+                            <div class="col-md-6">
+
+                                <button class="suggestion btn btn-outline-success">
+
+                                    Show today's production summary
+
+                                </button>
+
+                            </div>
+
+                            <div class="col-md-6">
+
+                                <button class="suggestion btn btn-outline-success">
+
+                                    How is OEE calculated?
+
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- Typing -->
+
+        <div id="typingIndicator" style="display:none;">
+
+            <div class="assistant-message">
+
+                <div class="message-icon">
+
+                    <i class="bi bi-robot"></i>
+
+                </div>
+
+                <div class="typing">
+
+                    <span></span>
+
+                    <span></span>
+
+                    <span></span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- Input -->
+
+        <div class="chat-footer">
+
+            <div class="input-group">
+
+                <textarea id="txtQuestion"
+                          class="form-control"
+                          rows="2"
+                          placeholder="Ask anything about production, quality, CAPA, inventory, work orders..."></textarea>
+
+                <button type="button"
+                        class="btn btn-success px-4"
+                        id="btnSend">
+
+                    <i class="bi bi-send-fill"></i>
+
+                </button>
+
+            </div>
+
+            <small class="text-muted mt-2 d-block">
+
+                AI may make mistakes. Always verify critical production decisions.
+
+            </small>
+
+        </div>
+
+    </div>
+
+</div>
+<script>
+
+    const btnSend=document.getElementById("btnSend");
+
+    const txtQuestion=document.getElementById("txtQuestion");
+
+    const chat=document.getElementById("chatMessages");
+
+    const typing=document.getElementById("typingIndicator");
+
+    const token=document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+
+
+    btnSend.addEventListener("click",sendMessage);
+
+    txtQuestion.addEventListener("keypress",function(e){
+
+        if(e.key==="Enter" && !e.shiftKey){
+
+            e.preventDefault();
+
+            sendMessage();
+
+        }
+
+    });
+
+
+
+    async function sendMessage(){
+
+        const question=txtQuestion.value.trim();
+
+        if(question==="") return;
+
+
+
+        addUserMessage(question);
+
+        txtQuestion.value="";
+
+
+
+        typing.style.display="block";
+
+
+
+        const response=await fetch("?handler=Chat",{
+
+            method:"POST",
+
+            headers:{
+
+                "Content-Type":"application/json",
+
+                "RequestVerificationToken":token
+
+            },
+
+            body:JSON.stringify({
+
+                message:question
+
+            })
+
+        });
+
+
+
+        typing.style.display="none";
+
+
+
+        const result=await response.json();
+
+
+
+        if(result.success){
+
+            addAIMessage(result.answer);
+
+        }
+
+        else{
+
+            addAIMessage("❌ "+result.answer);
+
+        }
+
+
+
+        chat.scrollTop=chat.scrollHeight;
+
+    }
+
+
+
+    function addUserMessage(text){
+
+        chat.insertAdjacentHTML("beforeend",
+
+    `<div class="user-message">
+
+    <div class="user-bubble">
+
+    ${text}
+
+    </div>
+
+    </div>`);
+
+    }
+
+
+
+    function addAIMessage(text){
+
+        chat.insertAdjacentHTML("beforeend",
+
+    `<div class="assistant-message">
+
+    <div class="message-icon">
+
+    <i class="bi bi-robot"></i>
+
+    </div>
+
+    <div class="message-content">
+
+    ${text}
+
+    </div>
+
+    </div>`);
+
+    }
+
+</script>
+<style>
+
+    body {
+        background: #f4f6f9;
+    }
+
+    .ai-card {
+        height: 88vh;
+        border-radius: 18px;
+        overflow: hidden;
+    }
+
+    .ai-header {
+        background: linear-gradient(135deg,#198754,#0d6efd);
+        color: white;
+    }
+
+    .ai-avatar {
+        width: 55px;
+        height: 55px;
+        border-radius: 50%;
+        background: white;
+        color: #198754;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+    }
+
+    #chatContainer {
+        flex: 1;
+        overflow-y: auto;
+        padding: 25px;
+        background: white;
+        height: calc(88vh - 200px);
+    }
+
+    .assistant-message,
+    .user-message {
+        display: flex;
+        margin-bottom: 25px;
+    }
+
+    .user-message {
+        justify-content: flex-end;
+    }
+
+    .message-icon {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        background: #198754;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        margin-right: 15px;
+    }
+
+    .message-content {
+        max-width: 80%;
+        background: #f8f9fa;
+        border-radius: 15px;
+        padding: 18px;
+        box-shadow: 0 3px 8px rgba(0,0,0,.08);
+    }
+
+    .user-bubble {
+        background: #198754;
+        color: white;
+        border-radius: 15px;
+        padding: 15px 20px;
+        max-width: 70%;
+    }
+
+    .chat-footer {
+        padding: 18px;
+        background: #fff;
+        border-top: 1px solid #dee2e6;
+    }
+
+    #txtQuestion {
+        resize: none;
+        border-radius: 12px;
+    }
+
+    #btnSend {
+        border-radius: 12px;
+    }
+
+    .suggestion {
+        width: 100%;
+        text-align: left;
+    }
+
+    .typing {
+        display: flex;
+        align-items: center;
+        height: 40px;
+    }
+
+        .typing span {
+            width: 10px;
+            height: 10px;
+            background: #198754;
+            border-radius: 50%;
+            margin: 3px;
+            animation: blink 1.3s infinite;
+        }
+
+            .typing span:nth-child(2) {
+                animation-delay: .2s;
+            }
+
+            .typing span:nth-child(3) {
+                animation-delay: .4s;
+            }
+
+    @@keyframes blink {
+        0%
+
+    {
+        transform: translateY(0);
+        opacity: .2;
+    }
+
+    50% {
+        transform: translateY(-8px);
+        opacity: 1;
+    }
+
+    100% {
+        transform: translateY(0);
+        opacity: .2;
+    }
+
+    }
+
+    ::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: #198754;
+        border-radius: 20px;
+    }
+
+</style>

@@ -1,0 +1,413 @@
+﻿@page
+@model TPL_TM.Pages.Downtime_EntryModel
+@{
+}
+
+<!-- Downtime Entry Modal -->
+<div class="modal fade show" id="downtimeEntryModal" tabindex="-1" aria-labelledby="downtimeEntryModalLabel" aria-hidden="true" style="display:block;">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 550px; margin-top:80px;">
+        <div class="modal-content shadow-lg border-0 rounded-4">
+            <div class="modal-header bg-primary text-white d-flex align-items-center rounded-top-4">
+                <i class="bi bi-clock-history me-2 fs-4"></i>
+                <h5 class="modal-title fw-semibold" id="downtimeEntryModalLabel">Downtime Entry</h5>
+                <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal" aria-label="Close" id="closeDowntimeEntryModal"></button>
+            </div>
+
+            <div class="modal-body p-4">
+                <form id="downtime-entry-form" method="post" novalidate class="needs-validation">
+                    <!-- Hidden Shift ID -->
+                    <input type="hidden" name="Shift" value="@Model.DowntimeInfo.Shift" />
+
+                    <!-- Downtime Value + Unit -->
+                    <div class="input-group mb-3">
+                        <div class="form-floating flex-grow-1">
+                            <select class="form-select" name="DowntimeValue" required>
+                                <option value="">Select Downtime</option>
+                                @for (int i = 1; i <= 100; i++)
+                                {
+                                    <option value="@i">@i</option>
+                                }
+                            </select>
+                            <label><i class="bi bi-hourglass-split me-1 text-primary"></i>Downtime Value</label>
+                            <div class="invalid-feedback">Please select a downtime value.</div>
+                        </div>
+
+                        <select class="form-select" name="DowntimeUnit" style="max-width: 130px;">
+                            <option value="minutes" selected>Minutes</option>
+                            <option value="hours">Hours</option>
+                        </select>
+                    </div>
+
+                    <!-- Reason Dropdown -->
+                    <div class="form-floating mb-3">
+                        <select name="ReasonId" class="form-select" required id="reasonSelect">
+                            <option value="">Select Reason</option>
+                            @foreach (var reason in Model.DowntimeReasons)
+                            {
+                                <option value="@reason.Id" data-description="@reason.Description">@reason.ReasonName</option>
+                            }
+                        </select>
+
+                        <label><i class="bi bi-exclamation-octagon me-1 text-primary"></i>Reason</label>
+                        <div class="invalid-feedback">Please select a reason.</div>
+                    </div>
+
+                    <!-- Comment -->
+                    <div class="form-floating mb-4">
+                        <textarea name="Comment" class="form-control" placeholder="Comment"></textarea>
+                        <label><i class="bi bi-chat-dots me-1 text-primary"></i>Comment</label>
+                    </div>
+
+                    <!-- Submit -->
+                    <button type="submit" class="btn btn-lg btn-success w-100 shadow-sm rounded-3">
+                        <i class="bi bi-save2 me-2"></i>Save Downtime Entry
+                    </button>
+                </form>
+
+                @{
+                    var totalDowntime = Model.DowntimeEntries.Sum(d => d.Downtime ?? 0);
+                }
+                <div class="alert alert-warning d-flex justify-content-between align-items-center rounded-3 shadow-sm mt-3 mb-2">
+                    <div>
+                        <i class="bi bi-clock-history me-2"></i>
+                        <strong>Total Downtime (minutes)</strong>
+                    </div>
+                    <span class="badge bg-danger fs-6 px-3 py-2">
+                        @totalDowntime
+                    </span>
+                </div>
+                
+                @if (Model.DowntimeEntries.Any())
+                {
+                    <button class="btn btn-outline-primary btn-sm d-flex justify-content-between align-items-center toggle-btn"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#downtime-@Model.DowntimeInfo.Shift"
+                            aria-expanded="true"
+                            aria-controls="downtime-@Model.DowntimeInfo.Shift">
+                        <span>
+                            <i class="bi bi-clock-history me-1"></i> View Downtime Details
+                        </span>
+                        <i class="bi bi-chevron-down chevron"></i>
+                    </button>
+
+                    <div class="collapse mt-2" id="downtime-@Model.DowntimeInfo.Shift">
+                        <div class="materials-table-container mt-2">
+                            <table class="table table-sm table-hover align-middle materials-table mb-0">
+                                <thead>
+                                    <tr>
+                                        <th class="text-center">Actions</th>
+                                        <th>Minutes</th>
+                                        <th>Reason</th>
+                                        <th>Comment</th>
+                                        <th>Created By</th>
+                                        <th>Created On</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var d in Model.DowntimeEntries)
+                                    {
+                                        <tr>
+                                            <td class="text-center">
+                                                <div class="dropdown">
+                                                    <a href="#" class="btn btn-link p-0" data-bs-toggle="dropdown">
+                                                        <i class="bi bi-three-dots-vertical text-muted"></i>
+                                                    </a>
+                                                    <ul class="dropdown-menu dropdown-menu-end">
+                                                        <li>
+                                                            <a class="dropdown-item"
+                                                               href="/Downtime_Edit?id=@d.Id">
+                                                                <i class="bi bi-pencil-square me-2 text-warning"></i>
+                                                                Edit
+                                                            </a>
+                                                        </li>
+                                                        <li>
+                                                            <a class="dropdown-item text-danger"
+                                                               href="/Downtime_Delete?id=@d.Id"
+                                                               onclick="return confirm('Delete this downtime entry?');">
+                                                                <i class="bi bi-trash me-2"></i>
+                                                                Delete
+                                                            </a>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </td>
+                                            <td>@d.Downtime</td>
+                                            <td>@d.ReasonName</td>
+                                            <td>@d.Comment</td>
+                                            <td>@d.CreatedBy</td>
+                                            <td>@d.CreatedOn?.ToString("g")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted small fst-italic mt-2 mb-0">
+                        No downtime recorded yet.
+                    </p>
+                }
+
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        .modal-content {
+            animation: fadeInDown 0.4s ease-in-out;
+        }
+
+        @@keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .form-floating > label i {
+            font-size: 0.95rem;
+        }
+
+        .btn-success:hover {
+            background-color: #218838 !important;
+        }
+
+        /* Header layout with centered clock */
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            text-align: center;
+        }
+
+        .downtime-clock {
+            flex: 1;
+            text-align: center;
+            font-size: 1.6rem;
+            font-weight: 600;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        /* Progress bar directly under header */
+        .downtime-progress {
+            height: 20px;
+            border-radius: 0;
+            overflow: hidden;
+            background-color: #e9ecef;
+        }
+
+            .downtime-progress .progress-bar {
+                transition: width 0.5s ease, background-color 0.5s ease;
+            }
+
+        .clock-paused {
+            opacity: 0.6;
+        }
+    </style>
+    <style>
+        /* === COLLAPSE BUTTON (same as Production) === */
+        .btn-outline-primary {
+            border: 1px solid #0d6efd;
+            color: #0d6efd;
+            font-weight: 500;
+            background-color: #f8faff;
+            border-radius: 0.75rem;
+            transition: all 0.2s ease-in-out;
+            width: 100%;
+        }
+
+            .btn-outline-primary:hover {
+                background-color: #0d6efd;
+                color: white;
+                box-shadow: 0 2px 8px rgba(13,110,253,0.2);
+            }
+
+        /* === TABLE CONTAINER === */
+        .materials-table-container {
+            max-height: 260px;
+            overflow-y: auto;
+            overflow-x: auto;
+        }
+
+        /* === TABLE STYLE === */
+        .materials-table {
+            border-radius: 0.75rem;
+            background: #f9fafb;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            font-size: 0.9rem;
+            width: 100%;
+            white-space: nowrap;
+        }
+
+            .materials-table thead {
+                background-color: #e9f5ff;
+                color: #0d6efd;
+                font-weight: 600;
+                position: sticky;
+                top: 0;
+                z-index: 2;
+            }
+
+            .materials-table tbody tr:hover {
+                background-color: #f1f9ff;
+                transition: background-color 0.2s ease-in-out;
+            }
+
+        /* === CHEVRON ROTATION === */
+        .chevron {
+            transition: transform 0.3s ease;
+        }
+
+            .chevron.rotate {
+                transform: rotate(180deg);
+            }
+    </style>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Initialize Bootstrap modal
+            const modalEl = document.getElementById('downtimeEntryModal');
+            const modal = new bootstrap.Modal(modalEl, { backdrop: 'static', keyboard: false });
+            modal.show();
+
+            // Redirect on close
+            document.getElementById("closeDowntimeEntryModal")?.addEventListener("click", () => {
+                window.location.href = "/Shift_Dashboard";
+            });
+
+            // --- 🕒 TIMER + PROGRESS BAR ---
+            const downtimeSelect = document.querySelector("select[name='DowntimeValue']");
+            const downtimeUnitSelect = document.querySelector("select[name='DowntimeUnit']");
+            const header = document.querySelector(".modal-header");
+            const clockIcon = header.querySelector(".bi-clock-history");
+
+            // Add a large centered timer display
+            const liveTimer = document.createElement("div");
+            liveTimer.className = "downtime-clock text-white";
+            liveTimer.textContent = "⏱ 0m 0s";
+            header.insertBefore(liveTimer, header.querySelector(".btn-close"));
+
+            // Move close button to right
+            const closeBtn = header.querySelector(".btn-close");
+            closeBtn.style.position = "absolute";
+            closeBtn.style.right = "15px";
+
+            // Add progress bar directly below header
+            const progressContainer = document.createElement("div");
+            progressContainer.className = "downtime-progress";
+            progressContainer.innerHTML = `
+                <div class="progress-bar bg-success" role="progressbar" style="width: 0%;" aria-valuemin="0" aria-valuemax="100"></div>
+            `;
+            header.after(progressContainer);
+            const progressBar = progressContainer.querySelector(".progress-bar");
+
+            // Timer logic
+            const downtimeOptions = Array.from(downtimeSelect.options)
+                .filter(opt => opt.value && !isNaN(opt.value))
+                .map(opt => parseInt(opt.value));
+            const maxDowntime = Math.max(...downtimeOptions);
+
+            let startTime = new Date();
+            let timerPaused = false;
+            let timerInterval = setInterval(updateTimer, 1000);
+
+            function updateTimer() {
+                if (timerPaused) return;
+
+                const now = new Date();
+                const elapsedMs = now - startTime;
+                const elapsedMinutes = Math.floor(elapsedMs / 60000);
+                const elapsedSeconds = Math.floor((elapsedMs % 60000) / 1000);
+
+                // Update display
+                liveTimer.textContent = `⏱ ${elapsedMinutes}m ${elapsedSeconds}s`;
+
+                // Auto-select closest value
+                const closestValue = downtimeOptions.reduce((prev, curr) =>
+                    Math.abs(curr - elapsedMinutes) < Math.abs(prev - elapsedMinutes) ? curr : prev
+                );
+
+                if (elapsedMinutes > 0 && elapsedMinutes <= maxDowntime) {
+                    downtimeSelect.value = closestValue.toString();
+                } else if (elapsedMinutes > maxDowntime) {
+                    downtimeSelect.value = maxDowntime.toString();
+                }
+
+                // Keep unit as minutes unless changed
+                if (downtimeUnitSelect.value === "minutes") {
+                    downtimeUnitSelect.value = "minutes";
+                }
+
+                // Progress bar update
+                const percent = Math.min((elapsedMinutes / maxDowntime) * 100, 100);
+                progressBar.style.width = percent + "%";
+                if (percent < 50) progressBar.className = "progress-bar bg-success";
+                else if (percent < 80) progressBar.className = "progress-bar bg-warning";
+                else progressBar.className = "progress-bar bg-danger";
+            }
+
+            // 🛑 Pause/Resume when clicking clock icon or timer text
+            function toggleTimer() {
+                timerPaused = !timerPaused;
+                liveTimer.classList.toggle("clock-paused", timerPaused);
+                clockIcon.classList.toggle("clock-paused", timerPaused);
+                if (timerPaused) {
+                    console.log("⏸ Timer paused — manual selection allowed");
+                } else {
+                    console.log("▶ Timer resumed");
+                }
+            }
+
+            clockIcon.addEventListener("click", toggleTimer);
+            liveTimer.addEventListener("click", toggleTimer);
+
+            // Stop timer when form submitted or modal closed
+            const form = document.getElementById('downtime-entry-form');
+            form?.addEventListener('submit', () => clearInterval(timerInterval));
+            modalEl.addEventListener('hidden.bs.modal', () => clearInterval(timerInterval));
+
+            // --- Validation ---
+            if (form) {
+                form.addEventListener('submit', (e) => {
+                    if (!form.checkValidity()) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                });
+            }
+            
+            const reasonSelect = document.getElementById("reasonSelect");
+            const commentTextarea = document.querySelector("textarea[name='Comment']");
+
+            reasonSelect.addEventListener("change", function () {
+                const selectedOption = reasonSelect.selectedOptions[0];
+                const description = selectedOption.getAttribute("data-description") || "";
+                commentTextarea.value = description;
+            });
+
+        });
+    </script>
+    <script>
+        document.querySelectorAll('.toggle-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                btn.querySelector('.chevron')?.classList.toggle('rotate');
+            });
+        });
+    </script>
+
+}

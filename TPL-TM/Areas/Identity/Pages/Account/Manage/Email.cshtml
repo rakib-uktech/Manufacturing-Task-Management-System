@@ -1,0 +1,90 @@
+﻿@page
+@model EmailModel
+@{
+    ViewData["Title"] = "Manage Email";
+    ViewData["ActivePage"] = ManageNavPages.Email;
+}
+
+<!-- Change Email Modal (Auto Open on Page Load) -->
+<div class="modal fade show" id="changeEmailModal" tabindex="-1" aria-labelledby="changeEmailModalLabel" aria-hidden="true" style="display: block;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="changeEmailModalLabel">@ViewData["Title"]</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="closeEmailModal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="email-form" method="post">
+                    <div asp-validation-summary="All" class="text-danger mb-3" role="alert"></div>
+
+                    @if (Model.IsEmailConfirmed)
+                    {
+                        <div class="mb-3">
+                            <label for="Email" class="form-label">Current Email</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                                <input asp-for="Email" class="form-control" placeholder="Current Email" disabled />
+                            </div>
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="mb-3">
+                            <label for="Email" class="form-label">Current Email</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                                <input asp-for="Email" class="form-control" placeholder="Current Email" disabled />
+                            </div>
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                            <button id="email-verification" type="submit" asp-page-handler="SendVerificationEmail" class="btn btn-link">Send verification email</button>
+                        </div>
+                    }
+
+                    <div class="mb-3">
+                        <label for="NewEmail" class="form-label">New Email</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-envelope-plus"></i></span>
+                            <input asp-for="Input.NewEmail" class="form-control" autocomplete="email" aria-required="true" placeholder="New Email" />
+                        </div>
+                        <span asp-validation-for="Input.NewEmail" class="text-danger"></span>
+                    </div>
+
+                    <button id="change-email-button" type="submit" asp-page-handler="ChangeEmail" class="btn btn-success w-100">Change Email</button>
+                </form>
+
+                <!-- Optional Links -->
+                <div class="mt-3 text-center">
+                    <a asp-page="/Account/Manage/Index" class="text-primary">Back to Profile</a>
+                </div>
+
+                <hr />
+
+                @if (!Model.IsEmailConfirmed)
+                {
+                    <div class="text-center">
+                        <button id="email-verification" type="submit" asp-page-handler="SendVerificationEmail" class="btn btn-link">Send verification email</button>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var myModal = new bootstrap.Modal(document.getElementById('changeEmailModal'), {
+                backdrop: 'static', // Prevent closing when clicking outside
+                keyboard: false     // Prevent closing with keyboard (Esc)
+            });
+            myModal.show();
+        });
+
+        // Closing Modal and redirecting to profile page (or another page if needed)
+        document.getElementById("closeEmailModal")?.addEventListener("click", function () {
+            window.location.href = "/Index";
+        });
+    </script>
+}

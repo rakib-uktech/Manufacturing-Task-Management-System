@@ -1,0 +1,188 @@
+﻿@page
+@model TPL_TM.Pages.Waste_ReportModel
+@{
+}
+
+<div class="container mt-4">
+    <div class="card shadow p-3">
+        <!-- Header -->
+        <div class="container-fluid bg-success text-white py-3 mb-4 rounded shadow">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h2 class="mb-0">
+                        <i class="bi bi-trash-fill me-2"></i> Waste Report
+                    </h2>
+                    <p class="mb-0">Monitor and track all waste clearance tasks efficiently.</p>
+                </div>
+                <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                    <a href="Assign_Task" class="btn btn-light text-success me-2">
+                        <i class="bi bi-plus-circle me-1"></i> Assign Task
+                    </a>
+                    <a id="exportBtn" class="btn btn-outline-light" href="javascript:void(0);">
+                        <i class="bi bi-download me-1"></i> Export
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 🔹 Date Range Filters -->
+        <div class="card shadow mb-4 p-3">
+            <div class="d-flex gap-2 align-items-center flex-nowrap">
+                <input type="text" id="wasteSearch" class="form-control form-control-sm search-box" placeholder="Search production records…">
+
+                <select id="rangeSelect" class="form-select form-select-sm w-auto">
+                    <option value="7">Last 7 days</option>
+                    <option value="30">Last 30 days</option>
+                    <option value="all" selected>All</option>
+                    <option value="custom">Custom Range</option>
+                </select>
+
+                <input type="date" id="fromDate" class="form-control form-control-sm date-input" disabled />
+                <input type="date" id="toDate" class="form-control form-control-sm date-input" disabled />
+                <button id="applyBtn" class="btn btn-success btn-sm" disabled>Apply</button>
+
+                <select id="pageLength" class="form-select form-select-sm w-auto ms-auto">
+                    <option value="5">5</option>
+                    <option value="10" selected>10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                </select>
+            </div>
+        </div>
+        <!-- Table -->
+        <div class="table-responsive">
+            <table id="wasteTable" class="table table-striped table-bordered table-hover w-100">
+                <thead class="bg-success text-white">
+                    <tr>
+                        <th>Action</th>
+                        <th>ID</th>
+                        <th>Create_On</th>
+                        <th>Ref_No</th>
+                        <th>Bin Name</th>
+                        <th>Location</th>
+                        <th>Waste Type</th>
+                        <th>Description</th>
+                        <th>Bin Weight</th>
+                        <th>Total Weight</th>
+                        <th>Waste Weight</th>
+                        <th>Status</th>
+                        <th>Priority</th>
+                        <th>Complete_On</th>
+                        <th>Created_by</th>
+                        <th>Completed_by</th>
+                        <th>Comments</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var task in Model.WasteList)
+                    {
+                        var rowClass = task.Qty > task.BinWeight ? "table-danger" : (task.Qty == task.BinWeight ? "table-success" : "");
+                        <tr class="@rowClass" data-created="@task.Created_On?.ToString("yyyy-MM-dd")">
+                            <td>
+                                <div class="dropdown">
+                                    <a href="#" class="btn btn-link p-0" data-bs-toggle="dropdown"><i class="bi bi-three-dots-vertical"></i></a>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li><a class="dropdown-item" href="Complete_Task?id=@task.Id">Complete Task</a></li>
+                                        <li><a class="dropdown-item" href="/Edit_Task?id=@task.Id">Edit Task</a></li>
+                                        <li><a class="dropdown-item" href="/Delete_Task?id=@task.Id" onclick="return confirm('Are you sure?');">Delete Task</a></li>
+                                    </ul>
+                                </div>
+                            </td>
+                            <td>@task.Id</td>
+                            <td>@task.Created_On?.ToString("dd/MM/yyyy")</td>
+                            <td>@task.Ref_No</td>
+                            <td>@task.Assign_To</td>
+                            <td>@task.WasteLocation</td>
+                            <td>@task.WasteType</td>
+                            <td>@task.WasteDescription</td>
+                            <td>@task.BinWeight</td>
+                            <td>@task.Qty</td>
+                            <td>@(task.Qty - task.BinWeight)</td>
+                            <td>@task.Status</td>
+                            <td>@task.Priority_Level</td>
+                            <td>@task.Completed_On?.ToString("dd/MM/yyyy")</td>
+                            <td>@task.Created_by</td>
+                            <td>@task.Completed_by</td>
+                            <td>@task.Comments</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+</div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            var table = $('#wasteTable').DataTable({
+                responsive: true,
+                paging: true,
+                pageLength: 10,
+                lengthMenu: [5, 10, 25, 50, 100, 500, 1000],
+                ordering: true,
+                searching: true
+            });
+
+            // Search box
+            $('#wasteSearch').on('keyup', function () { table.search(this.value).draw(); });
+
+            // Page length
+            $('#pageLength').change(function () {
+                table.page.len($(this).val()).draw();
+            });
+
+            // Export table
+            $("#exportBtn").click(function () {
+                var workbook = XLSX.utils.table_to_book(document.getElementById("wasteTable"), { sheet: "Waste" });
+                XLSX.writeFile(workbook, "Waste_Report.xlsx");
+            });
+
+            // Enable custom range inputs
+            $("#rangeSelect").change(function () {
+                if ($(this).val() === "custom") {
+                    $("#fromDate, #toDate, #applyBtn").prop("disabled", false);
+                } else {
+                    $("#fromDate, #toDate, #applyBtn").prop("disabled", true);
+                    applyRangeFilter();
+                }
+            });
+
+            // Apply custom range
+            $("#applyBtn").click(function () { applyRangeFilter(); });
+
+            function applyRangeFilter() {
+                var range = $("#rangeSelect").val();
+                let minDate = null, maxDate = null;
+
+                if (range === "7") { minDate = moment().subtract(7,"days").startOf("day"); maxDate = moment().endOf("day"); }
+                else if (range === "30") { minDate = moment().subtract(30,"days").startOf("day"); maxDate = moment().endOf("day"); }
+                else if (range === "custom") {
+                    if ($("#fromDate").val()) minDate = moment($("#fromDate").val(), "YYYY-MM-DD").startOf("day");
+                    if ($("#toDate").val()) maxDate = moment($("#toDate").val(), "YYYY-MM-DD").endOf("day");
+                } else { $.fn.dataTable.ext.search = $.fn.dataTable.ext.search.filter(f=>false); table.draw(); return; }
+
+                // Remove previous filters
+                $.fn.dataTable.ext.search = $.fn.dataTable.ext.search.filter(f=>false);
+
+                // Add new filter
+                $.fn.dataTable.ext.search.push(function(settings, data) {
+                    var createdAt = moment(data[2], "DD/MM/YYYY"); // Column index of Create_On
+                    if (!createdAt.isValid()) return false;
+                    if (minDate && createdAt.isBefore(minDate)) return false;
+                    if (maxDate && createdAt.isAfter(maxDate)) return false;
+                    return true;
+                });
+
+                table.draw();
+            }
+        });
+    </script>    
+}

@@ -1,0 +1,178 @@
+﻿@page "/Downtime_Report"
+@model TPL_TM.Pages.Downtime_ReportModel
+
+<div class="container-fluid">
+    <div class="card shadow p-3">
+
+        <!-- HEADER -->
+        <div class="bg-success text-white p-3 mb-3 rounded">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <h4 class="mb-0">
+                        <i class="bi bi-clock-history"></i> Downtime Report
+                    </h4>
+                    <small>View, edit, or delete downtime records</small>
+                </div>
+                <div>
+                    <a href="/Downtime_Entry" class="btn btn-light btn-sm me-2">
+                        <i class="bi bi-plus-circle"></i> Add Downtime
+                    </a>
+                    <button id="exportBtn" class="btn btn-outline-light btn-sm">
+                        <i class="bi bi-download"></i> Export
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- FILTERS -->
+        <div class="d-flex gap-2 mb-3">
+            <input id="downtimeSearch" class="form-control form-control-sm" placeholder="Search downtime records..." />
+
+            <select id="rangeSelect" class="form-select form-select-sm w-auto">
+                <option value="7">Last 7 days</option>
+                <option value="30">Last 30 days</option>
+                <option value="all" selected>All</option>
+                <option value="custom">Custom Range</option>
+            </select>
+
+            <input type="date" id="fromDate" class="form-control form-control-sm" disabled />
+            <input type="date" id="toDate" class="form-control form-control-sm" disabled />
+            <button id="applyBtn" class="btn btn-success btn-sm" disabled>Apply</button>
+
+            <select id="pageLength" class="form-select form-select-sm w-auto ms-auto">
+                <option value="5">5</option>
+                <option value="10" selected>10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+            </select>
+        </div>
+
+        <!-- TABLE -->
+        <div class="table-responsive" style="overflow-x:auto; overflow-y:auto;">
+            <table id="downtimeTable" class="table table-striped table-bordered w-100">
+                <thead class="bg-success text-white">
+                    <tr>
+                        <th>Actions</th>
+                        <th>Shift ID</th>
+                        <th>Machine Line</th>
+                        <th>Machine Name</th>
+                        <th>Product Line</th>
+                        <th>Downtime (min)</th>
+                        <th>Reason</th>
+                        <th>Comment</th>
+                        <th>Created By</th>
+                        <th>Created On</th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <script>
+        $(function () {
+            var table = $('#downtimeTable').DataTable({
+                processing: true,
+                serverSide: true,
+                searching: false,
+                pageLength: 10,
+                ajax: {
+                    url: '@Url.Page("/Downtime_Report", "LoadData")',
+                    type: 'GET',
+                    data: function (d) {
+                        return {
+                            draw: d.draw,
+                            start: d.start,
+                            length: d.length,
+                            search: $('#downtimeSearch').val(),
+                            range: $('#rangeSelect').val(),
+                            fromDate: $('#fromDate').val(),
+                            toDate: $('#toDate').val()
+                        };
+                    }
+                },
+                columns: [
+                    {
+                        data: 'id',
+                        orderable: false,
+                        render: function (id) {
+                            return `
+                            <div class="dropdown text-center">
+                                <a href="#" class="d-inline-flex align-items-center justify-content-center"
+                                   style="width: 28px; height: 28px;" data-bs-toggle="dropdown">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <a class="dropdown-item d-flex align-items-center gap-2" href="/Downtime_Edit?id=${id}">
+                                            <i class="fas fa-edit text-primary"></i> Edit
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item d-flex align-items-center gap-2 text-danger" href="/Downtime_Delete?id=${id}" onclick="return confirm('Are you sure?')">
+                                            <i class="fas fa-trash"></i> Delete
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>`;
+                        }
+                    },
+                    { data: 'shiftDetails.id' },
+                    { data: 'shiftDetails.machineLine' },
+                    { data: 'shiftDetails.machineName' },
+                    { data: 'shiftDetails.productLine' },
+                    { data: 'downtime' },
+                    { data: 'reason' },
+                    { data: 'comment' },
+                    { data: 'createdBy' },
+                    { data: 'createdOn' }
+                ]
+            });
+
+            // Search box
+            $('#downtimeSearch').keyup(() => table.draw());
+
+            // Page length
+            $('#pageLength').change(function () { table.page.len(this.value).draw(); });
+
+            // Range filter
+            $('#rangeSelect').change(function () {
+                let isCustom = this.value === "custom";
+                $('#fromDate,#toDate,#applyBtn').prop('disabled', !isCustom);
+                if (!isCustom) table.draw();
+            });
+
+            $('#applyBtn').click(() => table.draw());
+
+            // Export button
+            $('#exportBtn').click(function () {
+                const params = new URLSearchParams({
+                    search: $('#downtimeSearch').val(),
+                    range: $('#rangeSelect').val(),
+                    fromDate: $('#fromDate').val(),
+                    toDate: $('#toDate').val()
+                });
+                window.location = '@Url.Page("/Downtime_Report", "Export")' + '&' + params.toString();
+            });
+        });
+    </script>
+
+    <style>
+        /* Dropdown menu style like Production report */
+        .dropdown-item i {
+            width: 16px;
+        }
+
+        .dropdown-menu {
+            min-width: 140px;
+        }
+    </style>
+}

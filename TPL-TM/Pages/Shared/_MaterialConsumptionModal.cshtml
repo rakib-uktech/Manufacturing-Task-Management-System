@@ -1,0 +1,73 @@
+﻿@model TPL_TM.Pages.Material_ConsumptionModel
+
+<div class="modal fade" id="materialModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 550px;">
+        <div class="modal-content shadow-lg border-0 rounded-4">
+            <div class="modal-header bg-primary text-white d-flex align-items-center rounded-top-4">
+                <i class="bi bi-box-seam me-2 fs-4"></i>
+                <h5 class="modal-title fw-semibold">Record Material Consumption</h5>
+                <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="modal-material-form" class="needs-validation" novalidate>
+                    <!-- Hidden Shift Id -->
+                    <input type="hidden" id="Shift_Id" name="Shift_Id" value="@Model.MaterialInfo.Shift_Id" />
+
+                    <!-- Work Order -->
+                    <div class="form-floating mb-3">
+                        <input class="form-control" list="Work_OrderlistOptions" id="Wo_Number" name="Wo_Number" required value="@Model.MaterialInfo.Wo_Number" />
+                        <datalist id="Work_OrderlistOptions">
+                            @foreach (var wo in Model.MaterialList.GroupBy(x => x.WorkOrder).Select(g => g.First()))
+                            {
+                                <option value="@wo.WorkOrder">@wo.WorkOrder</option>
+                            }
+                        </datalist>
+                        <label for="Wo_Number">Work Order</label>
+                        <div class="invalid-feedback">Work Order is required.</div>
+                    </div>
+
+                    <!-- Material ID -->
+                    <div class="form-floating mb-3">
+                        <input class="form-control" list="Material_NamelistOptions" id="Material_Id" name="Material_Id" required value="@Model.MaterialInfo.Material_Id" />
+                        <datalist id="Material_NamelistOptions">
+                            @foreach (var mat in Model.MaterialList)
+                            {
+                                <option value="@mat.ItemId" data-description="@mat.DisplayName">@mat.ItemId</option>
+                            }
+                        </datalist>
+                        <label for="Material_Id">Material ID</label>
+                        <div class="invalid-feedback">Material ID is required.</div>
+                    </div>
+
+                    <!-- Material Description -->
+                    <div class="form-floating mb-3">
+                        <input class="form-control" id="Material_Description" name="Material_Description" value="@Model.MaterialInfo.Material_Description" readonly />
+                        <label for="Material_Description">Material Description</label>
+                    </div>
+
+                    <!-- Quantity Consumed -->
+                    <div class="form-floating mb-4">
+                        <input type="number" name="Quantity_Consumed" id="Quantity_Consumed" class="form-control" required min="1" value="@Model.MaterialInfo.Quantity_Consumed" />
+                        <label for="Quantity_Consumed">Quantity Consumed</label>
+                        <div class="invalid-feedback">Quantity must be at least 1.</div>
+                    </div>
+
+                    <!-- Submit -->
+                    <button type="submit" class="w-100 btn btn-lg btn-primary">Submit</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Optional: Automatically fill Material Description when Material_ID changes
+    document.getElementById("Material_Id").addEventListener("change", function() {
+        const selectedOption = document.querySelector(`#Material_NamelistOptions option[value="${this.value}"]`);
+        if (selectedOption) {
+            document.getElementById("Material_Description").value = selectedOption.dataset.description || "";
+        } else {
+            document.getElementById("Material_Description").value = "";
+        }
+    });
+</script>

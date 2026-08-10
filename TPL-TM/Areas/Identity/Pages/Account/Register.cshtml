@@ -1,0 +1,107 @@
+﻿@page
+@model RegisterModel
+
+@{
+    ViewData["Title"] = "Register";
+}
+
+<!-- Register Modal (Auto Open on Page Load) -->
+<div class="modal fade show" id="registerModal" tabindex="-1" aria-labelledby="registerModalLabel" aria-hidden="true" style="display: block;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="registerModalLabel">Create a New Account</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <!-- Email Input -->
+                    <div class="input-group mb-3">
+                        <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                        <input asp-for="Input.Email" class="form-control" placeholder="Email" required />
+                        <span asp-validation-for="Input.Email" class="text-danger"></span>
+                    </div>
+
+                    <!-- Password Input -->
+                    <div class="input-group mb-3">
+                        <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                        <input asp-for="Input.Password" type="password" class="form-control" placeholder="Password" required />
+                        <span asp-validation-for="Input.Password" class="text-danger"></span>
+                    </div>
+
+                    <!-- Confirm Password Input -->
+                    <div class="input-group mb-3">
+                        <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+                        <input asp-for="Input.ConfirmPassword" type="password" class="form-control" placeholder="Confirm Password" required />
+                        <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+                    </div>
+
+                    <!-- Role Selection -->
+                    <div class="input-group mb-3">
+                        <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
+                        <select asp-for="Input.SelectedRole" class="form-control">
+                            <option value="">-- Select Role --</option>
+                            @foreach (var role in Model.AvailableRoles)
+                            {
+                                <option value="@role">@role</option>
+                            }
+                        </select>
+                        <span asp-validation-for="Input.SelectedRole" class="text-danger"></span>
+                    </div>
+
+                    <!-- Shift Selection -->
+                    <div class="input-group mb-3">
+                        <span class="input-group-text"><i class="bi bi-clock-history"></i></span>
+                        <select asp-for="Input.SelectedShiftId" class="form-control">
+                            <option value="">-- Select Shift --</option>
+                            @foreach (var shift in Model.ShiftList)
+                            {
+                                <option value="@shift.Value">@shift.Text</option>
+                            }
+                        </select>
+                        <span asp-validation-for="Input.SelectedShiftId" class="text-danger"></span>
+                    </div>
+
+                    <!-- Register Button -->
+                    <button id="registerSubmit" type="submit" class="btn btn-success w-100">Register</button>
+                </form>
+
+                <!-- Links -->
+                <div class="mt-3 text-center">
+                    <a asp-page="./Login" asp-route-returnUrl="@Model.ReturnUrl" class="text-primary">Already have an account? Log in</a>
+                </div>
+
+                <hr />
+
+                <!-- External Login Providers -->
+                @if (Model.ExternalLogins?.Count > 0)
+                {
+                    <div class="text-center">
+                        <p>Or sign up with:</p>
+                        @foreach (var provider in Model.ExternalLogins!)
+                        {
+                            <button type="submit" class="btn btn-outline-primary mb-2" name="provider" value="@provider.Name" form="external-account">
+                                <i class="bi bi-globe"></i> @provider.DisplayName
+                            </button>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var myModal = new bootstrap.Modal(document.getElementById('registerModal'), {
+                backdrop: 'static', // Prevent closing when clicking outside
+                keyboard: false     // Prevent closing with keyboard (Esc)
+            });
+            myModal.show();
+        });
+    </script>
+}

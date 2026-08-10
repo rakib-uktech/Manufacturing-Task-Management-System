@@ -1,0 +1,198 @@
+﻿@page
+@model TPL_TM.Pages.Move_ItemModel
+@{
+}
+<!-- Move Item Modal (Auto Open on Page Load) -->
+<div class="modal fade show" id="moveItemModal" tabindex="-1" aria-labelledby="moveItemModalLabel" aria-hidden="true" style="display: block;">
+    <div class="modal-dialog modal-dialog-centered" style="margin-top: 80px;">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-white">
+                <h5 class="modal-title" id="moveItemModalLabel">Move Item</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="closeMoveItemModal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="move-item-form" method="post" novalidate>
+                    <!-- Source Location -->
+                    <div class="form-floating mb-3">
+                        <input class="form-control" list="Source_LocationlistOptions" id="Source_Location" name="Source_Location" required placeholder="Source Location" />
+                        <datalist id="Source_LocationlistOptions">
+                            @foreach (var location in Model.LocationList)
+                            {
+                                <option value="@location.Assign_To">@location.Assign_To</option>
+                            }
+                        </datalist>
+                        <label>Source Location</label>
+                        <div class="invalid-feedback">Source Location is required.</div>
+                    </div>
+
+                    <!-- Destination Location -->
+                    <div class="form-floating mb-3">
+                        <input class="form-control" list="Destination_LocationlistOptions" id="Destination_Location" name="Destination_Location" required placeholder="Destination Location" />
+                        <datalist id="Destination_LocationlistOptions">
+                            @foreach (var location in Model.LocationList)
+                            {
+                                <option value="@location.Assign_To">@location.Assign_To</option>
+                            }
+                        </datalist>
+                        <label>Destination Location</label>
+                        <div class="invalid-feedback">Destination Location is required.</div>
+                    </div>
+
+                    <!-- Item Name -->
+                    <div class="form-floating mb-3">
+                        <input class="form-control" list="Item_NamelistOptions" id="Item_Name" name="Item_Name" required placeholder="Item Name" />
+                        <datalist id="Item_NamelistOptions">
+                            @foreach (var item in Model.ItemList)
+                            {
+                                <option value="@item.Task_Name" data-description="@item.Task_Description" data-refno="@item.Ref_No">@item.Task_Name</option>
+                            }
+                        </datalist>
+                        <label>Item Name</label>
+                        <div class="invalid-feedback">Item Name is required.</div>
+                    </div>
+
+                    <!-- Item Description (Auto-filled based on Item Name) -->
+                    <div class="form-floating mb-3">
+                        <input class="form-control" id="Item_Description" name="Item_Description" required placeholder="Item Description" readonly />
+                        <label>Item Description</label>
+                        <div class="invalid-feedback">Item Description is required.</div>
+                    </div>
+
+                    <!-- Quantity -->
+                    <div class="form-floating mb-3">
+                        <input type="number" name="Qty" class="form-control" required placeholder="Quantity" min="1" />
+                        <label>Quantity</label>
+                        <div class="invalid-feedback">Quantity must be at least 1.</div>
+                    </div>
+
+                    <!-- Unit -->
+                    <div class="form-floating mb-3">
+                        <select name="Unit" class="form-select" required>
+                            <option value="">Select Unit</option>
+                            <option value="Piece">Piece</option>
+                            <option value="Case">Case</option>
+                            <option value="Pallet">Pallet</option>
+                            <option value="Kilogram">Kilogram</option>
+                            <option value="Sheet">Sheet</option>
+                        </select>
+                        <label>Unit</label>
+                        <div class="invalid-feedback">Please select a unit.</div>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <select name="Priority_Level" class="form-select" required>
+                            <option value="">Select Priority Level</option>
+                            <option value="High">High</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Low">Low</option>
+                        </select>
+                        <label>Priority Level</label>
+                        <div class="invalid-feedback">Please select a priority level.</div>
+                    </div>
+
+                    <!-- Comments -->
+                    <div class="form-floating mb-3">
+                        <textarea name="Comments" class="form-control" placeholder="Comments"></textarea>
+                        <label>Comments</label>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="w-100 btn btn-lg btn-warning">Move Item</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var myModal = new bootstrap.Modal(document.getElementById('moveItemModal'), {
+                backdrop: 'static',
+                keyboard: false
+            });
+            myModal.show();
+
+            document.getElementById("closeMoveItemModal").addEventListener("click", function () {
+                window.location.href = "/Index";  // Redirect after closing modal
+            });
+
+            // Form validation
+            (function () {
+                'use strict';
+                var form = document.getElementById('move-item-form');
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            })();
+        });
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const itemNameInput = document.getElementById('Item_Name');
+            const itemDescriptionInput = document.getElementById('Item_Description');
+
+            const itemOptions = Array.from(document.querySelectorAll('#Item_NamelistOptions option'));
+
+            // Function to update Item Description based on Item Name
+            function updateItemDescription() {
+                const selectedItemName = itemNameInput.value.trim();
+
+                // Find matching item by Item Name
+                const selectedOption = itemOptions.find(option => option.value === selectedItemName);
+                if (selectedOption) {
+                    itemDescriptionInput.value = selectedOption.getAttribute('data-description') || '';
+                } else {
+                    itemDescriptionInput.value = '';
+                }
+            }
+
+            // Attach event listeners for input and change
+            itemNameInput.addEventListener('input', updateItemDescription);
+            itemNameInput.addEventListener('change', updateItemDescription);
+
+            // Handle Enter key press in Item Name input
+            itemNameInput.addEventListener('keydown', function (event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault(); // Prevent default Enter behavior
+                    fetchItemDetailsFromServer(); // Fetch item details via AJAX if necessary
+                }
+            });
+
+            // Fetch Item details via AJAX when Item Name is entered manually
+            function fetchItemDetailsFromServer() {
+                const itemName = itemNameInput.value.trim();
+
+                if (!itemName) {
+                    alert('Please enter a valid Item Name.');
+                    return;
+                }
+
+                // Make AJAX request to fetch item details
+                $.ajax({
+                    url: '@Url.Action("GetItemDetailsByName", "ItemController")',
+                    type: 'GET',
+                    data: { itemName: itemName },
+                    success: function (response) {
+                        if (response.success) {
+                            // Populate Item Description field
+                            $('#Item_Description').val(response.itemDescription);
+                        } else {
+                            // Show error if Item is not found
+                            alert(response.message);
+                            $('#Item_Description').val('');
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        // Handle AJAX error
+                        alert('An error occurred while fetching item details: ' + error);
+                        $('#Item_Description').val('');
+                    }
+                });
+            }
+        });
+    </script>
+}

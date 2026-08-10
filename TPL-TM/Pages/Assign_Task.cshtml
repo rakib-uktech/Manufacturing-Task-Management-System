@@ -1,0 +1,240 @@
+﻿@page
+@model TPL_TM.Pages.Assign_TaskModel
+@{
+}
+
+<!-- Assign Task Modal (Auto Open on Page Load) -->
+<div class="modal fade show" id="assignTaskModal" tabindex="-1" aria-labelledby="assignTaskModalLabel" aria-hidden="true" style="display: block;">
+    <div class="modal-dialog modal-dialog-centered" style="margin-top: 80px;">
+        <!-- Added margin-top to prevent modal going below navbar -->
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="assignTaskModalLabel">Assign New Task</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="closeAssignTaskModal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="assign-task-form" method="post" novalidate>
+                    <div class="form-floating mb-3">
+                        <input class="form-control" list="Work_OrderlistOptions" id="Work_Order" name="Work_Order" required placeholder="Work Order" />
+                        <datalist id="Work_OrderlistOptions">
+                            @foreach (var task in Model.TaskList)
+                            {
+                                <option value="@task.Ref_No">@task.Ref_No</option>
+                            }
+                        </datalist>
+                        <label>Work Order</label>
+                        <div class="invalid-feedback">Work Order is required.</div>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <input class="form-control" list="Task_NamelistOptions" id="Task_Name" name="Task_Name" required placeholder="Task Name" />
+                        <datalist id="Task_NamelistOptions">
+                            @foreach (var task in Model.TaskList)
+                            {
+                                <option value="@task.Task_Name"
+                                        data-description="@task.Task_Description"
+                                        data-refno="@task.Ref_No"
+                                        data-gtin="@task.GTIN">
+                                    @task.Task_Name
+                                </option>
+                            }
+                        </datalist>
+
+                        <label>Task Name</label>
+                        <div class="invalid-feedback">Task Name is required.</div>
+                    </div>
+
+
+                    <div class="form-floating mb-3">
+                        <input class="form-control" list="Task_DescriptionlistOptions" id="Task_Description" name="Task_Description" required placeholder="Task Description">
+                        <datalist id="Task_DescriptionlistOptions">
+                            @foreach (var task in Model.TaskList)
+                            {
+                                <option value="@task.Task_Description">@task.Task_Description</option>
+                            }
+                        </datalist>
+                        <label>Task Description</label>
+                        <div class="invalid-feedback">Task Description is required.</div>
+                    </div>
+                    
+                    <div class="form-floating mb-3">
+                        <input class="form-control" list="GTINlistOptions" id="GTIN" name="GTIN" required placeholder="GTIN">
+                        <datalist id="GTINlistOptions">
+                            @foreach (var task in Model.TaskList)
+                            {
+                                <option value="@task.GTIN">@task.GTIN</option>
+                            }
+                        </datalist>
+                        <label>GTIN</label>
+                        <div class="invalid-feedback">GTIN is required.</div>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <input class="form-control" list="Assign_TolistOptions" id="Assign_To" name="Assign_To" required placeholder="Assign To">
+                        <datalist id="Assign_TolistOptions">
+                            @foreach (var task in Model.AssignTolist)
+                            {
+                                <option value="@task.Assign_To">@task.Assign_To</option>
+                            }
+                        </datalist>
+                        <label>Assign To</label>
+                        <div class="invalid-feedback">Please specify the assignee.</div>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <input type="number" name="Qty" class="form-control" required placeholder="Quantity" min="1" />
+                        <label>Quantity</label>
+                        <div class="invalid-feedback">Quantity must be at least 1.</div>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <select name="Unit" class="form-select" required>
+                            <option value="">Select Unit</option>
+                            <option value="Piece">Piece</option>
+                            <option value="Case">Case</option>
+                            <option value="Pallet">Pallet</option>
+                            <option value="Kilogram">Kilogram</option>
+                            <option value="Sheet">Sheet</option>
+                        </select>
+                        <label>Unit</label>
+                        <div class="invalid-feedback">Please select a unit.</div>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <select name="Priority_Level" class="form-select" required>
+                            <option value="">Select Priority Level</option>
+                            <option value="High">High</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Low">Low</option>
+                        </select>
+                        <label>Priority Level</label>
+                        <div class="invalid-feedback">Please select a priority level.</div>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <textarea name="Comments" class="form-control" placeholder="Comments"></textarea>
+                        <label>Comments</label>
+                    </div>
+                    <button type="submit" class="w-100 btn btn-lg btn-success">Submit Task</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var myModal = new bootstrap.Modal(document.getElementById('assignTaskModal'), {
+                backdrop: 'static',
+                keyboard: false
+            });
+            myModal.show();
+
+            document.getElementById("closeAssignTaskModal").addEventListener("click", function () {
+                window.location.href = "/Index";
+            });
+
+            // Form validation
+            (function () {
+                'use strict';
+                var form = document.getElementById('assign-task-form');
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            })();
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const workOrderInput = document.getElementById('Work_Order');  // Ref_No input
+            const taskNameInput = document.getElementById('Task_Name');
+            const taskDescriptionInput = document.getElementById('Task_Description');
+            const GTINInput = document.getElementById('GTIN');
+
+            const taskOptions = Array.from(document.querySelectorAll('#Task_NamelistOptions option'));
+
+            // Function to update Task Name and Task Description based on Work Order
+            function updateTaskDetails() {
+                const selectedWorkOrder = workOrderInput.value.trim();
+
+                // Find matching task based on Ref_No (Work Order)
+                const matchedTask = taskOptions.find(option => option.dataset.refno === selectedWorkOrder);
+
+                if (matchedTask) {
+                    taskNameInput.value = matchedTask.value; // Set Task Name
+                    taskDescriptionInput.value = matchedTask.getAttribute('data-description') || ''; // Set Task Description
+                    GTINInput.value = matchedTask.getAttribute('data-gtin') || '';
+                } else {
+                    taskNameInput.value = '';
+                    taskDescriptionInput.value = '';
+                    GTINInput.value = '';
+                }
+            }
+
+            // Function to update only Task Description based on Task Name
+            function updateTaskDescription() {
+                const selectedTaskName = taskNameInput.value.trim();
+
+                // Find matching task by Task Name
+                const selectedOption = taskOptions.find(option => option.value === selectedTaskName);
+                if (selectedOption) {
+                    taskDescriptionInput.value = selectedOption.getAttribute('data-description') || '';
+                    GTINInput.value = selectedOption.getAttribute('data-gtin') || '';
+                }
+            }
+
+            // Attach event listeners for input and change
+            workOrderInput.addEventListener('input', updateTaskDetails);
+            workOrderInput.addEventListener('change', updateTaskDetails);
+            taskNameInput.addEventListener('input', updateTaskDescription);
+            taskNameInput.addEventListener('change', updateTaskDescription);
+
+            // Handle Enter key press in Work_Order input
+            workOrderInput.addEventListener('keydown', function (event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault(); // Prevent default Enter behavior
+                    fetchTaskDetailsFromServer(); // Fetch task details via AJAX if necessary
+                }
+            });
+
+            // Fetch Task details via AJAX when Work_Order is entered manually
+            function fetchTaskDetailsFromServer() {
+                const workOrderNo = workOrderInput.value.trim();
+
+                if (!workOrderNo) {
+                    alert('Please enter a valid Work Order number.');
+                    return;
+                }
+
+                // Make AJAX request to fetch task details
+                $.ajax({
+                    url: '@Url.Action("GetProductDetailsByWorkOrder", "TaskController")',
+                    type: 'GET',
+                    data: { workOrderNo: workOrderNo },
+                    success: function (response) {
+                        if (response.success) {
+                            // Populate Task Name and Description fields
+                            $('#Task_Name').val(response.taskName);
+                            $('#Task_Description').val(response.taskDescription);
+                            $('#GTIN').val(response.GTINInput);
+                        } else {
+                            // Show error if Work Order is not found
+                            alert(response.message);
+                            $('#Task_Name').val('');
+                            $('#Task_Description').val('');
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        // Handle AJAX error
+                        alert('An error occurred while fetching product details: ' + error);
+                        $('#Task_Name').val('');
+                        $('#Task_Description').val('');
+                    }
+                });
+            }
+        });
+    </script>
+}

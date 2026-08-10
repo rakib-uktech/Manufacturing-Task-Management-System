@@ -1,0 +1,102 @@
+﻿@page
+@model TPL_TM.Pages.Delete_TaskModel
+@{
+    ViewData["Title"] = "Delete Task";
+}
+
+<div class="modal fade show" id="deleteTaskModal" tabindex="-1" aria-labelledby="deleteTaskModalLabel" aria-hidden="true" style="display: block;">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 500px;">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteTaskModalLabel">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" onclick="window.location.href='/Index'"></button>
+            </div>
+
+            <div class="modal-body">
+                @if (!string.IsNullOrEmpty(Model.errorMessage))
+                {
+                    <div class="alert alert-danger">@Model.errorMessage</div>
+                }
+                else
+                {
+                    <h5 class="text-danger">Are you sure you want to delete this task?</h5>
+
+                    <table class="table table-bordered table-hover table-sm align-middle" style="background-color: #f9f9f9;">
+                        <tbody>
+                            <tr>
+                                <th style="width: 30%;">Ref No:</th>
+                                <td>@Model.taskinfo.Ref_No</td>
+                            </tr>
+                            <tr>
+                                <th>Task Type:</th>
+                                <td>@Model.taskinfo.Task_Type</td>
+                            </tr>
+                            <tr>
+                                <th>Task Name:</th>
+                                <td>@Model.taskinfo.Task_Name</td>
+                            </tr>
+                            <tr>
+                                <th>Task Description:</th>
+                                <td>@Model.taskinfo.Task_Description</td>
+                            </tr>
+                            <tr>
+                                <th>Assign To:</th>
+                                <td>@Model.taskinfo.Assign_To</td>
+                            </tr>
+                            <tr>
+                                <th>Quantity:</th>
+                                <td>@Model.taskinfo.Qty</td>
+                            </tr>
+                            <tr>
+                                <th>Unit:</th>
+                                <td>@Model.taskinfo.Unit</td>
+                            </tr>
+                            <tr>
+                                <th>Priority Level:</th>
+                                <td>@Model.taskinfo.Priority_Level</td>
+                            </tr>
+                            <tr>
+                                <th>Assigned On:</th>
+                                <td>@Model.taskinfo.Create_On</td>
+                            </tr>
+                            <tr>
+                                <th>Assigned By:</th>
+                                <td>@Model.taskinfo.Created_by</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <form method="post" asp-page-handler="DeleteTask" novalidate>
+                        <input type="hidden" name="TaskId" value="@Model.taskinfo.Id" />
+                        <button type="submit" class="btn btn-danger w-100">Delete Task</button>
+                        <a href="/Index" class="btn btn-secondary w-100 mt-2">Cancel</a>
+                    </form>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Show modal on page load
+            var deleteModal = new bootstrap.Modal(document.getElementById('deleteTaskModal'), {
+                backdrop: 'static',
+                keyboard: false
+            });
+
+            deleteModal.show();
+        });
+
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var deleteForm = document.querySelector("form");
+            deleteForm.addEventListener("submit", function (event) {
+                console.log("Form submitted for deletion!"); // Check if this logs
+                alert("Deleting Task..."); // This should show if the form submits
+            });
+        });
+    </script>
+}

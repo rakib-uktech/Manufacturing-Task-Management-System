@@ -1,0 +1,58 @@
+﻿@page
+@model TPL_TM.Pages.HelpModel
+
+@{
+    ViewData["Title"] = "Get Help";
+}
+
+<div class="container mt-5">
+    <h1 class="text-center mb-4">Get Help</h1>
+
+    <!-- Search Input -->
+    <div class="mb-4">
+        <input type="text" id="helpSearch" class="form-control" placeholder="Search help topics..." onkeyup="searchHelp()">
+    </div>
+
+    <!-- Help Topics List -->
+    <div id="helpTopicsList">
+        @if (Model.HelpTopics != null && Model.HelpTopics.Count > 0)
+        {
+            <ul class="list-group">
+                @foreach (var topic in Model.HelpTopics)
+                {
+                    <li class="list-group-item" data-topic="@topic.Name">
+
+                        <img src="~/images/@(topic.Name).png" style="max-width: 100%; height: auto;" class="img-fluid my-2" />
+                        <strong>@topic.Name</strong>
+                        <div>@Html.Raw(topic.Description)</div> <!-- Render the Markdown as HTML -->
+                    </li>
+                }
+            </ul>
+        }
+        else
+        {
+            <p>No help topics found.</p>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // JavaScript function to handle the search functionality
+        function searchHelp() {
+            var input = document.getElementById("helpSearch");
+            var filter = input.value.toLowerCase();
+            var helpList = document.getElementById("helpTopicsList");
+            var topics = helpList.getElementsByTagName("li");
+
+            for (var i = 0; i < topics.length; i++) {
+                var topicName = topics[i].getAttribute("data-topic").toLowerCase();
+                if (topicName.indexOf(filter) > -1) {
+                    topics[i].style.display = "";
+                } else {
+                    topics[i].style.display = "none";
+                }
+            }
+        }
+    </script>
+}

@@ -1,0 +1,57 @@
+﻿@page
+@model TPL_TM.Pages.Shift_Check_Template_EditModel
+
+<div class="modal fade show" id="editTemplateModal" tabindex="-1" aria-hidden="true" style="display:block;">
+    <div class="modal-dialog modal-dialog-centered" style="margin-top:80px;">
+        <div class="modal-content">
+
+            <div class="modal-header bg-warning text-white">
+                <h5 class="modal-title"><i class="bi bi-pencil-square"></i> Edit Shift Check Template</h5>
+                <button type="button" class="btn-close" id="closeTemplateModal"></button>
+            </div>
+
+            <div class="modal-body">
+
+                @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+                {
+                    <div class="alert alert-danger">@Model.ErrorMessage</div>
+                }
+
+                <form method="post">
+
+                    <input type="hidden" asp-for="Template.Id" />
+
+                    <!-- Check Name -->
+                    <div class="form-floating mb-3">
+                        <input asp-for="Template.Check_Name" class="form-control" placeholder="Check Name" required />
+                        <label>Check Name</label>
+                    </div>
+
+                    <button type="submit" class="btn btn-warning w-100 text-white">
+                        <i class="bi bi-save"></i> Update Template
+                    </button>
+
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            var modal = new bootstrap.Modal(document.getElementById('editTemplateModal'), {
+                backdrop: 'static',
+                keyboard: false
+            });
+
+            modal.show();
+
+            document.getElementById("closeTemplateModal").addEventListener("click", function () {
+                window.location.href = "/Shift_Check_Template_List";
+            });
+        });
+    </script>
+}

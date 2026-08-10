@@ -1,0 +1,650 @@
+﻿@page
+@model TPL_TM.Pages.Production_EntryModel
+@using System.Text.Json
+
+<style>
+    #scanCodeBtn {
+        border-radius: 50%;
+        width: 2.3rem;
+        height: 2.3rem;
+    }
+
+    .btn-outline-primary {
+        border: 1px solid #0d6efd;
+        color: #0d6efd;
+        font-weight: 500;
+        background-color: #f8faff;
+        border-radius: 0.75rem;
+        transition: all 0.2s ease-in-out;
+        width: 100%;
+    }
+
+        .btn-outline-primary:hover {
+            background-color: #0d6efd;
+            color: white;
+            box-shadow: 0 2px 8px rgba(13,110,253,0.2);
+        }
+
+    
+    .materials-table-container {
+        max-height: 260px;
+        overflow-y: auto;
+        overflow-x: auto;
+    }
+
+    .materials-table {
+        border-radius: 0.75rem;
+        background: #f9fafb;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        font-size: 0.9rem;
+        width: 100%;
+        white-space: nowrap;
+    }
+
+        .materials-table thead {
+            background-color: #e9f5ff;
+            color: #0d6efd;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+
+        .materials-table tbody tr:hover {
+            background-color: #f1f9ff;
+            transition: background-color 0.2s ease-in-out;
+        }
+
+    .chevron {
+        transition: transform 0.3s ease;
+    }
+
+        .chevron.rotate {
+            transform: rotate(180deg);
+        }
+
+</style>
+
+<!-- Production Entry Modal -->
+<div class="modal fade show" id="productionEntryModal" tabindex="-1" aria-labelledby="productionEntryModalLabel" aria-hidden="true" style="display:block;">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 650px; margin-top:80px;">
+        <div class="modal-content shadow-lg border-0 rounded-4">
+            <div class="modal-header bg-primary text-white d-flex align-items-center rounded-top-4">
+                <i class="bi bi-gear-fill me-2 fs-4"></i>
+                <h5 class="modal-title fw-semibold d-flex align-items-center gap-2" id="productionEntryModalLabel">
+                    <span>Production Entry</span>
+                    @if (!string.IsNullOrEmpty(Model.ShiftData.WorkOrderNumber))
+                    {
+                        <small class="text-light opacity-100">(@Model.ShiftData.WorkOrderNumber)</small>
+                    }
+                </h5>
+                <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal" aria-label="Close" id="closeProductionEntryModal"></button>
+            </div>
+            
+            <div class="modal-body p-4">
+                <div class="form-control bg-light mb-3">
+                    <strong>Item:</strong> @Model.ShiftData.PartNumber <br />
+                    <strong>Description:</strong> @Model.ShiftData.ItemDescription <br />
+                </div>
+
+                <form id="production-entry-form" method="post" novalidate class="needs-validation">
+
+                    <!-- Hidden Fields -->
+                    <input type="hidden" name="Shift_Id" value="@Model.ProductionInfo.Shift_Id" />
+                    <input type="hidden" name="Shift_Letter" value="@Model.ProductionInfo.Shift_Letter" />
+                    <input type="hidden" name="Wo_Number" value="@Model.ShiftData.WorkOrderNumber" />
+                    <input type="hidden" name="Part_Number" value="@Model.ShiftData.PartNumber" />
+                    <input type="hidden" name="Item_Description" value="@Model.ShiftData.ItemDescription" />
+                    <input type="hidden" name="Machine_Line" value="@Model.ShiftData.MachineLine" />
+                    <input type="hidden" name="Machine_Name" value="@Model.ShiftData.MachineName" />
+                    <input type="hidden" name="Product_Line" value="@Model.ShiftData.ProductLine" />
+                    <input type="hidden" name="Timestamp_Start" value="@(Model.ProductionInfo.Timestamp_Start?.ToString("yyyy-MM-ddTHH:mm") ?? DateTime.Now.ToString("yyyy-MM-ddTHH:mm"))" />
+                    <input type="hidden" name="Timestamp_End" value="@(Model.ProductionInfo.Timestamp_End?.ToString("yyyy-MM-ddTHH:mm") ?? (Model.ProductionInfo.Timestamp_Start?.AddHours(8).ToString("yyyy-MM-ddTHH:mm") ?? DateTime.Now.AddHours(8).ToString("yyyy-MM-ddTHH:mm")))" />
+
+                    <!-- Batch / Lot / Case Number -->
+                    <div class="form-floating mb-3 position-relative">
+                        <input type="text" class="form-control pe-5" id="Batch_Identifier" name="Batch_Identifier"
+                               placeholder="Batch / Lot / Case Number" autocomplete="off" />
+                        <label><i class="bi bi-upc-scan me-1 text-primary"></i>Batch / Lot / Case Number</label>
+                        <button type="button" id="scanCaseBtn" class="btn btn-outline-secondary position-absolute top-50 end-0 translate-middle-y me-2 p-1" style="z-index: 5;">
+                            <i class="bi bi-qr-code-scan fs-4"></i>
+                        </button>
+                    </div>
+
+                    <!-- Product Count -->
+                    <div class="form-floating mb-3">
+                        <input type="number"
+                               name="Product_Count"
+                               id="Product_Count"
+                               class="form-control"
+                               placeholder="Product Count"
+                               min="1"
+                               max="1000000"
+                               step="1"
+                               inputmode="numeric"
+                               pattern="[0-9]*"
+                               required
+                               value="@(Model.ShiftData.CaseQty ?? 0)" />
+
+                        <label>
+                            <i class="bi bi-123 me-1 text-primary"></i>Product Count
+                        </label>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="btn btn-lg btn-success w-100 rounded-3 shadow-sm">
+                        <i class="bi bi-save2 me-2"></i>Save Production Entry
+                    </button>
+                </form>
+                @{
+                    var runningTotal = Model.ActiveShifts
+                    .SelectMany(s => s.ProductionEntries)
+                    .Sum(p => p.Product_Count);
+                }
+
+                <!-- Production Entries Table -->
+                @foreach (var shift in Model.ActiveShifts)
+                {
+                    <div class="alert alert-info d-flex justify-content-between align-items-center rounded-3 shadow-sm mt-3 mb-2">
+                        <div>
+                            <i class="bi bi-bar-chart-fill me-2"></i>
+                            <strong>Running Production Total</strong>
+                        </div>
+                        <span class="badge bg-primary fs-6 px-3 py-2">
+                            @runningTotal
+                        </span>
+                    </div>
+
+                    @if (TempData["ProductionSaved"] != null)
+                    {
+                        <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1100;">
+                            <div id="saveToast" class="toast align-items-center text-bg-success border-0" role="alert">
+                                <div class="d-flex">
+                                    <div class="toast-body">
+                                        <i class="bi bi-check-circle-fill me-2"></i>
+                                        Last production entry saved successfully
+                                    </div>
+                                    <button type="button" class="btn-close btn-close-white me-2 m-auto"
+                                            data-bs-dismiss="toast"></button>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+
+                    <div class="mt-3">
+                        @if (shift.ProductionEntries.Any())
+                        {
+                           <button class="btn btn-outline-primary btn-sm d-flex justify-content-between align-items-center toggle-btn"
+                                    type="button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#prod-@Model.ProductionInfo.Shift_Id"
+                                    aria-expanded="false"
+                                    aria-controls="prod-@Model.ProductionInfo.Shift_Id">
+                                <span><i class="bi bi-speedometer2 me-1"></i> View Production Details</span>
+                                <i class="bi bi-chevron-down chevron"></i>
+                            </button>
+
+                            <div class="collapse mt-2" id="prod-@shift.Shift_Id">
+                                <div class="materials-table-container mt-2">
+                                    <table class="table table-sm table-hover align-middle materials-table mb-0">
+
+                                        <thead>
+                                            <tr>
+                                                <th class="text-center">Actions</th>
+                                                <th>WO Number</th>
+                                                <th>Case Number</th>
+                                                <th>Product</th>
+                                                <th>Description</th>
+                                                <th>Count</th>
+                                                <th>Created By</th>
+                                                <th>Created on</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var p in shift.ProductionEntries)
+                                            {
+                                                <tr>
+                                                    <!-- Actions -->
+                                                    <td class="text-center">
+                                                        <div class="dropdown">
+                                                            <a href="#" class="btn btn-link p-0 text-decoration-none" data-bs-toggle="dropdown">
+                                                                <i class="bi bi-three-dots-vertical text-muted"></i>
+                                                            </a>
+                                                            <ul class="dropdown-menu dropdown-menu-end">
+                                                                <li>
+                                                                    <a class="dropdown-item"
+                                                                       href="/Production_Edit?id=@p.Id">
+                                                                        <i class="bi bi-pencil-square me-2 text-warning"></i> Edit
+                                                                    </a>
+                                                                </li>
+                                                                <li>
+                                                                    <a class="dropdown-item text-danger"
+                                                                       href="/Production_Delete?id=@p.Id"
+                                                                       onclick="return confirm('Are you sure you want to delete this entry?');">
+                                                                        <i class="bi bi-trash me-2"></i> Delete
+                                                                    </a>
+                                                                </li>
+                                                            </ul>
+                                                        </div>
+                                                    </td>
+                                                    <td>@p.Wo_Number</td>
+                                                    <td>@p.Batch_Identifier</td>
+                                                    <td>@p.Part_Number</td>
+                                                    <td>@p.Item_Description</td>
+                                                    <td>@p.Product_Count</td>
+                                                    <td>@p.Username</td>
+                                                    <td>@p.Timestamp_Start?.ToString("g")</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="text-muted small fst-italic mt-2 mb-0">No production recorded yet.</p>
+                        }
+                    </div>
+                }
+            </div>
+
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="caseScanModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 shadow-lg">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-camera me-2"></i>Scan Case
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div id="case-code-reader" style="width:100%;"></div>
+                <small class="text-muted d-block mt-2">
+                    Point camera at barcode
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        .modal-content {
+            animation: fadeInDown 0.4s ease-in-out;
+        }
+
+        @@keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .form-floating > label i {
+            font-size: 0.95rem;
+        }
+
+        .btn-success:hover {
+            background-color: #218838 !important;
+        }
+
+        .is-invalid {
+            border: 2px solid #dc3545 !important;
+            background-color: #fff5f5;
+        }
+    </style>
+
+    @* Auto-show toast on load *@
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const toastEl = document.getElementById("saveToast");
+            if (toastEl) {
+                const toast = new bootstrap.Toast(toastEl, { delay: 2500 });
+                toast.show();
+            }
+        });
+    </script>
+
+    @* Toggle chevron for collapse *@
+    <script>
+        document.querySelectorAll('.toggle-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const chevron = btn.querySelector('.chevron');
+                chevron.classList.toggle('rotate');
+            });
+        });
+    </script>
+
+    @* Auto-expand current shift collapse on load *@
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const collapseId = "prod-@Model.ProductionInfo.Shift_Id";
+            const collapseEl = document.getElementById(collapseId);
+
+            if (!collapseEl) return;
+
+            new bootstrap.Collapse(collapseEl, { toggle: true });
+
+            const btn = document.querySelector(`[data-bs-target="#${collapseId}"]`);
+            const chevron = btn?.querySelector('.chevron');
+            chevron?.classList.add('rotate');
+        });
+    </script>
+
+    @* Show production modal and form validation *@
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const modal = new bootstrap.Modal(document.getElementById('productionEntryModal'), {
+                backdrop: 'static',
+                keyboard: false
+            });
+            modal.show();
+
+            document.getElementById("closeProductionEntryModal")?.addEventListener("click", () => {
+                window.location.href = "/Shift_Dashboard";
+            });
+
+            const form = document.getElementById('production-entry-form');
+            form.addEventListener('submit', function (e) {
+                if (!form.checkValidity()) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            });
+        });
+    </script>
+
+    @* Batch input cleaning and focus *@
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const modalEl = document.getElementById('productionEntryModal');
+            const batchInput = document.getElementById("Batch_Identifier");
+
+            if (!modalEl || !batchInput) return;
+
+            batchInput.value = "";
+
+            batchInput.addEventListener("input", function () {
+                const cleaned = cleanZebraInput(this.value);
+                if (this.value !== cleaned) this.value = cleaned;
+            });
+
+            batchInput.addEventListener("blur", function () {
+                this.value = cleanZebraInput(this.value);
+            });
+
+            modalEl.addEventListener('shown.bs.modal', function () {
+                batchInput.focus();
+            }, { once: true });
+        });
+    </script>
+
+    @* WorkOrder and Item autofill *@
+    <script>
+        const workOrders = [];
+        const itemLookup = {};
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const woInput = document.getElementById("Wo_Number");
+            const machineInput = document.getElementById("Machine_Name");
+            const productLineInput = document.getElementById("Product_Line");
+            const machineLineInput = document.getElementById("Machine_Line");
+            const itemIdInput = document.getElementById("Part_Number");
+            const itemDisplayNameInput = document.getElementById("Item_Description");
+
+            function clearAutofill() {
+                machineInput.value = "";
+                productLineInput.value = "";
+                machineLineInput.value = "";
+                itemIdInput.value = "";
+                itemDisplayNameInput.value = "";
+            }
+
+            function setMachineLine(value) {
+                machineLineInput.value = (value || "").toUpperCase();
+            }
+
+            woInput.addEventListener("change", function () {
+                const selectedWO = woInput.value?.trim();
+                if (!selectedWO) { clearAutofill(); return; }
+
+                const matched = workOrders.find(w => w.workOrder === selectedWO);
+
+                if (matched) {
+                    itemIdInput.value = matched.partNumber || "";
+                    itemDisplayNameInput.value = matched.itemDescription || "";
+                    productLineInput.value = matched.productLine || "";
+                    setMachineLine(matched.productType || "");
+                    machineInput.value = matched.machineLine || "";
+                } else {
+                    clearAutofill();
+                }
+            });
+
+            itemIdInput.addEventListener("change", function () {
+                const selectedItem = itemIdInput.value?.trim();
+                if (!selectedItem) { clearAutofill(); return; }
+
+                if (itemInfoLookup && itemInfoLookup[selectedItem]) {
+                    const info = itemInfoLookup[selectedItem];
+                    itemDisplayNameInput.value = info.task_Description || info.taskDescription || info.taskDescriptionText || "";
+                    productLineInput.value = info.product_Line || info.productLine || "";
+                    machineLineInput.value = info.productType || info.productType || info.machineName || "";
+                    machineInput.value = info.assign_To || info.assignTo || info.machineName || "";
+                } else {
+                    clearAutofill();
+                }
+            });
+        });
+    </script>
+
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
+    @* QR Code / Camera scanning *@
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const formatsToSupport = [
+                Html5QrcodeSupportedFormats.QR_CODE,
+                Html5QrcodeSupportedFormats.DATA_MATRIX,
+                Html5QrcodeSupportedFormats.AZTEC,
+                Html5QrcodeSupportedFormats.PDF_417,
+                Html5QrcodeSupportedFormats.CODE_128,
+                Html5QrcodeSupportedFormats.CODE_39,
+                Html5QrcodeSupportedFormats.CODE_93,
+                Html5QrcodeSupportedFormats.EAN_13,
+                Html5QrcodeSupportedFormats.EAN_8,
+                Html5QrcodeSupportedFormats.UPC_A,
+                Html5QrcodeSupportedFormats.UPC_E,
+                Html5QrcodeSupportedFormats.ITF
+            ];
+
+            function setupScanner(buttonId, modalId, readerId, targetInputId) {
+                const button = document.getElementById(buttonId);
+                const modalEl = document.getElementById(modalId);
+                const inputEl = document.getElementById(targetInputId);
+
+                if (!button) return;
+
+                button.addEventListener('click', function () {
+                    const modal = new bootstrap.Modal(modalEl);
+                    modal.show();
+
+                    const html5QrCode = new Html5Qrcode(readerId);
+
+                    html5QrCode.start(
+                        { facingMode: "environment" },
+                        { fps: 10, qrbox: 250, formatsToSupport: formatsToSupport },
+                        (decodedText) => {
+                            let value = cleanZebraInput(decodedText);
+                            value = extractGS1Batch(value);
+                            inputEl.value = value;
+
+                            if (isValidCase(value)) {
+                                ensureProductCount();
+                                safeSubmit(document.getElementById("production-entry-form"));
+                            }
+
+                            html5QrCode.stop().then(() => modal.hide());
+                        },
+                        (errorMessage) => console.warn("Scan error:", errorMessage)
+                    ).catch((err) => console.error("Camera start error:", err));
+
+                    modalEl.addEventListener('hidden.bs.modal', () => {
+                        html5QrCode.stop().catch(() => {});
+                    }, { once: true });
+                });
+            }
+
+            // Only initialize the case scanner (Wo scanner elements missing)
+            if (document.getElementById('scanCaseBtn')) {
+                setupScanner('scanCaseBtn', 'caseScanModal', 'case-code-reader', 'Batch_Identifier');
+            }
+        });
+    </script>
+
+    @* Zebra scanner / GS1 cleaning *@
+    <script>
+        function cleanZebraInput(value) {
+            if (!value) return "";
+            value = value.replace(/^\][A-Za-z]\d/, "");
+            value = value.replace(/\u001d/g, "");
+            return value.trim();
+        }
+
+        function extractGS1Batch(value) {
+            if (!value) return "";
+            let m = value.match(/\(10\)(.+)$/);
+            if (m) return m[1];
+            m = value.match(/01\d{14}10(.+)$/);
+            if (m) return m[1];
+            return value;
+        }
+
+        function isValidCase(value) {
+            return /^[A-Za-z0-9_-]{3,30}$/.test(value);
+        }
+
+        function ensureProductCount() {
+            const qty = document.getElementById("Product_Count");
+            if (!qty) return;
+            if (!qty.value || parseInt(qty.value) < 1) qty.value = 1;
+        }
+    </script>
+
+    @* Batch input auto-submit logic *@
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const input = document.getElementById("Batch_Identifier");
+            const form  = document.getElementById("production-entry-form");
+
+            if (!input || !form) return;
+
+            let debounceTimer = null;
+            let isTyping = false;
+
+            input.addEventListener("keydown", () => {
+                isTyping = true;
+            });
+
+            input.addEventListener("input", function () {
+                clearTimeout(debounceTimer);
+
+                debounceTimer = setTimeout(() => {
+                    let value = cleanZebraInput(input.value);
+                    value = extractGS1Batch(value);
+                    input.value = value;
+
+                    // 🚫 NO auto-submit while typing
+                    if (isTyping) return;
+
+                }, 150);
+            });
+
+            input.addEventListener("blur", () => {
+                isTyping = false;
+            });
+        });
+    </script>
+
+    @* Form submit cleanup *@
+    <script>
+        document.getElementById("production-entry-form")?.addEventListener("submit", function () {
+            const batchInput = document.getElementById("Batch_Identifier");
+            if (batchInput && batchInput.value) batchInput.value = cleanZebraInput(batchInput.value);
+        });
+    </script>
+    <script>
+        let isAutoSubmitting = false;
+
+        function safeSubmit(form) {
+            if (isAutoSubmitting) return;
+            isAutoSubmitting = true;
+
+            form.requestSubmit();
+
+            setTimeout(() => {
+                isAutoSubmitting = false;
+            }, 800); // prevents double-fire
+        }
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const qtyInput = document.getElementById("Product_Count");
+            if (!qtyInput) return;
+
+            qtyInput.addEventListener("input", function () {
+                let value = this.value;
+
+                // Keep digits only
+                value = value.replace(/\D/g, "");
+
+                // 🚫 Block barcode scans (too many digits)
+                if (value.length > 7) {
+                    this.classList.add("is-invalid");
+                    this.setCustomValidity("Invalid quantity scanned");
+                    return;
+                }
+
+                const num = parseInt(value, 10);
+
+                // ✅ Valid range: 1 → 1,000,000
+                if (!num || num < 1 || num > 1000000) {
+                    this.classList.add("is-invalid");
+                    this.setCustomValidity("Quantity must be between 1 and 1,000,000");
+                } else {
+                    this.classList.remove("is-invalid");
+                    this.setCustomValidity("");
+                    this.value = num; // normalize
+                }
+            });
+        });
+    </script>
+    <script>
+        document.getElementById("production-entry-form")?.addEventListener("submit", function (e) {
+            const qty = document.getElementById("Product_Count");
+            const value = parseInt(qty.value, 10);
+
+            if (!value || value < 1 || value > 1000000) {
+                e.preventDefault();
+                qty.classList.add("is-invalid");
+                qty.focus();
+                return false;
+            }
+        });
+    </script>
+
+}

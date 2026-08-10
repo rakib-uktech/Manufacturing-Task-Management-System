@@ -1,0 +1,64 @@
+﻿@page
+@model TPL_TM.Pages.Quality_Check_DeleteModel
+@{
+    ViewData["Title"] = "Delete Quality Check Record";
+}
+
+<div class="modal fade show" id="deleteQualityModal" tabindex="-1"
+     aria-labelledby="deleteQualityModalLabel" aria-hidden="true" style="display: block;">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 500px;">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteQualityModalLabel">Confirm Delete</h5>
+                <button type="button" class="btn-close" aria-label="Close"
+                        onclick="window.location.href='/Quality_Check_Report'"></button>
+            </div>
+
+            <div class="modal-body">
+                @if (!string.IsNullOrEmpty(Model.errorMessage))
+                {
+                    <div class="alert alert-danger">@Model.errorMessage</div>
+                }
+                else
+                {
+                    <h5 class="text-danger">Are you sure you want to delete this quality check record?</h5>
+
+                    <table class="table table-bordered table-hover table-sm" style="background-color: #fafafa;">
+                        <tbody>
+                            <tr><th>Shift</th><td>@Model.qualityCheck.Shift_Id</td></tr>
+                            <tr><th>Test Name</th><td>@Model.qualityCheck.TestName</td></tr>
+                            <tr><th>Status</th><td>@Model.qualityCheck.Status</td></tr>
+                            <tr><th>Fail</th><td>@(Model.qualityCheck.Fail ? "Yes" : "No")</td></tr>
+                            <tr><th>Weights</th><td>@Model.qualityCheck.Weights</td></tr>
+                            <tr><th>Comment</th><td>@Model.qualityCheck.Comment</td></tr>
+                            <tr><th>Check Time</th><td>@Model.qualityCheck.Check_Time?.ToString(@"hh\:mm\:ss")</td></tr>
+                        </tbody>
+                    </table>
+
+                    <form method="post" asp-page-handler="DeleteQualityCheck">
+                        <input type="hidden" name="Id" value="@Model.qualityCheck.Id" />
+
+                        <button type="submit" class="btn btn-danger w-100">
+                            Delete Quality Check
+                        </button>
+                        <a href="/Quality_Check_Report" class="btn btn-secondary w-100 mt-2">
+                            Cancel
+                        </a>
+                    </form>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var modal = new bootstrap.Modal(document.getElementById('deleteQualityModal'), {
+                backdrop: 'static',
+                keyboard: false
+            });
+            modal.show();
+        });
+    </script>
+}

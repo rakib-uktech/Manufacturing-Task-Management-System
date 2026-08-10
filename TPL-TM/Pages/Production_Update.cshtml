@@ -1,0 +1,142 @@
+﻿@page
+@model TPL_TM.Pages.Production_UpdateModel
+
+<div class="modal fade show" id="editProductionModal" tabindex="-1" style="display:block;">
+    <div class="modal-dialog modal-dialog-centered" style="margin-top:80px;">
+        <div class="modal-content">
+
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    @(Model.ProductionInfo.Id > 0 ? "Update Production Record" : "Add Production Record")
+                </h5>
+                <button type="button" class="btn-close" id="closeModal"></button>
+            </div>
+
+            <div class="modal-body">
+
+                @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+                {
+                    <div class="alert alert-danger">@Model.ErrorMessage</div>
+                }
+
+                <form method="post" class="needs-validation" novalidate>
+
+                    <input type="hidden" asp-for="ProductionInfo.Id" />
+
+                    <!-- SHIFT ID -->
+                    <div class="form-floating mb-3">
+                        <input asp-for="ProductionInfo.Shift_Id"
+                               type="number"
+                               min="1"
+                               class="form-control"
+                               required />
+                        <label>Shift ID</label>
+                    </div>
+
+                    <!-- SHIFT LETTER -->
+                    <div class="form-floating mb-3">
+                        <input asp-for="ProductionInfo.Shift_Letter"
+                               class="form-control"
+                               required />
+                        <label>Shift Letter</label>
+                    </div>
+
+                    <!-- WO -->
+                    <div class="form-floating mb-3">
+                        <input asp-for="ProductionInfo.Wo_Number" class="form-control" required />
+                        <label>WO Number</label>
+                    </div>
+
+                    <!-- BATCH -->
+                    <div class="form-floating mb-3">
+                        <input asp-for="ProductionInfo.Batch_Identifier" class="form-control" required />
+                        <label>Batch</label>
+                    </div>
+
+                    <!-- TIME -->
+                    <div class="form-floating mb-3">
+                        <input asp-for="ProductionInfo.Timestamp_Start" type="datetime-local" class="form-control" />
+                        <label>Start</label>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <input asp-for="ProductionInfo.Timestamp_End" type="datetime-local" class="form-control" />
+                        <label>End</label>
+                    </div>
+
+                    <!-- COUNT -->
+                    <div class="form-floating mb-3">
+                        <input asp-for="ProductionInfo.Product_Count" type="number" class="form-control" required />
+                        <label>Count</label>
+                    </div>
+
+                    <!-- MACHINE -->
+                    <div class="form-floating mb-3">
+                        <input asp-for="ProductionInfo.Machine_Name" list="machineList" class="form-control" />
+                        <datalist id="machineList">
+                            @foreach (var m in Model.MachineNames)
+                            {
+                                <option value="@m"></option>
+                            }
+                        </datalist>
+                        <label>Machine</label>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <input asp-for="ProductionInfo.Machine_Line" class="form-control" />
+                        <label>Machine Line</label>
+                    </div>
+
+                    <!-- PRODUCT -->
+                    <div class="form-floating mb-3">
+                        <input asp-for="ProductionInfo.Product_Line" class="form-control" />
+                        <label>Product Line</label>
+                    </div>
+
+                    <!-- PART -->
+                    <div class="form-floating mb-3">
+                        <input asp-for="ProductionInfo.Part_Number" class="form-control" />
+                        <label>Part Number</label>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <input asp-for="ProductionInfo.Item_Description" class="form-control" />
+                        <label>Description</label>
+                    </div>
+
+                    <button class="btn btn-success w-100">
+                        @(Model.ProductionInfo.Id > 0 ? "Update" : "Create")
+                    </button>
+
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            const modal = new bootstrap.Modal(document.getElementById('editProductionModal'), {
+                backdrop: 'static',
+                keyboard: false
+            });
+            modal.show();
+
+            document.getElementById("closeModal").addEventListener("click", function () {
+                window.location.href = "/ProductionReport";
+            });
+
+            const form = document.querySelector('.needs-validation');
+
+            form.addEventListener('submit', function (e) {
+                if (!form.checkValidity()) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            });
+        });
+    </script>
+}

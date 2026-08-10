@@ -1,0 +1,73 @@
+﻿@page
+@model TPLPLM.Areas.Identity.Pages.Account.Manage.EditUserModel
+@{
+    ViewData["Title"] = "Edit User";
+}
+
+<div class="modal fade show" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true" style="display: block;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="editUserModalLabel"><i class="bi bi-pencil-square me-2"></i>Edit User</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="closeEditUserModal"></button>
+            </div>
+            <div class="modal-body">
+                <partial name="_StatusMessage" for="StatusMessage" />
+                <form method="post">
+                    <input type="hidden" asp-for="Input.Id" />
+
+                    <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+                    <div class="form-floating mb-3">
+                        <input asp-for="Input.UserName" class="form-control" placeholder="User Name" />
+                        <label asp-for="Input.UserName"></label>
+                        <span asp-validation-for="Input.UserName" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <input asp-for="Input.Email" class="form-control" placeholder="Email" />
+                        <label asp-for="Input.Email"></label>
+                        <span asp-validation-for="Input.Email" class="text-danger"></span>
+                    </div>
+
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <div class="form-floating mb-3">
+                            <select asp-for="Input.Role" class="form-control" asp-items="Model.AvailableRoles">
+                                <option value="">-- Select Role --</option>
+                            </select>
+                            <label asp-for="Input.Role">Role</label>
+                            <span asp-validation-for="Input.Role" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-floating mb-3">
+                            <select asp-for="Input.ShiftId" class="form-control" asp-items="Model.ShiftList">
+                                <option value="">-- Select Shift --</option>
+                            </select>
+                            <label asp-for="Input.ShiftId">Shift</label>
+                            <span asp-validation-for="Input.ShiftId" class="text-danger"></span>
+                        </div>
+                    }
+
+                    <button type="submit" class="w-100 btn btn-success btn-lg">Save Changes</button>
+                    <a asp-page="./UserList" class="w-100 btn btn-secondary mt-2">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const modalEl = document.getElementById('editUserModal');
+            const myModal = new bootstrap.Modal(modalEl, { backdrop: 'static', keyboard: false });
+            myModal.show();
+
+            document.getElementById("closeEditUserModal").addEventListener("click", function () {
+                window.location.href = "/"; // Redirect back or you can redirect to UserList page
+            });
+        });
+    </script>
+}

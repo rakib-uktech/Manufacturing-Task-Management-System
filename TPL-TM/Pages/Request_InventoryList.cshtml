@@ -1,0 +1,102 @@
+﻿@page
+@model TPL_TM.Pages.Request_InventoryListModel
+@{
+}
+<!-- Assign Task Modal -->
+<div class="modal fade" id="assignTaskModal" tabindex="-1" aria-labelledby="assignTaskModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" style="margin-top: 80px;">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white py-3 shadow-sm">
+                <div class="d-flex align-items-center w-100">
+                    <div class="me-3">
+                        <i class="bi bi-check-circle-fill fs-3"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title mb-0" id="assignTaskModalLabel">Complete Task</h5>
+                        <small class="text-white-50">Mark the task as completed and add comments if necessary.</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" id="closeAssignTaskModal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card shadow p-3">
+                            <input type="text" id="taskSearch" class="form-control mb-3" placeholder="🔍 Search tasks...">
+                            <div class="table-responsive">
+                                <table id="taskTable" class="table table-striped table-bordered table-hover w-100">
+                                    <thead class="bg-success text-white">
+                                        <tr>
+                                            <th class="text-center">Action</th>
+                                            <th>Ref_No</th>
+                                            <th>Task_Name</th>
+                                            <th>Assign_To</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="taskTableBody">
+                                        @foreach (var task in Model.listtask)
+                                        {
+                                            <tr>
+                                                <td class="text-center">
+                                                    <div class="dropdown">
+                                                        <a href="/Complete_Task?id=@task.Id" class="btn btn-link p-0 text-decoration-none complete-task-btn">
+                                                            <i class="bi bi-check2-circle me-1"></i> Complete Task
+                                                        </a>
+                                                    </div>
+                                                </td>
+                                                <td>@task.Ref_No</td>
+                                                <td>@task.Task_Name</td>
+                                                <td>@task.Assign_To</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var myModal = new bootstrap.Modal(document.getElementById('assignTaskModal'), {
+                backdrop: 'static',
+                keyboard: false
+            });
+            myModal.show();
+
+            document.getElementById("closeAssignTaskModal").addEventListener("click", function () {
+                window.location.href = "/Index";
+            });
+        });
+
+        $(document).ready(function () {
+            var table = $('#taskTable').DataTable({
+                responsive: true,
+                paging: true,
+                lengthMenu: [5, 10, 25, 50],
+                pageLength: 10,
+                autoWidth: false,
+                searching: true,
+                language: {
+                    search: "🔍 Search:",
+                    lengthMenu: "Show _MENU_ tasks per page",
+                    zeroRecords: "No matching tasks found",
+                    info: "Showing _START_ to _END_ of _TOTAL_ tasks",
+                    paginate: {
+                        previous: "←",
+                        next: "→"
+                    }
+                }
+            });
+
+            $('#taskSearch').on('keyup', function () {
+                table.search(this.value).draw();
+            });
+        });
+    </script>
+}

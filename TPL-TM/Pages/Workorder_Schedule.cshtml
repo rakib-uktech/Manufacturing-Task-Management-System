@@ -1,0 +1,919 @@
+﻿@page
+@model TPL_TM.Pages.Workorder_ScheduleModel
+@{
+    ViewData["Title"] = "Work Order Schedule";
+    var next7Days = Enumerable.Range(0, 7).Select(offset => Model.SelectedStartDate.AddDays(offset)).ToList();
+    var hours = Enumerable.Range(0, 24).ToList();
+
+    var segmentsByDay = Model.Segments
+        .Where(s => next7Days.Contains(s.Day.Date))
+        .GroupBy(s => s.Day.Date)
+        .ToDictionary(g => g.Key, g => g.ToList());
+    
+   
+
+    var renderedOrders = new Dictionary<string, int>();
+    var remainingSpans = new Dictionary<string, int>();
+    var colorMap = new Dictionary<string, string>();
+    var colorPalette = new[] { "#FFD700", "#ADFF2F", "#87CEFA", "#FFB6C1", "#FFA07A", "#D8BFD8", "#20B2AA", "#FF69B4", "#7FFFD4", "#FF6347" };
+    int colorIndex = 0;
+}
+
+<style>
+   /* Work order schedule grid */
+.droppable-cell {
+    padding: 0;            /* Remove table padding so card fills cell */
+    vertical-align: top;   /* Align card to the top of the cell */
+    cursor: default;
+}
+
+.placeholder-cell {
+    visibility: hidden;
+    pointer-events: none;  /* Prevent dropping onto placeholder cells */
+}
+
+/* Work order card */
+.workorder-card {
+    height: 100%;          /* Fill the full rowspan cell height */
+    display: flex;         /* Flex layout for content + button */
+    flex-direction: column;
+    justify-content: space-between;
+    border-radius: 8px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
+}
+
+.workorder-card:hover {
+    transform: scale(1.03);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    z-index: 10;
+}
+
+/* Dimmed for completed or over build */
+td.status-complete {
+    background-color: #d3d3d3 !important; /* solid grey override */
+    opacity: 0.7;
+}
+
+/* Flash red for not started */
+td.status-flash-red .workorder-card {
+    animation: pulse-red 1.5s infinite;
+    border: 2px solid red;
+}
+@@keyframes pulse-red {
+    0%   { box-shadow: 0 0 5px red; }
+    50%  { box-shadow: 0 0 20px red; }
+    100% { box-shadow: 0 0 5px red; }
+}
+
+/* Flash orange for partially built */
+td.status-flash-orange .workorder-card {
+    animation: pulse-orange 1.5s infinite;
+    border: 2px solid orange;
+}
+@@keyframes pulse-orange {
+    0%   { box-shadow: 0 0 5px orange; }
+    50%  { box-shadow: 0 0 20px orange; }
+    100% { box-shadow: 0 0 5px orange; }
+}
+.machine-line-tabs .machine-tab {
+    border-radius: 25px;
+    padding: 6px 16px;
+    font-size: 13px;
+    border: 1px solid #dee2e6;
+    background: #f8f9fa;
+    color: #333;
+    transition: all 0.25s ease;
+}
+
+.machine-line-tabs .machine-tab:hover {
+    background: #0d6efd;
+    color: white;
+    transform: translateY(-1px);
+}
+
+.machine-line-tabs .machine-tab.active {
+    background: linear-gradient(135deg, #0d6efd, #6610f2);
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 4px 10px rgba(13,110,253,0.3);
+}
+
+    body.dark-mode {
+        --bg-color: #0f1f14;
+        --card-bg: #1b2b22;
+        --header-bg: #145a32;
+        --text-color: #f8f9fa;
+        --border-color: #2d4a3a;
+        background-color: var(--bg-color) !important;
+        color: var(--text-color) !important;
+    }
+
+        /* FORCE key containers to respect dark mode */
+        body.dark-mode .card {
+            background: var(--card-bg) !important;
+            color: var(--text-color) !important;
+        }
+
+        body.dark-mode .table {
+            color: var(--text-color) !important;
+            background: var(--card-bg) !important;
+        }
+
+            body.dark-mode .table td,
+            body.dark-mode .table th {
+                border-color: var(--border-color) !important;
+            }
+
+        body.dark-mode .filter-bar {
+            background: rgba(27,43,34,.85) !important;
+            color: var(--text-color) !important;
+        }
+
+        body.dark-mode .dashboard-header {
+            background: linear-gradient(135deg, #145a32, #1e7e34) !important;
+        }
+
+        body.dark-mode .table thead tr:first-child th {
+            background: linear-gradient(135deg, #145a32, #1e7e34) !important;
+        }
+
+        body.dark-mode .table thead tr:nth-child(2) th {
+            background: #1b2b22 !important;
+        }
+
+    
+
+    /* icon circle */
+    .header-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        background: rgba(255,255,255,0.15);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+    }
+
+    /* title */
+    .dashboard-title {
+        font-size: 20px;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+
+    /* subtitle */
+    .dashboard-subtitle {
+        font-size: 12px;
+        opacity: 0.85;
+    }
+
+    /* clock pill */
+    .clock-pill {
+        background: rgba(255,255,255,0.15);
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 500;
+        white-space: nowrap;
+    }
+
+    /* theme button */
+    .theme-btn {
+        background: rgba(255,255,255,0.15);
+        color: #fff;
+        border: none;
+        border-radius: 20px;
+    }
+
+        .theme-btn:hover {
+            background: rgba(255,255,255,0.25);
+            color: #fff;
+        }
+
+    body.dark-mode .dashboard-header {
+        background: linear-gradient(135deg, #145a32, #1e7e34);
+    }
+
+    
+
+    /* section labels */
+    .control-label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        opacity: 0.85;
+        margin-bottom: 4px;
+    }
+
+    /* inputs */
+    .control-input .form-control,
+    .control-input .input-group-text {
+        border: none;
+        border-radius: 10px;
+    }
+
+    .control-input .form-control {
+        background: rgba(255,255,255,0.15);
+        color: #fff;
+    }
+
+        .control-input .form-control::placeholder {
+            color: rgba(255,255,255,0.7);
+        }
+
+    .control-input .input-group-text {
+        background: rgba(255,255,255,0.15);
+        color: #fff;
+    }
+
+    
+
+    /* dark mode support */
+    body.dark-mode .control-panel {
+        background: linear-gradient(135deg, #145a32, #1e7e34);
+    }
+
+    body.dark-mode .control-pill.active {
+        color: #145a32;
+    }
+
+    .card-header[data-bs-toggle="collapse"] {
+        user-select: none;
+    }
+
+        .card-header[data-bs-toggle="collapse"]:hover {
+            background: #157347 !important;
+        }
+
+    #scheduleControls .btn {
+        border-radius: 20px;
+        min-width: 90px;
+        transition: all .2s ease;
+    }
+
+        #scheduleControls .btn:hover {
+            transform: translateY(-2px);
+        }
+
+    #scheduleControls .btn-success {
+        box-shadow: 0 3px 8px rgba(25,135,84,.25);
+    }
+
+    #scheduleControls h6 {
+        color: #198754;
+        font-weight: 600;
+    }
+</style>
+
+<div class="container">
+    <div class="card shadow p-3">
+        <div class="container-fluid bg-success text-white py-3 mb-4 rounded shadow">
+            <div class="row align-items-center">
+
+                <div class="col-md-8">
+                    <h2 class="mb-0">
+                        <i class="bi bi-calendar-week me-2"></i>
+                        Work Order Schedule
+                    </h2>
+                    <p class="mb-0">
+                        Production Planning & Capacity Dashboard
+                    </p>
+                </div>
+
+                <div class="col-md-4 text-md-end mt-3 mt-md-0">
+
+                    <div id="liveClock" class="d-inline-block me-2"></div>
+
+                    <button id="themeToggle" class="btn btn-light text-success">
+                        <i class="bi bi-moon-stars me-1"></i>
+                        Theme
+                    </button>
+
+                </div>
+
+            </div>
+        </div>
+        <div class="card shadow-sm border-success mb-3">
+
+            <div class="card-header bg-success text-white d-flex justify-content-between align-items-center"
+                 data-bs-toggle="collapse"
+                 data-bs-target="#scheduleControls"
+                 style="cursor:pointer;">
+
+                <div>
+                    <i class="bi bi-sliders me-2"></i>
+                    <strong>Schedule Controls</strong>
+                </div>
+
+                <div>
+                    <i class="bi bi-chevron-down"></i>
+                </div>
+
+            </div>
+
+            <div id="scheduleControls" class="collapse show">
+
+                <div class="card-body">
+
+                    <form method="get" id="filterForm">
+
+                        <!-- TOP FILTERS -->
+                        <div class="row g-3 align-items-end mb-4">
+
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold">
+                                    <i class="bi bi-calendar-event me-1"></i>
+                                    Start Date
+                                </label>
+
+                                <input type="date"
+                                       id="startDatePicker"
+                                       name="startDate"
+                                       class="form-control"
+                                       value="@Model.SelectedStartDate.ToString("yyyy-MM-dd")" />
+                            </div>
+
+                            <div class="col-md-5">
+                                <label class="form-label fw-semibold">
+                                    <i class="bi bi-search me-1"></i>
+                                    Search
+                                </label>
+
+                                <input type="text"
+                                       id="searchBox"
+                                       class="form-control"
+                                       placeholder="Search work orders, items, descriptions..." />
+                            </div>
+
+                        </div>
+
+                        <!-- MACHINE LINES -->
+                        <div class="mb-4">
+
+                            <h6 class="border-bottom border-success pb-2 mb-3">
+                                <i class="bi bi-diagram-3 me-1"></i>
+                                Machine Lines
+                            </h6>
+
+                            <div class="d-flex flex-wrap gap-2">
+
+                                @foreach (var line in Model.AvailableMachineLines)
+                                {
+                                    <button type="submit"
+                                            name="SelectedMachineLine"
+                                            value="@line"
+                                            class="btn btn-sm @(line == Model.SelectedMachineLine
+                                                                                    ? "btn-success"
+                                                                                    : "btn-outline-success")">
+
+                                    @line
+
+                                    </button>
+                                                                }
+
+                            </div>
+
+                        </div>
+
+                        <!-- MACHINES -->
+                        <div>
+
+                            <h6 class="border-bottom border-success pb-2 mb-3">
+                                <i class="bi bi-cpu me-1"></i>
+                                Machines
+                            </h6>
+
+                            <div class="d-flex flex-wrap gap-2">
+
+                                @foreach (var machine in Model.AvailableMachineNames)
+                                {
+                                    <button type="submit"
+                                            name="SelectedMachineName"
+                                            value="@machine"
+                                            class="btn btn-sm @(machine == Model.SelectedMachineName
+                                                                                    ? "btn-success"
+                                                                                    : "btn-outline-success")">
+
+                                    @machine
+
+                                    </button>
+                                                                }
+
+                            </div>
+
+                        </div>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+    
+</div>
+
+
+        <div class="table-responsive">
+           
+            <table id="workOrderTable" class="table table-bordered">
+                @{
+                    var machinesByDay = next7Days.ToDictionary(
+                        day => day,
+                        day => Model.Segments
+                        .Where(x =>
+                        x.Day.Date == day.Date &&
+                        !string.IsNullOrWhiteSpace(x.WorkOrder.MachineName))
+                        .Select(x => x.WorkOrder.MachineName)
+                        .Distinct()
+                        .OrderBy(x => x)
+                        .ToList()
+                        );
+
+                    var segmentsLookup = Model.Segments
+                    .GroupBy(x => new
+                    {
+                        Day = x.Day.Date,
+                        Machine = x.WorkOrder.MachineName
+                    })
+                    .ToDictionary(
+                    g => $"{g.Key.Day:yyyyMMdd}|{g.Key.Machine}",
+                    g => g.ToList()
+                    );
+                }
+               <thead class="bg-success text-white">
+
+                    <!-- Row 1 : Day -->
+                    <tr>
+                        <th rowspan="2" class="align-middle">
+                            Hour
+                        </th>
+
+                        @foreach (var day in next7Days)
+                        {
+                            var dayMachines = machinesByDay[day];
+
+                            if (dayMachines.Any())
+                            {
+                            <th colspan="@dayMachines.Count"
+                                class="text-center">
+                                    @day.ToString("dddd")
+                                    <br />
+                                    @day.ToString("dd-MMM-yyyy")
+                                </th>
+                            }
+                        }
+                    </tr>
+
+                    <!-- Row 2 : Machines -->
+                    <tr>
+                        @foreach (var day in next7Days)
+                        {
+                            foreach (var machine in machinesByDay[day])
+                            {
+                                <th class="text-center">
+                                    @machine
+                                </th>
+                            }
+                        }
+                    </tr>
+
+                </thead>
+                <tbody id="workOrderBody">
+
+                    @foreach (var hour in hours)
+                    {
+                        <tr>
+
+                            <td class="fw-bold">
+                                @hour.ToString("00"):00
+                            </td>
+
+                            @foreach (var day in next7Days)
+                            {
+                                foreach (var machine in machinesByDay[day])
+                                {
+                                    var key = $"{day:yyyyMMdd}-{machine}-{hour}";
+
+                                    if (remainingSpans.TryGetValue(key, out var skip) && skip > 0)
+                                    {
+                                        remainingSpans[key] = skip - 1;
+
+                                        <td class="placeholder-cell"></td>
+                                        continue;
+                                    }
+
+                                    var lookupKey = $"{day:yyyyMMdd}|{machine}";
+
+                                    if (segmentsLookup.TryGetValue(lookupKey, out var daySegments))
+                                    {
+                                        daySegments = daySegments
+                                        .OrderBy(x => x.StartHour)
+                                        .ToList();
+                                        var segment = daySegments
+                                        .Where(x => x.StartHour == hour)
+                                        .OrderByDescending(x => x.Span)
+                                        .FirstOrDefault();
+
+                                        if (segment != null)
+                                        {
+                                            var order = segment.WorkOrder;
+
+                                            var orderKey =
+                                            $"{order.WO_Number}-{machine}-{segment.Day:yyyyMMdd}";
+
+                                            if (!renderedOrders.ContainsKey(orderKey))
+                                            {
+                                                double start = segment.StartHour;
+                                                double end = segment.EndHour;
+
+                                                int span = segment.Span;
+
+                                                renderedOrders[orderKey] = span;
+
+                                                for (int i = 1; i < span && (hour + i) < 24; i++)
+                                                {
+                                                    string skipKey =
+                                                    $"{day:yyyyMMdd}-{machine}-{hour + i}";
+
+                                                    remainingSpans[skipKey] = 1;
+                                                }
+
+                                                if (!colorMap.ContainsKey(order.WO_Number))
+                                                {
+                                                    colorMap[order.WO_Number] =
+                                                    colorPalette[colorIndex % colorPalette.Length];
+
+                                                    colorIndex++;
+                                                }
+
+                                                var bgColor =
+                                                colorMap[order.WO_Number];
+
+                                                int remainingQty =
+                                                order.Qty - order.Built_Qty;
+
+                                                string statusText = "";
+                                                string badgeClass = "";
+                                                string cardClass = "";
+
+                                                if (order.Built_Qty >= order.Qty)
+                                                {
+                                                    statusText =
+                                                    order.Built_Qty > order.Qty
+                                                    ? "Over Build"
+                                                    : "Build Completed";
+
+                                                    badgeClass =
+                                                    order.Built_Qty > order.Qty
+                                                    ? "bg-danger"
+                                                    : "bg-success";
+
+                                                    cardClass =
+                                                    "status-complete";
+                                                }
+                                                else if (order.Built_Qty == 0)
+                                                {
+                                                    statusText =
+                                                    $"Not Started (Need {remainingQty})";
+
+                                                    badgeClass =
+                                                    "bg-danger";
+
+                                                    cardClass =
+                                                    "status-flash-red";
+                                                }
+                                                else
+                                                {
+                                                    statusText =
+                                                    $"Need to Build {remainingQty}";
+
+                                                    badgeClass =
+                                                    "bg-warning text-dark";
+
+                                                    cardClass =
+                                                    "status-flash-orange";
+                                                }
+
+                                                <td rowspan="@span"
+                                                    class="droppable-cell align-top p-0 @cardClass"
+                                                    style="background-color:@bgColor;"
+                                                    data-date="@day.ToString("yyyy-MM-dd")"
+                                                    data-machine="@machine">
+
+                                                    <div class="workorder-card h-100 w-100 p-2 d-flex flex-column justify-between"
+                                                         style="background:transparent; cursor:pointer;"
+                                                         data-machine="@order.MachineName"
+                                                         data-internal-id="@order.InternalId"
+                                                         data-order-id="@order.WO_Number"
+                                                         data-date="@day.ToString("yyyy-MM-dd")"
+                                                         data-start-hour="@start.ToString("0.##")"
+                                                         data-end-hour="@end.ToString("0.##")"
+                                                         data-pdf-url="@(string.IsNullOrEmpty(order.JobBag_Link) ? "#" : order.JobBag_Link)">
+
+                                                        <div class="flex-grow-1">
+
+                                                            <h6 class="mb-1">
+                                                                @order.WO_Number
+                                                            </h6>
+
+                                                            <p class="mb-1 small text-muted">
+                                                                <strong>@order.Description</strong><br />
+                                                                <span>@order.ItemName</span>
+                                                            </p>
+
+                                                            <div class="small">
+                                                                W/O Qty:
+                                                                <strong>@order.Qty</strong>
+                                                                @order.Unit
+                                                                <br />
+
+                                                                Built Qty:
+                                                                <strong>@order.Built_Qty</strong>
+                                                                @order.Unit
+                                                                <br />
+
+                                                                <span class="badge @badgeClass">
+                                                                    @statusText
+                                                                </span>
+                                                                <br />
+
+                                                                Machine:
+                                                                @order.MachineName
+                                                                <br />
+
+                                                                <div class="text-muted small">
+                                                                    <div>
+                                                                        <strong>Start:</strong>
+                                                                        @order.WO_StartDate.ToString("dd-MMM-yyyy")
+                                                                        @order.WO_StartTime.ToString(@"hh\:mm")
+                                                                    </div>
+
+                                                                    <div>
+                                                                        <strong>End:</strong>
+                                                                        @order.WO_EndDate.ToString("dd-MMM-yyyy")
+                                                                        @order.WO_EndTime.ToString(@"hh\:mm")
+                                                                    </div>
+                                                                </div>
+
+                                                            </div>
+
+                                                        </div>
+
+                                                    </div>
+
+                                                </td>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <td class="droppable-cell"
+                                                data-date="@day.ToString("yyyy-MM-dd")"
+                                                data-machine="@machine">
+                                            </td>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <td class="droppable-cell"
+                                            data-date="@day.ToString("yyyy-MM-dd")"
+                                            data-machine="@machine">
+                                        </td>
+                                    }
+                                }
+                            }
+
+                        </tr>
+                    }
+
+                </tbody>
+            </table>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+<script>
+$(function () {
+    let dragStarted = false;
+
+    // Submit filter on date/machine change
+   $('#startDatePicker, #machineLineSelector, #machineNameSelector')
+    .on('change', function () {
+        $('#filterForm').submit();
+    });
+
+    // Search/filter table
+    $('#searchBox').on('keyup', function () {
+        const value = $(this).val().toLowerCase();
+        $('#workOrderBody tr').filter(function () {
+            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+        });
+    });
+
+    // Export table to Excel
+    $('#exportBtn').on('click', function () {
+        const table = document.getElementById("workOrderTable");
+        const workbook = XLSX.utils.table_to_book(table, { sheet: "Work Orders" });
+        XLSX.writeFile(workbook, "WorkOrder_Schedule.xlsx");
+    });
+
+    // Make workorder cards draggable and clickable
+    $(".workorder-card").each(function () {
+        const card = $(this);
+        const rowHeight = card.closest("tr").height();
+        const colWidth = card.closest("td").outerWidth();
+
+        card.draggable({
+            grid: [colWidth, rowHeight],
+            containment: "#workOrderTable",
+            start: function () { dragStarted = true; },
+            stop: function (event, ui) {
+                setTimeout(() => dragStarted = false, 100);
+
+                // Detect drop cell
+                const centerX = ui.offset.left + card.width() / 2;
+                const centerY = ui.offset.top + card.height() / 2;
+                const $td = $(document.elementFromPoint(centerX, centerY)).closest("td");
+
+                if ($td.length === 0) return;
+
+                // Get new date and hour
+                const newDate = $td.data("date");
+                if (!newDate) return;
+
+                const newHourText = $td.closest("tr").find("td:first").text().split(":")[0];
+                const newHour = parseInt(newHourText, 10);
+                if (isNaN(newHour)) return;
+
+                const oldStartHour = parseInt(card.data("start-hour"), 10);
+                const oldEndHour = parseInt(card.data("end-hour"), 10);
+
+                const hourDelta = newHour - oldStartHour;
+                const newStart = oldStartHour + hourDelta;
+                const newEnd = oldEndHour + hourDelta;
+
+                console.log({
+                    newDate,
+                    newHourText,
+                    oldStartHour,
+                    oldEndHour,
+                    newStart,
+                    newEnd
+                });
+
+                updateWorkOrder(card, newDate, newStart, newEnd);
+            }
+        });
+
+        // Open PDF or fallback to NetSuite WorkOrder page
+        card.on("click", function () {
+            if (!dragStarted) {
+                let pdfUrl = card.data("pdf-url");
+                let internalId = card.data("internal-id");
+
+                if (pdfUrl && pdfUrl !== "#") {
+                    const ts = new Date().getTime();
+                    pdfUrl += (pdfUrl.includes("?") ? "&" : "?") + "_ts=" + ts;
+                    window.open(pdfUrl, "bomTab_" + ts);
+                } else if (internalId) {
+                    // fallback to NetSuite Work Order page
+                    const netsuiteUrl = `https://5262984.app.netsuite.com/app/accounting/transactions/workord.nl?id=${internalId}&whence=`;
+                    window.open(netsuiteUrl, "_blank");
+                } else {
+                    alert("⚠️ No Job Bag PDF or Work Order ID found.");
+                }
+            }
+        });
+
+    });
+
+    // Update work order via NetSuite REST API
+    function updateWorkOrder(card, newDate, newStartHour, newEndHour) {
+        const internalId = parseInt(card.data("internal-id"), 10);
+        if (!internalId) return;
+
+        const payload = {
+            WorkOrderId: internalId,
+            StartDate: newDate,
+            EndDate: newDate,
+            StartHour: newStartHour,
+            EndHour: newEndHour
+        };
+
+        fetch("/api/netsuite/workorder/update", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        })
+        .then(response => {
+            if (!response.ok) return response.text().then(text => Promise.reject(text));
+            return response.json();
+        })
+        .then(res => {
+            console.log("Work order updated via NetSuite API:", res);
+            card.data("start-hour", payload.StartHour);
+            card.data("end-hour", payload.EndHour);
+            card.data("date", newDate);
+        })
+        .catch(err => {
+            alert("❌ Failed to update work order via NetSuite API: " + err);
+        });
+    }
+});
+
+// Function to decide if text should be black or white based on background
+function getContrastColor(hexColor) {
+    // Remove # if present
+    hexColor = hexColor.replace('#', '');
+
+    // Expand shorthand like #FFF → #FFFFFF
+    if (hexColor.length === 3) {
+        hexColor = hexColor.split('').map(c => c + c).join('');
+    }
+
+    const r = parseInt(hexColor.substr(0, 2), 16);
+    const g = parseInt(hexColor.substr(2, 2), 16);
+    const b = parseInt(hexColor.substr(4, 2), 16);
+
+    // Calculate relative luminance
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+
+    // If bright, use black text; else white text
+    return luminance > 0.5 ? '#000000' : '#FFFFFF';
+}
+
+// Apply contrast text color to all workorder cards
+$(".workorder-card").each(function () {
+    const card = $(this);
+    const bgColor = card.css("background-color");
+
+    // Convert rgb(...) to hex
+    const rgbMatch = bgColor.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
+    if (rgbMatch) {
+        const r = parseInt(rgbMatch[1]).toString(16).padStart(2, '0');
+        const g = parseInt(rgbMatch[2]).toString(16).padStart(2, '0');
+        const b = parseInt(rgbMatch[3]).toString(16).padStart(2, '0');
+        const hex = `#${r}${g}${b}`;
+        card.css("color", getContrastColor(hex));
+    }
+});
+
+        // Dark / Light Mode
+        $("#themeToggle").on("click", function () {
+
+            const isDark = $("body").toggleClass("dark-mode").hasClass("dark-mode");
+
+            localStorage.setItem("theme", isDark ? "dark" : "light");
+        });
+
+        if(localStorage.getItem("theme") === "dark"){
+            $("body").addClass("dark-mode");
+        }
+
+        // Live Clock
+        function updateClock() {
+
+            const now = new Date();
+
+            $("#liveClock").text(
+                now.toLocaleString("en-GB", {
+                    weekday: 'short',
+                    day: '2-digit',
+                    month: 'short',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                })
+            );
+        }
+
+        updateClock();
+
+        setInterval(updateClock,1000);
+</script>
+    <script>
+               document.addEventListener("DOMContentLoaded", function () {
+
+            const collapse = document.getElementById("scheduleControls");
+            const icon = document.querySelector(
+                '[data-bs-target="#scheduleControls"] .bi-chevron-down'
+            );
+
+            collapse.addEventListener("shown.bs.collapse", function () {
+                icon.style.transform = "rotate(180deg)";
+            });
+
+            collapse.addEventListener("hidden.bs.collapse", function () {
+                icon.style.transform = "rotate(0deg)";
+            });
+
+        });
+    </script>
+}
+
+

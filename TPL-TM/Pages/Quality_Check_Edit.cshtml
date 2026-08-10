@@ -1,0 +1,85 @@
+﻿@page
+@model TPL_TM.Pages.Quality_Check_EditModel
+
+<div class="modal fade show" id="editQualityModal" tabindex="-1" aria-hidden="true" style="display:block;">
+    <div class="modal-dialog modal-dialog-centered" style="margin-top:80px;">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">Update Quality Check</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" id="closeQualityModal"></button>
+            </div>
+
+            <div class="modal-body">
+                <form method="post">
+                    <input type="hidden" name="QualityCheck.Id" value="@Model.QualityCheck.Id" />
+
+                    <div class="form-floating mb-3">
+                        <input type="number" class="form-control" name="QualityCheck.Shift_Id"
+                               value="@Model.QualityCheck.Shift_Id" placeholder="Shift ID" />
+                        <label>Shift ID</label>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <select class="form-select" name="QualityCheck.TestId">
+                            <option value="">-- select test --</option>
+                            @foreach (var t in Model.TestList)
+                            {
+                                <option value="@t.Id" selected="@(Model.QualityCheck.TestId == t.Id)">
+                                    @t.TestName
+                                </option>
+                            }
+                        </select>
+                        <label>Test</label>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <input type="text" class="form-control" name="QualityCheck.Status"
+                               value="@Model.QualityCheck.Status" placeholder="Status" />
+                        <label>Status</label>
+                    </div>
+
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" name="QualityCheck.Fail"
+                               value="true" @(Model.QualityCheck.Fail ? "checked" : "") />
+                        <label class="form-check-label">Fail</label>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <input type="text" class="form-control" name="QualityCheck.Weights"
+                               value="@Model.QualityCheck.Weights" placeholder="Weights" />
+                        <label>Weights</label>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <textarea class="form-control" name="QualityCheck.Comment" style="height:100px">@Model.QualityCheck.Comment</textarea>
+                        <label>Comment</label>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <input type="time" class="form-control" name="QualityCheck.Check_Time"
+                               value="@Model.QualityCheck.Check_Time?.ToString(@"hh\:mm\:ss")" />
+                        <label>Check Time</label>
+                    </div>
+
+                    <button type="submit" class="btn btn-success w-100">Update Quality Check</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var modal = new bootstrap.Modal(document.getElementById('editQualityModal'), {
+                backdrop: 'static',
+                keyboard: false
+            });
+            modal.show();
+
+            document.getElementById("closeQualityModal").addEventListener("click", function () {
+                window.location.href = "/Quality_Check_Report";
+            });
+        });
+    </script>
+}

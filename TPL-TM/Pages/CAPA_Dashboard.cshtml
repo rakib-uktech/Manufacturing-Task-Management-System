@@ -1,0 +1,582 @@
+﻿@page
+@model TPL_TM.Pages.CAPA_DashboardModel
+
+<div class="container-fluid py-4">
+
+    <!-- HEADER -->
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h2 class="fw-bold mb-1">
+                CAPA Dashboard
+            </h2>
+
+            <div class="text-muted">
+                Corrective & Preventive Action Monitoring
+            </div>
+        </div>
+
+        <a href="/CAPA_List"
+           class="btn btn-success">
+
+            <i class="bi bi-list-check me-2"></i>
+            Manage CAPAs
+
+        </a>
+
+    </div>
+
+    <!-- KPI ROW -->
+
+    <div class="row g-4 mb-4">
+
+        <div class="col-xl-2 col-md-4">
+
+            <div class="kpi-card total">
+
+                <div class="kpi-icon">
+                    <i class="bi bi-clipboard-data-fill"></i>
+                </div>
+
+                <div class="kpi-content">
+
+                    <div class="kpi-value">
+                        @Model.TotalCAPA
+                    </div>
+
+                    <div class="kpi-title">
+                        Total CAPA
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-xl-2 col-md-4">
+
+            <div class="kpi-card open">
+
+                <div class="kpi-icon">
+                    <i class="bi bi-exclamation-circle-fill"></i>
+                </div>
+
+                <div class="kpi-content">
+
+                    <div class="kpi-value">
+                        @Model.OpenCAPA
+                    </div>
+
+                    <div class="kpi-title">
+                        Open
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-xl-2 col-md-4">
+
+            <div class="kpi-card investigation">
+
+                <div class="kpi-icon">
+                    <i class="bi bi-search"></i>
+                </div>
+
+                <div class="kpi-content">
+
+                    <div class="kpi-value">
+                        @Model.InvestigationCAPA
+                    </div>
+
+                    <div class="kpi-title">
+                        Investigation
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-xl-2 col-md-4">
+
+            <div class="kpi-card verification">
+
+                <div class="kpi-icon">
+                    <i class="bi bi-patch-check-fill"></i>
+                </div>
+
+                <div class="kpi-content">
+
+                    <div class="kpi-value">
+                        @Model.VerificationCAPA
+                    </div>
+
+                    <div class="kpi-title">
+                        Verification
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-xl-2 col-md-4">
+
+            <div class="kpi-card closed">
+
+                <div class="kpi-icon">
+                    <i class="bi bi-check-circle-fill"></i>
+                </div>
+
+                <div class="kpi-content">
+
+                    <div class="kpi-value">
+                        @Model.ClosedCAPA
+                    </div>
+
+                    <div class="kpi-title">
+                        Closed
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-xl-2 col-md-4">
+
+            <div class="kpi-card overdue">
+
+                <div class="kpi-icon">
+                    <i class="bi bi-clock-history"></i>
+                </div>
+
+                <div class="kpi-content">
+
+                    <div class="kpi-value">
+                        @Model.OverdueCAPA
+                    </div>
+
+                    <div class="kpi-title">
+                        Overdue
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- CHART + ALERTS -->
+    <!-- ROW 1 -->
+    <div class="row g-4 mb-4">
+
+        <!-- Status Overview -->
+        <div class="col-lg-8">
+            <div class="card dashboard-card h-100">
+                <div class="card-header dashboard-header">
+                    <i class="bi bi-bar-chart-line-fill me-2"></i>
+                    CAPA Status Overview
+                </div>
+                <div class="card-body">
+                    <canvas id="statusChart" height="220"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Severity -->
+        <div class="col-lg-4">
+            <div class="card dashboard-card h-100">
+                <div class="card-header dashboard-header">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    Severity Distribution
+                </div>
+                <div class="card-body text-center">
+                    <canvas id="severityChart"
+                            style="max-height:250px;max-width:250px;margin:auto;">
+                    </canvas>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ROW 2 -->
+    <div class="row g-4 mb-4">
+
+        <!-- Machine -->
+        <div class="col-lg-6">
+            <div class="card dashboard-card h-100">
+                <div class="card-header dashboard-header">
+                    <i class="bi bi-gear-fill me-2"></i>
+                    CAPA by Machine
+                </div>
+                <div class="card-body">
+                    <canvas id="machineChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Incident -->
+        <div class="col-lg-6">
+            <div class="card dashboard-card h-100">
+                <div class="card-header dashboard-header">
+                    <i class="bi bi-file-earmark-bar-graph-fill me-2"></i>
+                    CAPA by Incident Type
+                </div>
+                <div class="card-body">
+                    <canvas id="incidentChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- RECENT CAPA -->
+
+    <div class="card dashboard-card">
+
+        <div class="card-header d-flex justify-content-between">
+
+            <span>Recent CAPAs</span>
+
+            <span class="badge bg-primary">
+
+                @Model.RecentCAPA.Count
+
+            </span>
+
+        </div>
+
+        <div class="card-body p-0">
+
+            <table class="table modern-table mb-0">
+
+                <thead>
+
+                    <tr>
+                        <th>CAPA No</th>
+                        <th>Title</th>
+                        <th>Machine</th>
+                        <th>Severity</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    @foreach (var item in Model.RecentCAPA)
+                    {
+                        <tr>
+
+                            <td>
+                                <strong>@item.CAPA_No</strong>
+                            </td>
+
+                            <td>@item.Title</td>
+
+                            <td>@item.Machine_Name</td>
+
+                            <td>
+                                <span class="badge bg-danger">
+                                    @item.Severity
+                                </span>
+                            </td>
+
+                            <td>
+
+                                @{
+                                    string statusClass = item.Status switch
+                                    {
+                                        "Open" => "bg-danger",
+                                        "Investigation" => "bg-warning text-dark",
+                                        "Verification" => "bg-info",
+                                        "Closed" => "bg-success",
+                                        _ => "bg-secondary"
+                                    };
+                                }
+
+                                <span class="badge @statusClass">
+                                    @item.Status
+                                </span>
+
+                            </td>
+
+                            <td>
+
+                                <a asp-page="/CAPA_Detail"
+                                   asp-route-id="@item.Id"
+                                   class="btn btn-sm btn-outline-success">
+
+                                    Open
+
+                                </a>
+
+                            </td>
+
+                        </tr>
+                    }
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+<style>
+    .kpi-card {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        padding: 22px;
+        border-radius: 18px;
+        color: #fff;
+        transition: .3s;
+        box-shadow: 0 8px 25px rgba(0,0,0,.12);
+    }
+
+        .kpi-card:hover {
+            transform: translateY(-5px);
+        }
+
+    .total {
+        background: linear-gradient(135deg,#2563eb,#60a5fa);
+    }
+
+    .open {
+        background: linear-gradient(135deg,#dc2626,#ef4444);
+    }
+
+    .investigation {
+        background: linear-gradient(135deg,#f59e0b,#fbbf24);
+    }
+
+    .verification {
+        background: linear-gradient(135deg,#0891b2,#22d3ee);
+    }
+
+    .closed {
+        background: linear-gradient(135deg,#16a34a,#4ade80);
+    }
+
+    .overdue {
+        background: linear-gradient(135deg,#374151,#6b7280);
+    }
+
+    .kpi-icon {
+        width: 65px;
+        height: 65px;
+        border-radius: 15px;
+        background: rgba(255,255,255,.18);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+    }
+
+    .kpi-value {
+        font-size: 32px;
+        font-weight: 800;
+        line-height: 1;
+    }
+
+    .kpi-title {
+        font-size: 14px;
+        opacity: .9;
+    }
+
+    .dashboard-card {
+        border: none;
+        border-radius: 18px;
+        overflow: hidden;
+        box-shadow: 0 8px 25px rgba(0,0,0,.08);
+    }
+
+        .dashboard-card .card-header {
+            background: #fff;
+            font-weight: 700;
+            border-bottom: 1px solid #eef2f7;
+            padding: 18px 22px;
+        }
+
+    .modern-table thead th {
+        background: #f8fafc;
+        text-transform: uppercase;
+        font-size: 12px;
+        letter-spacing: .5px;
+    }
+
+    .modern-table tbody tr:hover {
+        background: #f8fbff;
+    }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    new Chart(
+    document.getElementById('statusChart'),
+    {
+        type: 'bar',
+        data: {
+            labels: [
+                'Open',
+                'Investigation',
+                'Verification',
+                'Closed',
+                'Overdue'
+            ],
+            datasets: [{
+                data: [
+                    @Model.OpenCAPA,
+                    @Model.InvestigationCAPA,
+                    @Model.VerificationCAPA,
+                    @Model.ClosedCAPA,
+                    @Model.OverdueCAPA
+                ],
+                borderRadius: 8,
+                backgroundColor: [
+                    '#dc3545',
+                    '#ffc107',
+                    '#0dcaf0',
+                    '#198754',
+                    '#212529'
+                ]
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+</script>
+<script>
+    new Chart(
+    document.getElementById('severityChart'),
+    {
+        type: 'doughnut',
+        data: {
+            labels: [
+                'Critical',
+                'Major',
+                'Minor',
+                'Low'
+            ],
+            datasets: [{
+                data: [
+                    @Model.CriticalSeverity,
+                    @Model.HighSeverity,
+                    @Model.MediumSeverity,
+                    @Model.LowSeverity
+                ],
+                backgroundColor: [
+                    '#dc3545',
+                    '#fd7e14',
+                    '#ffc107',
+                    '#198754'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            cutout: '65%',
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+</script>
+<script>
+
+    new Chart(
+     document.getElementById('machineChart'),
+     {
+         type: 'bar',
+         data: {
+             labels: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.MachineLabels)),
+             datasets: [{
+                 label: 'CAPAs',
+                 data: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.MachineCounts)),
+                 backgroundColor: '#0d6efd',
+                 borderRadius: 8
+             }]
+         },
+         options: {
+             responsive: true,
+             maintainAspectRatio: false,
+             plugins: {
+                 legend: {
+                     display: false
+                 }
+             },
+             scales: {
+                 y: {
+                     beginAtZero: true
+                 }
+             }
+         }
+     });
+
+</script>
+<script>
+
+    new Chart(
+     document.getElementById('incidentChart'),
+     {
+         type: 'bar',
+         data: {
+             labels: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.IncidentLabels)),
+             datasets: [{
+                 label: 'CAPAs',
+                 data: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.IncidentCounts)),
+                 backgroundColor: '#20c997',
+                 borderRadius: 8
+             }]
+         },
+         options: {
+             responsive: true,
+             maintainAspectRatio: false,
+             plugins: {
+                 legend: {
+                     display: false
+                 }
+             },
+             scales: {
+                 y: {
+                     beginAtZero: true
+                 }
+             }
+         }
+     });
+
+</script>

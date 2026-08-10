@@ -1,0 +1,1870 @@
+﻿@page
+@model TPL_TM.Pages.CAPA_DetailModel
+
+@{
+    ViewData["Title"] = "CAPA Detail";
+
+    string statusBadge = "bg-secondary";
+
+    switch (Model.CAPA.Status)
+    {
+        case "Open":
+            statusBadge = "bg-danger";
+            break;
+
+        case "Investigation":
+            statusBadge = "bg-warning text-dark";
+            break;
+
+        case "Verification":
+            statusBadge = "bg-info";
+            break;
+
+        case "Closed":
+            statusBadge = "bg-success";
+            break;
+    }
+
+    string progressColor = "bg-danger";
+
+    if (Model.PercentComplete >= 75)
+        progressColor = "bg-success";
+    else if (Model.PercentComplete >= 50)
+        progressColor = "bg-warning";
+    else if (Model.PercentComplete >= 25)
+        progressColor = "bg-info";
+}
+
+<link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+
+<div class="modal fade show"
+     id="capaDetailModal"
+     tabindex="-1"
+     aria-hidden="true"
+     style="display:block;">
+
+    <div class="modal-dialog modal-lg"
+         style="margin-top:80px;">
+
+        <div class="modal-content">
+
+            <div class="modal-header bg-success text-white">
+                <div class="d-flex justify-content-between align-items-center w-100">
+                <!-- Left Side -->
+                    <div>
+                        <h5 class="modal-title mb-1">
+                            <i class="bi bi-clipboard2-pulse-fill me-2"></i>
+                            CAPA Detail - @Model.CAPA.CAPA_No
+                        </h5>
+
+                        <div class="opacity-75">
+                            @Model.CAPA.Title
+                        </div>
+                    </div>
+                    <!-- Right Side -->
+                    <div class="d-flex align-items-center gap-3">
+
+                        <span class="badge @statusBadge fs-6 px-3 py-2">
+                            <i class="bi bi-flag-fill me-1"></i>
+                            @Model.CAPA.Status
+                        </span>
+
+                        <button type="button"
+                                class="btn-close btn-close-white"
+                                id="closeCAPAModal">
+                        </button>
+
+                    </div>
+                </div>
+                
+            </div>
+
+            <div class="modal-body p-3">
+                <div class="container-fluid pt-1 px-0">
+
+            <div class="card shadow-lg border-0 mb-4">
+   
+
+                <div class="card-body p-4">
+
+                    <!-- PROGRESS -->
+
+                    <div class="mb-4">
+
+                        <div class="d-flex justify-content-between mb-2">
+
+                            <strong>
+                                CAPA Completion Progress
+                            </strong>
+
+                            <strong>
+                                @Model.PercentComplete%
+                            </strong>
+
+                        </div>
+
+                        <div class="progress capa-progress">
+
+                            <div class="progress-bar progress-bar-striped progress-bar-animated @progressColor"
+                                 role="progressbar"
+                                 style="width:@(Model.PercentComplete)%">
+                            </div>
+
+                        </div>
+
+                    </div>
+                            <!-- KPI CARDS -->
+
+                            <div class="row g-3 mb-4">
+
+                                <!-- Machine -->
+                                <div class="col-xl-3 col-lg-6 col-md-6">
+
+                                    <div class="card kpi-card machine-card h-100">
+
+                                        <div class="card-body">
+
+                                            <div class="kpi-top">
+
+                                                <span class="kpi-title">
+                                                    Machine
+                                                </span>
+
+                                                <div class="kpi-icon bg-primary-subtle text-primary">
+                                                    <i class="bi bi-gear-fill"></i>
+                                                </div>
+
+                                            </div>
+
+                                            <div class="kpi-value">
+                                                @Model.CAPA.Machine_Name
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                                <!-- Severity -->
+                                <div class="col-xl-3 col-lg-6 col-md-6">
+
+                                    <div class="card kpi-card severity-card h-100">
+
+                                        <div class="card-body">
+
+                                            <div class="kpi-top">
+
+                                                <span class="kpi-title">
+                                                    Severity
+                                                </span>
+
+                                                <div class="kpi-icon bg-danger-subtle text-danger">
+                                                    <i class="bi bi-exclamation-triangle-fill"></i>
+                                                </div>
+
+                                            </div>
+
+                                            <div class="kpi-value">
+                                                @Model.CAPA.Severity
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                                <!-- Owner -->
+                                <div class="col-xl-3 col-lg-6 col-md-6">
+
+                                    <div class="card kpi-card owner-card h-100">
+
+                                        <div class="card-body">
+
+                                            <div class="kpi-top">
+
+                                                <span class="kpi-title">
+                                                    Owner
+                                                </span>
+
+                                                <div class="kpi-icon bg-success-subtle text-success">
+                                                    <i class="bi bi-person-fill"></i>
+                                                </div>
+
+                                            </div>
+
+                                            <div class="kpi-value">
+                                                @Model.CAPA.Assigned_To
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                                <!-- Department -->
+                                <div class="col-xl-3 col-lg-6 col-md-6">
+
+                                    <div class="card kpi-card dept-card h-100">
+
+                                        <div class="card-body">
+
+                                            <div class="kpi-top">
+
+                                                <span class="kpi-title">
+                                                    Department
+                                                </span>
+
+                                                <div class="kpi-icon bg-info-subtle text-info">
+                                                    <i class="bi bi-building-fill"></i>
+                                                </div>
+
+                                            </div>
+
+                                            <div class="kpi-value">
+                                                @Model.CAPA.Department
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+          
+                </div>
+
+            </div>
+
+                <!-- NAVIGATION -->
+
+                    <div class="card border-0 shadow-sm mb-3">
+
+                        <div class="card-body p-2">
+
+                            <ul class="nav nav-pills nav-fill capa-tabs">
+
+                                <li class="nav-item">
+                                    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#incident">
+                                        <i class="bi bi-file-earmark-text-fill"></i>
+                                        <span>Incident</span>
+                                    </button>
+                                </li>
+
+                                <li class="nav-item">
+                                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#investigation">
+                                        <i class="bi bi-search"></i>
+                                        <span>Investigation</span>
+                                    </button>
+                                </li>
+
+                                <li class="nav-item">
+                                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#corrective">
+                                        <i class="bi bi-tools"></i>
+                                        <span>Corrective</span>
+                                    </button>
+                                </li>
+
+                                <li class="nav-item">
+                                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#preventive">
+                                        <i class="bi bi-shield-check"></i>
+                                        <span>Preventive</span>
+                                    </button>
+                                </li>
+
+                                <li class="nav-item">
+                                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#effectiveness">
+                                        <i class="bi bi-clipboard-check"></i>
+                                        <span>Verification</span>
+                                    </button>
+                                </li>
+
+                                <li class="nav-item">
+                                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#history">
+                                        <i class="bi bi-clock-history"></i>
+                                        <span>History</span>
+                                    </button>
+                                </li>
+
+                                <li class="nav-item">
+                                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#closure">
+                                        <i class="bi bi-check2-circle"></i>
+                                        <span>Closure</span>
+                                    </button>
+                                </li>
+
+                            </ul>
+
+                        </div>
+
+                    </div>
+
+
+
+                <div class="tab-content mt-3">
+
+                    <!-- INCIDENT TAB -->
+                    <div class="tab-pane fade show active"
+                            id="incident">
+
+                        <div class="card border-0 shadow-sm">
+
+                            <div class="card-header bg-light">
+
+                                <h5 class="mb-0">
+                                    <i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>
+                                    Incident Details
+                                </h5>
+
+                            </div>
+
+                            <div class="card-body">
+
+                                <div class="row g-4">
+
+                                    <div class="col-md-6">
+
+                                        <label class="text-muted small">
+                                            Incident Type
+                                        </label>
+
+                                        <div class="fw-semibold fs-6">
+                                            @Model.CAPA.Incident_Type
+                                        </div>
+
+                                    </div>
+
+                                    <div class="col-md-6">
+
+                                        <label class="text-muted small">
+                                            Department
+                                        </label>
+
+                                        <div class="fw-semibold fs-6">
+                                            @Model.CAPA.Department
+                                        </div>
+
+                                    </div>
+
+                                    <div class="col-12">
+
+                                        <label class="text-muted small">
+                                            Description
+                                        </label>
+
+                                        <div class="border rounded p-3 bg-light">
+
+                                            @Model.CAPA.Description
+
+                                        </div>
+
+                                    </div>
+
+                                    <div class="col-12">
+
+                                        <label class="text-muted small">
+                                            Immediate Containment Action
+                                        </label>
+
+                                        <div class="border rounded p-3 bg-warning bg-opacity-10">
+
+                                            @Model.CAPA.Immediate_Action
+
+                                        </div>
+
+                                    </div>
+                                    
+                                    <div class="mt-4">
+
+                                            <div class="card-header bg-dark">
+
+                                                <h5 class="mb-0">
+                                                    <i class="bi bi-images text-primary me-2"></i>
+                                                    Incident Photos 
+                                                    <span class="badge bg-gradient">
+                                                        @Model.Photos.Count
+                                                    </span>
+                                                </h5>
+
+                                            </div>
+
+                                            <div class="row">
+
+                                                @foreach (var photo in Model.Photos)
+                                                {
+                                                    var imgUrl =
+                                                    $"/CAPA_Detail?handler=Photo&photoId={photo.Id}";
+
+                                                    <div class="col-md-3 col-6 mb-3">
+
+                                                        <a href="@imgUrl"
+                                                           data-pswp-width="1600"
+                                                           data-pswp-height="1200"
+                                                           target="_blank">
+
+                                                            <img src="@imgUrl"
+                                                                 class="img-fluid rounded shadow gallery-thumb" />
+
+                                                        </a>
+
+                                                    </div>
+                                                }
+
+                                            </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <!-- INVESTIGATION TAB -->
+                    <div class="tab-pane fade"
+                            id="investigation">
+
+                        <div class="card border-0 shadow-sm">
+
+                                <div class="card-header">
+
+                                <h5 class="mb-0">
+
+                                    <i class="bi bi-search me-2 text-primary"></i>
+
+                                    Root Cause Investigation
+
+                                </h5>
+
+                            </div>
+
+                            <div class="card-body">
+
+                                <form method="post"
+                                        asp-page-handler="SaveInvestigation">
+
+                                    <input type="hidden"
+                                            asp-for="Id" />
+
+                                    <div class="mb-3">
+
+                                        <label class="form-label fw-semibold">
+
+                                            Root Cause Analysis
+
+                                        </label>
+
+                                        <textarea asp-for="RootCause"
+                                                    rows="10"
+                                                    class="form-control"
+                                                    placeholder="Enter 5 Why Analysis, Fishbone Analysis, RCA findings...">
+                                    </textarea>
+
+                                    </div>
+
+                                    <div class="text-end">
+
+                                        <button type="submit"
+                                                class="btn btn-success">
+
+                                            <i class="bi bi-check-circle me-1"></i>
+                                            Save Investigation
+
+                                        </button>
+
+                                    </div>
+
+                                </form>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <!-- CORRECTIVE ACTIONS -->
+                    <div class="tab-pane fade"
+                            id="corrective">
+
+                        <div class="card border-0 shadow-sm">
+
+                            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+
+                                <h5 class="mb-0">
+
+                                    <i class="bi bi-tools text-danger me-2"></i>
+
+                                    Corrective Actions
+
+                                </h5>
+
+                                <button class="btn btn-success"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#correctiveModal">
+
+                                    <i class="bi bi-plus-circle me-1"></i>
+
+                                    Add Action
+
+                                </button>
+
+                            </div>
+
+                            <div class="card-body p-0">
+
+                                <table class="table table-hover align-middle mb-0">
+
+                                    <thead class="table-light">
+
+                                        <tr>
+
+                                            <th>Action</th>
+
+                                            <th width="180">Owner</th>
+
+                                            <th width="140">Target Date</th>
+
+                                            <th width="120">Status</th>
+
+                                        </tr>
+
+                                    </thead>
+
+                                    <tbody>
+
+                                        @if (Model.CorrectiveActions.Count == 0)
+                                        {
+                                            <tr>
+
+                                                <td colspan="4"
+                                                    class="text-center py-4 text-muted">
+
+                                                    No corrective actions created.
+
+                                                </td>
+
+                                            </tr>
+                                        }
+
+                                        @foreach (var item in Model.CorrectiveActions)
+                                        {
+                                            string badgeClass = item.Status == "Completed"
+                                            ? "bg-success"
+                                            : item.Status == "In Progress"
+                                            ? "bg-warning text-dark"
+                                            : "bg-secondary";
+
+                                            <tr>
+
+                                                <td>
+
+                                                    <div class="fw-semibold">
+
+                                                        @item.Action_Description
+
+                                                    </div>
+
+                                                </td>
+
+                                                <td>
+
+                                                    <i class="bi bi-person-circle me-1"></i>
+
+                                                    @item.Assigned_To
+
+                                                </td>
+
+                                                <td>
+
+                                                    @item.Target_Date?.ToString("dd/MM/yyyy")
+
+                                                </td>
+
+                                                <td>
+
+                                                    <span class="badge @badgeClass">
+
+                                                        @item.Status
+
+                                                    </span>
+
+                                                </td>
+
+                                            </tr>
+                                        }
+
+                                    </tbody>
+
+                                </table>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <!-- PREVENTIVE ACTIONS -->
+                    <div class="tab-pane fade"
+                            id="preventive">
+
+                        <div class="card border-0 shadow-sm">
+
+                            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+
+                                <h5 class="mb-0">
+
+                                    <i class="bi bi-shield-check text-success me-2"></i>
+
+                                    Preventive Actions
+
+                                </h5>
+
+                                <button class="btn btn-success"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#preventiveModal">
+
+                                    <i class="bi bi-plus-circle me-1"></i>
+
+                                    Add Action
+
+                                </button>
+
+                            </div>
+
+                            <div class="card-body p-0">
+
+                                <table class="table table-hover align-middle mb-0">
+
+                                    <thead class="table-light">
+
+                                        <tr>
+
+                                            <th>Action</th>
+
+                                            <th width="180">Owner</th>
+
+                                            <th width="140">Target Date</th>
+
+                                            <th width="120">Status</th>
+
+                                        </tr>
+
+                                    </thead>
+
+                                    <tbody>
+
+                                        @if (Model.PreventiveActions.Count == 0)
+                                        {
+                                            <tr>
+
+                                                <td colspan="4"
+                                                    class="text-center py-4 text-muted">
+
+                                                    No preventive actions created.
+
+                                                </td>
+
+                                            </tr>
+                                        }
+
+                                        @foreach (var item in Model.PreventiveActions)
+                                        {
+                                            string badgeClass = item.Status == "Completed"
+                                            ? "bg-success"
+                                            : item.Status == "In Progress"
+                                            ? "bg-warning text-dark"
+                                            : "bg-secondary";
+
+                                            <tr>
+
+                                                <td>
+
+                                                    <div class="fw-semibold">
+
+                                                        @item.Action_Description
+
+                                                    </div>
+
+                                                </td>
+
+                                                <td>
+
+                                                    <i class="bi bi-person-circle me-1"></i>
+
+                                                    @item.Assigned_To
+
+                                                </td>
+
+                                                <td>
+
+                                                    @item.Target_Date?.ToString("dd/MM/yyyy")
+
+                                                </td>
+
+                                                <td>
+
+                                                    <span class="badge @badgeClass">
+
+                                                        @item.Status
+
+                                                    </span>
+
+                                                </td>
+
+                                            </tr>
+                                        }
+
+                                    </tbody>
+
+                                </table>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <!-- EFFECTIVENESS REVIEW -->
+                    <div class="tab-pane fade"
+                            id="effectiveness">
+
+                        <div class="card border-0 shadow-sm">
+
+                            <div class="card-header bg-light">
+
+                                <h5 class="mb-0">
+
+                                    <i class="bi bi-clipboard2-check text-success me-2"></i>
+
+                                    Effectiveness Verification
+
+                                </h5>
+
+                            </div>
+
+                            <div class="card-body">
+
+                                <form method="post"
+                                        asp-page-handler="SaveEffectiveness">
+
+                                    <input type="hidden"
+                                            asp-for="Id" />
+
+                                    <div class="mb-3">
+
+                                        <label class="form-label fw-semibold">
+
+                                            Verification Result
+
+                                        </label>
+
+                                        <textarea asp-for="EffectivenessReview"
+                                                    rows="10"
+                                                    class="form-control"
+                                                    placeholder="Describe effectiveness verification and evidence...">
+                                    </textarea>
+
+                                    </div>
+
+                                    <div class="text-end">
+
+                                        <button type="submit"
+                                                class="btn btn-success">
+
+                                            <i class="bi bi-check-circle-fill me-1"></i>
+
+                                            Save Verification
+
+                                        </button>
+
+                                    </div>
+
+                                </form>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+                    <!-- HISTORY -->
+                    <div class="tab-pane fade"
+                            id="history">
+
+                        <div class="card border-0 shadow-sm">
+
+                            <div class="card-header bg-light">
+
+                                <h5 class="mb-0">
+                                    <i class="bi bi-clock-history me-2 text-primary"></i>
+                                    CAPA Activity Timeline
+                                </h5>
+
+                            </div>
+
+                            <div class="card-body">
+
+                                <div class="timeline">
+
+                                    @foreach (var h in Model.History)
+                                    {
+                                        <div class="timeline-item">
+
+                                            <div class="timeline-icon">
+
+                                                <i class="bi bi-check-circle-fill"></i>
+
+                                            </div>
+
+                                            <div class="timeline-content">
+
+                                                <div class="d-flex justify-content-between">
+
+                                                    <strong>
+                                                        @h.Action_Type
+                                                    </strong>
+
+                                                    <small class="text-muted">
+                                                        @h.Action_Date.ToString("dd MMM yyyy HH:mm")
+                                                    </small>
+
+                                                </div>
+
+                                                <div class="text-muted">
+                                                    @h.Remarks
+                                                </div>
+
+                                                <small class="text-secondary">
+                                                    By @h.Action_By
+                                                </small>
+
+                                            </div>
+
+                                        </div>
+                                    }
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <!-- CLOSURE TAB -->
+                    <div class="tab-pane fade" id="closure">
+
+                        <div class="card border-0 shadow-sm">
+
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0">
+                                    <i class="bi bi-check2-circle text-success me-2"></i>
+                                    CAPA Closure
+                                </h5>
+                            </div>
+
+                            <div class="card-body">
+
+                                @if (Model.CAPA.Status == "Closed")
+                                {
+                                    <div class="alert alert-success">
+                                        CAPA is already closed.
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="alert alert-warning">
+                                        Before closing CAPA ensure all actions are completed.
+                                    </div>
+
+                                    <form method="post" asp-page-handler="CloseCAPA">
+
+                                        <input type="hidden" asp-for="Id" />
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Closure Remarks</label>
+                                            <textarea name="ClosureRemarks"
+                                                    class="form-control"
+                                                    rows="4"></textarea>
+                                        </div>
+
+                                        <button type="submit"
+                                                class="btn btn-danger"
+                                                onclick="return confirm('Are you sure you want to close this CAPA?');">
+
+                                            <i class="bi bi-lock-fill"></i>
+                                            Close CAPA
+                                        </button>
+
+                                    </form>
+                                }
+                            </div>
+
+                        </div>
+                    </div>
+    
+                </div>
+
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div class="modal-backdrop fade show"></div>
+
+
+<div class="modal fade"
+     id="correctiveModal">
+
+    <div class="modal-dialog modal-lg modal-dialog-top-offset">
+
+        <div class="modal-content border-0 shadow">
+
+            <form method="post"
+                  asp-page-handler="AddCorrectiveAction">
+
+                <input type="hidden"
+                       asp-for="Id" />
+
+                <div class="modal-header bg-danger text-white">
+
+                    <h5 class="modal-title">
+
+                        <i class="bi bi-tools me-2"></i>
+
+                        Add Corrective Action
+
+                    </h5>
+
+                    <button type="button"
+                            class="btn-close btn-close-white"
+                            data-bs-dismiss="modal">
+                    </button>
+
+                </div>
+
+                <div class="modal-body">
+
+                    <div class="mb-3">
+
+                        <label class="form-label">
+                            Action Description
+                        </label>
+
+                        <textarea asp-for="CorrectiveActionDescription"
+                                  rows="5"
+                                  class="form-control"
+                                  required>
+                        </textarea>
+
+                    </div>
+
+                    <div class="row">
+
+                        <div class="col-md-6">
+
+                            <label class="form-label">
+                                Assigned To
+                            </label>
+
+                            <select asp-for="CorrectiveAssignedTo" class="form-select">
+                                <option value="">-- Select User --</option>
+
+                                @foreach (var user in Model.UserList)
+                                {
+                                    <option value="@user">@user</option>
+                                }
+                            </select>
+
+                        </div>
+
+                        <div class="col-md-6">
+
+                            <label class="form-label">
+                                Target Date
+                            </label>
+
+                            <input asp-for="CorrectiveTargetDate"
+                                   type="date"
+                                   class="form-control" />
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+
+                    <button type="submit"
+                            class="btn btn-danger">
+
+                        Save Corrective Action
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+<div class="modal fade"
+        id="preventiveModal">
+
+    <div class="modal-dialog modal-lg modal-dialog-top-offset">
+
+        <div class="modal-content border-0 shadow">
+
+            <form method="post"
+                    asp-page-handler="AddPreventiveAction">
+
+                <input type="hidden"
+                        asp-for="Id" />
+
+                <div class="modal-header bg-success text-white">
+
+                    <h5 class="modal-title">
+
+                        <i class="bi bi-shield-check me-2"></i>
+
+                        Add Preventive Action
+
+                    </h5>
+
+                    <button type="button"
+                            class="btn-close btn-close-white"
+                            data-bs-dismiss="modal">
+                    </button>
+
+                </div>
+
+                <div class="modal-body">
+
+                    <div class="mb-3">
+
+                        <label class="form-label">
+                            Action Description
+                        </label>
+
+                        <textarea asp-for="PreventiveActionDescription"
+                                    rows="5"
+                                    class="form-control"
+                                    required>
+                    </textarea>
+
+                    </div>
+
+                    <div class="row">
+
+                        <div class="col-md-6">
+
+                            <label class="form-label">
+                                Assigned To
+                            </label>
+
+                            <select asp-for="PreventiveAssignedTo" class="form-select">
+                                <option value="">-- Select User --</option>
+
+                                @foreach (var user in Model.UserList)
+                                {
+                                    <option value="@user">@user</option>
+                                }
+                            </select>
+
+                        </div>
+
+                        <div class="col-md-6">
+
+                            <label class="form-label">
+                                Target Date
+                            </label>
+
+                            <input asp-for="PreventiveTargetDate"
+                                    type="date"
+                                    class="form-control" />
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+
+                    <button type="submit"
+                            class="btn btn-success">
+
+                        Save Preventive Action
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div class="modal fade"
+     id="photoGalleryModal"
+     tabindex="-1">
+
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+
+        <div class="modal-content bg-dark border-0">
+
+            <div class="modal-header border-0">
+
+                <h5 class="text-white mb-0">
+                    Incident Photos
+                </h5>
+
+                <button type="button"
+                        class="btn-close btn-close-white"
+                        data-bs-dismiss="modal">
+                </button>
+
+            </div>
+
+            <div class="modal-body p-0">
+
+                <div id="photoCarousel"
+                     class="carousel slide">
+
+                    <div class="carousel-inner">
+
+                        @for (int i = 0; i < Model.Photos.Count; i++)
+                        {
+                            var photo = Model.Photos[i];
+
+                            <div class="carousel-item @(i == 0 ? "active" : "")">
+
+                                <div class="text-center">
+
+                                    <img src="/CAPA_Detail?handler=Photo&photoId=@photo.Id"
+                                         class="gallery-image" />
+
+                                </div>
+
+                            </div>
+                        }
+
+                    </div>
+
+                    <button class="carousel-control-prev"
+                            type="button"
+                            data-bs-target="#photoCarousel"
+                            data-bs-slide="prev">
+
+                        <span class="carousel-control-prev-icon"></span>
+
+                    </button>
+
+                    <button class="carousel-control-next"
+                            type="button"
+                            data-bs-target="#photoCarousel"
+                            data-bs-slide="next">
+
+                        <span class="carousel-control-next-icon"></span>
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div class="fab-menu">
+
+    <button class="btn btn-success btn-lg rounded-circle shadow"
+            data-bs-toggle="dropdown">
+
+        <i class="bi bi-plus-lg"></i>
+
+    </button>
+
+    <ul class="dropdown-menu dropdown-menu-end">
+
+        <li>
+
+            <a class="dropdown-item"
+                data-bs-toggle="modal"
+                data-bs-target="#correctiveModal">
+
+                <i class="bi bi-tools me-2"></i>
+                Corrective Action
+
+            </a>
+
+        </li>
+
+        <li>
+
+            <a class="dropdown-item"
+                data-bs-toggle="modal"
+                data-bs-target="#preventiveModal">
+
+                <i class="bi bi-shield-check me-2"></i>
+                Preventive Action
+
+            </a>
+
+        </li>
+
+    </ul>
+
+</div>
+    
+    <style>
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+
+            .timeline::before {
+                content: '';
+                position: absolute;
+                left: 14px;
+                top: 0;
+                width: 2px;
+                height: 100%;
+                background: #dee2e6;
+            }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 25px;
+        }
+
+        .timeline-icon {
+            position: absolute;
+            left: -24px;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #198754;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .timeline-content {
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            padding: 15px;
+            background: white;
+        }
+
+        .fab-menu {
+            position: fixed;
+            right: 30px;
+            bottom: 90px;
+            z-index: 1050;
+        }
+
+        .sticky-actions {
+            position: sticky;
+            bottom: 0;
+            background: white;
+            border-top: 1px solid #dee2e6;
+            padding: 10px;
+            z-index: 1000;
+        }
+
+        .progress-bar {
+            transition: width .8s ease-in-out;
+        }
+
+        .card {
+            border-radius: 14px;
+        }
+
+        .nav-tabs .nav-link.active {
+            font-weight: 600;
+        }
+
+        .modal-content {
+            border-radius: 14px;
+        }
+
+        .modal-dialog-top-offset {
+            margin-top: 80px;
+        }
+
+    .capa-tabs {
+        gap: 8px;
+    }
+
+        .capa-tabs .nav-link {
+            border-radius: 12px;
+            padding: 12px 10px;
+            color: #495057;
+            font-weight: 600;
+            transition: all .25s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            min-height: 70px;
+            border: 1px solid transparent;
+        }
+
+            .capa-tabs .nav-link i {
+                font-size: 1.2rem;
+            }
+
+            .capa-tabs .nav-link:hover {
+                background: #f8f9fa;
+                color: #198754;
+                transform: translateY(-2px);
+                border-color: #dee2e6;
+            }
+
+            .capa-tabs .nav-link.active {
+                background: linear-gradient(135deg, #198754, #20c997);
+                color: white;
+                box-shadow: 0 4px 12px rgba(25,135,84,.25);
+            }
+
+                .capa-tabs .nav-link.active i {
+                    color: white;
+                }
+
+    /* =====================================
+       KPI CARDS
+    ===================================== */
+
+    .kpi-card {
+        border: none;
+        border-radius: 18px;
+        overflow: hidden;
+        transition: all .3s ease;
+        box-shadow: 0 4px 12px rgba(0,0,0,.08);
+        background: #fff;
+    }
+
+        .kpi-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 24px rgba(0,0,0,.15);
+        }
+
+    .machine-card {
+        border-top: 5px solid #0d6efd;
+    }
+
+    .severity-card {
+        border-top: 5px solid #dc3545;
+    }
+
+    .owner-card {
+        border-top: 5px solid #198754;
+    }
+
+    .dept-card {
+        border-top: 5px solid #0dcaf0;
+    }
+
+    .kpi-card .card-body {
+        padding: 1.25rem;
+    }
+
+    .kpi-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+
+    .kpi-icon {
+        width: 52px;
+        height: 52px;
+        min-width: 52px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+    }
+
+    .kpi-title {
+        font-size: .75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #6c757d;
+    }
+
+    .kpi-value {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #212529;
+        line-height: 1.45;
+        /* Prevent text overflow */
+        white-space: normal;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+        min-height: 55px;
+        display: flex;
+        align-items: center;
+    }
+
+    /* Mobile */
+
+    @@media (max-width: 768px) {
+
+        .kpi-value {
+            font-size: .95rem;
+            min-height: auto;
+        }
+
+        .kpi-icon {
+            width: 45px;
+            height: 45px;
+            min-width: 45px;
+            font-size: 1.1rem;
+        }
+    }
+
+    /* =====================================
+       TAB PANELS
+    ===================================== */
+
+    .tab-content {
+        margin-top: 20px;
+    }
+
+    .tab-pane .card {
+        border: none !important;
+        border-radius: 18px;
+        overflow: hidden;
+        box-shadow: 0 8px 25px rgba(0,0,0,.08);
+        animation: fadeIn .25s ease;
+    }
+
+    /* =====================================
+       COLOURED SECTION HEADERS
+    ===================================== */
+
+    #incident .card-header {
+        background: linear-gradient(135deg,#dc3545,#ff6b6b) !important;
+        color: white;
+    }
+
+    #investigation .card-header {
+        background: linear-gradient(135deg,#0d6efd,#4dabf7) !important;
+        color: white;
+    }
+
+    #corrective .card-header {
+        background: linear-gradient(135deg,#fd7e14,#ff922b) !important;
+        color: white;
+    }
+
+    #preventive .card-header {
+        background: linear-gradient(135deg,#198754,#51cf66) !important;
+        color: white;
+    }
+
+    #effectiveness .card-header {
+        background: linear-gradient(135deg,#20c997,#38d9a9) !important;
+        color: white;
+    }
+
+    #history .card-header {
+        background: linear-gradient(135deg,#6f42c1,#9775fa) !important;
+        color: white;
+    }
+
+    #closure .card-header {
+        background: linear-gradient(135deg,#343a40,#6c757d) !important;
+        color: white;
+    }
+
+    .card-header {
+        border: none;
+        padding: 16px 24px;
+    }
+
+        .card-header h5 {
+            margin: 0;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+        }
+
+        .card-header i {
+            color: white !important;
+        }
+
+    /* =====================================
+       CARD BODY
+    ===================================== */
+
+    .card-body {
+        background: #ffffff;
+        padding: 24px;
+    }
+
+    /* =====================================
+       LABELS
+    ===================================== */
+
+    .text-muted.small {
+        display: block;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-size: 11px;
+        font-weight: 700;
+        margin-bottom: 8px;
+        color: #6c757d !important;
+    }
+
+    /* =====================================
+       INCIDENT BOXES
+    ===================================== */
+
+    #incident .border.rounded {
+        border: none !important;
+        border-radius: 14px !important;
+        padding: 18px !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,.05);
+    }
+
+    #incident .card-body .bg-light {
+        background: #f8fafc !important;
+    }
+
+    #incident .bg-warning {
+        background: #fff8e6 !important;
+    }
+
+    /* =====================================
+       FORMS
+    ===================================== */
+
+    .form-control,
+    .form-select {
+        border-radius: 12px;
+        border: 1px solid #dce3ea;
+    }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: #198754;
+            box-shadow: 0 0 0 .2rem rgba(25,135,84,.15);
+        }
+
+    textarea.form-control {
+        resize: vertical;
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: #495057;
+    }
+
+    /* =====================================
+       BUTTONS
+    ===================================== */
+
+    .btn {
+        border-radius: 12px;
+        font-weight: 600;
+        transition: all .25s ease;
+    }
+
+    .btn-success,
+    .btn-danger {
+        box-shadow: 0 4px 12px rgba(0,0,0,.15);
+    }
+
+    .btn:hover {
+        transform: translateY(-2px);
+    }
+
+    /* =====================================
+       TABLES
+    ===================================== */
+
+    .table {
+        margin-bottom: 0;
+    }
+
+        .table thead th {
+            background: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #6c757d;
+            padding: 15px;
+        }
+
+        .table td {
+            padding: 16px;
+            vertical-align: middle;
+        }
+
+        .table tbody tr {
+            transition: .2s ease;
+        }
+
+            .table tbody tr:hover {
+                background: #f8fbff;
+            }
+
+    /* =====================================
+       STATUS BADGES
+    ===================================== */
+
+    .badge {
+        padding: 8px 12px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: .8rem;
+    }
+
+    /* =====================================
+       TIMELINE
+    ===================================== */
+
+    .timeline {
+        position: relative;
+        padding-left: 35px;
+    }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 0;
+            width: 3px;
+            height: 100%;
+            background: #d9e2ec;
+            border-radius: 50px;
+        }
+
+    .timeline-item {
+        position: relative;
+        margin-bottom: 25px;
+    }
+
+    .timeline-icon {
+        position: absolute;
+        left: -27px;
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: #6f42c1;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(111,66,193,.35);
+    }
+
+    .timeline-content {
+        background: white;
+        border-radius: 14px;
+        border: 1px solid #e9ecef;
+        padding: 16px;
+        box-shadow: 0 3px 10px rgba(0,0,0,.05);
+    }
+
+    /* =====================================
+       ALERTS
+    ===================================== */
+
+    .alert {
+        border: none;
+        border-radius: 14px;
+    }
+
+    .alert-warning {
+        background: #fff8e6;
+    }
+
+    .alert-success {
+        background: #e9fff2;
+    }
+
+    /* =====================================
+       EMPTY TABLE MESSAGE
+    ===================================== */
+
+    .text-center.py-4.text-muted {
+        font-size: 15px;
+        font-style: italic;
+    }
+
+    /* =====================================
+       ANIMATION
+    ===================================== */
+
+    @@keyframes fadeIn {
+        from
+
+    {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    }
+
+    
+       
+
+    .gallery-image {
+        max-height: 80vh;
+        max-width: 100%;
+        object-fit: contain;
+    }
+
+    .gallery-thumb {
+        height: 220px;
+        width: 100%;
+        object-fit: cover;
+        border-radius: 12px;
+        transition: all .25s ease;
+    }
+
+        .gallery-thumb:hover {
+            transform: scale(1.04);
+            box-shadow: 0 10px 25px rgba(0,0,0,.25);
+        }
+
+</style>
+
+@section Scripts {
+
+    <script>
+
+        document.addEventListener("DOMContentLoaded", function () {
+
+            var modal = new bootstrap.Modal(
+                document.getElementById('capaDetailModal'),
+                {
+                    backdrop: 'static',
+                    keyboard: false
+                });
+
+            modal.show();
+
+            document.getElementById("closeCAPAModal")
+                .addEventListener("click", function () {
+
+                    window.location.href = "/CAPA_List";
+                    // Change to your CAPA listing page
+
+                });
+
+        });
+
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            const preventiveModalEl = document.getElementById('preventiveModal');
+            const capaModalEl = document.getElementById('capaDetailModal');
+
+            preventiveModalEl.addEventListener('hidden.bs.modal', function () {
+
+                const capaModal = bootstrap.Modal.getOrCreateInstance(capaModalEl);
+
+                capaModal.show();
+            });
+
+        });
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            const correctiveModalEl = document.getElementById('correctiveModal');
+            const capaModalEl = document.getElementById('capaDetailModal');
+
+            correctiveModalEl.addEventListener('hidden.bs.modal', function () {
+
+                document.body.classList.add('modal-open');
+
+                const capaModal = bootstrap.Modal.getOrCreateInstance(capaModalEl);
+
+                capaModal.show();
+            });
+
+        });
+    </script>
+    <script>
+
+        document.addEventListener("DOMContentLoaded", function () {
+
+            document.querySelectorAll(".gallery-thumb")
+                .forEach(function (img) {
+
+                    img.addEventListener("click", function () {
+
+                        const index =
+                            parseInt(this.dataset.slide);
+
+                        const carousel =
+                            bootstrap.Carousel.getOrCreateInstance(
+                                document.querySelector("#photoCarousel")
+                            );
+
+                        carousel.to(index);
+
+                    });
+
+                });
+
+        });
+
+    </script>
+    <script type="module">
+
+        import PhotoSwipeLightbox
+        from 'https://cdn.jsdelivr.net/npm/photoswipe@5/dist/photoswipe-lightbox.esm.min.js';
+
+        const lightbox = new PhotoSwipeLightbox({
+            gallery: '.row',
+            children: 'a',
+            pswpModule: () =>
+                import('https://cdn.jsdelivr.net/npm/photoswipe@5/dist/photoswipe.esm.min.js')
+        });
+
+        lightbox.init();
+
+    </script>
+
+}

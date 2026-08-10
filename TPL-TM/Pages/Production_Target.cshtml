@@ -1,0 +1,104 @@
+﻿@page
+@model TPL_TM.Pages.Production_TargetModel
+@{
+}
+<div class="modal fade show" id="prodTargetModal" tabindex="-1" aria-hidden="true" style="display: block;">
+    <div class="modal-dialog modal-dialog-centered" style="margin-top: 80px;">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">Production Target Entry</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" id="closeProdTargetModal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="prod-target-form" method="post" novalidate>
+                    <input type="hidden" name="Id" value="@Model.TargetInfo.Id" />
+
+                    <div class="form-floating mb-3">
+                        <select class="form-select" name="Machine_Line" required>
+                            <option value="">Select Machine Line</option>
+                            @foreach (var line in Model.MachineLineList)
+                            {
+                                <option value="@line" selected="@(Model.TargetInfo.Machine_Line == line)">
+                                    @line
+                                </option>
+                            }
+                        </select>
+                        <label>Machine Line</label>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <select class="form-select" name="Machine_Name" required>
+                            <option value="">Select Machine Name</option>
+                            @foreach (var machine in Model.MachineNameList)
+                            {
+                                <option value="@machine" selected="@(Model.TargetInfo.Machine_Name == machine)">
+                                    @machine
+                                </option>
+                            }
+                        </select>
+                        <label>Machine Name</label>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <select class="form-select" name="Product_Line" required>
+                            <option value="">Select Product Line</option>
+                            @foreach (var product in Model.ProductLineList)
+                            {
+                                <option value="@product" selected="@(Model.TargetInfo.Product_Line == product)">
+                                    @product
+                                </option>
+                            }
+                        </select>
+                        <label>Product Line</label>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <input type="number" name="Target_Count" class="form-control"
+                               value="@Model.TargetInfo.Target_Count" placeholder="Target Count" required />
+                        <label>Target Count</label>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <input type="date" name="Effective_Date" class="form-control"
+                               value="@(Model.TargetInfo.Effective_Date == DateTime.MinValue
+                                                   ? DateTime.Today.ToString("yyyy-MM-dd")
+                                                   : Model.TargetInfo.Effective_Date.ToString("yyyy-MM-dd"))" />
+                        <label>Effective Date</label>
+                    </div>
+
+                    <div class="form-check mb-3">
+                        <input type="checkbox" name="Is_Active" class="form-check-input" @(Model.TargetInfo.Is_Active ? "checked" : "") />
+                        <label class="form-check-label">Active</label>
+                    </div>
+
+
+                    @if (Model.TargetInfo.Id > 0)
+                    {
+                        <button type="submit" formaction="?handler=Update" class="btn btn-lg btn-warning w-100">Update Target</button>
+                    }
+                    else
+                    {
+                        <button type="submit" class="btn btn-lg btn-success w-100">Save Production Target</button>
+                    }
+
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var modal = new bootstrap.Modal(document.getElementById('prodTargetModal'), {
+                backdrop: 'static',
+                keyboard: false
+            });
+            modal.show();
+
+            document.getElementById("closeProdTargetModal").addEventListener("click", function () {
+                window.location.href = "/Index";
+            });
+        });
+    </script>
+}

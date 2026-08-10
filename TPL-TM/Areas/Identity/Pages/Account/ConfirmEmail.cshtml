@@ -1,0 +1,36 @@
+﻿@page
+@model ConfirmEmailModel
+@{
+    ViewData["Title"] = "Confirm Email";
+}
+
+<!-- Confirm Email Modal (Auto Open on Page Load) -->
+<div class="modal fade show" id="confirmEmailModal" tabindex="-1" aria-labelledby="confirmEmailModalLabel" aria-hidden="true" style="display: block;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="confirmEmailModalLabel">Confirm Email</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="closeConfirmEmailModal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <partial name="_StatusMessage" model="Model.StatusMessage" />
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var myModal = new bootstrap.Modal(document.getElementById('confirmEmailModal'), {
+                backdrop: 'static', // Prevent closing when clicking outside
+                keyboard: false     // Prevent closing with keyboard (Esc)
+            });
+            myModal.show();
+
+            document.getElementById("closeConfirmEmailModal").addEventListener("click", function () {
+                window.location.href = "/Index";
+            });
+        });
+    </script>
+}

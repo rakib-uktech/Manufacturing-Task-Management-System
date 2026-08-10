@@ -1,0 +1,99 @@
+﻿@page
+@model TPL_TM.Pages.Downtime_EditModel
+
+<!-- Modal style like Production_Edit -->
+<div class="modal fade show" id="editDowntimeModal" tabindex="-1" aria-hidden="true" style="display:block;">
+    <div class="modal-dialog modal-dialog-centered" style="margin-top: 80px;">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    Update Downtime Record
+                </h5>
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"
+                        id="closeEditDowntimeModal">
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <form method="post">
+                    <input type="hidden" name="Downtime.Id" value="@Model.Downtime.Id" />
+
+                    <div class="form-floating mb-3">
+                        <input class="form-control" type="number"
+                               name="Downtime.Downtime"
+                               value="@Model.Downtime.Downtime"
+                               min="0" placeholder="Downtime (minutes)" />
+                        <label>Downtime (minutes)</label>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <select class="form-select" name="Downtime.ReasonId">
+                            <option value="">-- select reason --</option>
+                            @foreach (var r in Model.ReasonList)
+                            {
+                                <option value="@r.Id" selected="@(Model.Downtime.ReasonId == r.Id)">
+                                    @r.ReasonName
+                                </option>
+
+                            }
+                        </select>
+                        <label>Reason</label>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <input class="form-control" type="number"
+                               name="Downtime.Shift"
+                               value="@Model.Downtime.Shift"
+                               placeholder="Shift ID" />
+                        <label>Shift</label>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <textarea class="form-control"
+                                  name="Downtime.Comment"
+                                  style="height:100px">@Model.Downtime.Comment</textarea>
+                        <label>Comment</label>
+                    </div>
+
+                    <button type="submit" class="btn btn-success w-100">
+                        Update Downtime Record
+                    </button>
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            // 🔐 Role check (same as Production_Edit)
+            const isUser = @User.IsInRole("User").ToString().ToLower();
+
+            // 🔔 Init modal
+            const modalEl = document.getElementById('editDowntimeModal');
+            const modal = new bootstrap.Modal(modalEl, {
+                backdrop: 'static',
+                keyboard: false
+            });
+            modal.show();
+
+            // ❌ Close button redirect logic
+            document
+                .getElementById("closeEditDowntimeModal")
+                .addEventListener("click", function () {
+
+                    if (isUser) {
+                        window.location.href = "/Operator_Index";
+                    } else {
+                        window.location.href = "/Downtime_Report";
+                    }
+                });
+        });
+    </script>
+}

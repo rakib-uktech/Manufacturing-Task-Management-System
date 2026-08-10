@@ -1,0 +1,140 @@
+﻿@page
+@model TPL_TM.Pages.Edit_TaskModel
+@{
+}
+<!-- Assign Task Modal (Auto Open on Page Load) -->
+<div class="modal fade show" id="assignTaskModal" tabindex="-1" aria-labelledby="assignTaskModalLabel" aria-hidden="true" style="display: block;">
+    <div class="modal-dialog modal-dialog-centered" style="margin-top: 80px;">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="assignTaskModalLabel">
+                    @(Model.TaskInfo.Id > 0 ? "Update Task" : "Assign New Task")
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="closeAssignTaskModal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="assign-task-form" method="post" novalidate>
+                    <input type="hidden" name="TaskId" value="@Model.TaskInfo.Id" />
+
+                    <div class="form-floating mb-3">
+                        <input class="form-control" list="Work_OrderlistOptions" id="Work_Order" name="Work_Order" value="@Model.TaskInfo.Ref_No" required placeholder="Work Order" />
+                        <datalist id="Work_OrderlistOptions">
+                            @foreach (var task in Model.TaskList)
+                            {
+                                <option value="@task.Ref_No">@task.Ref_No</option>
+                            }
+                        </datalist>
+                        <label>Work Order</label>
+                        <div class="invalid-feedback">Work Order is required.</div>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <input name="Task_Type" class="form-control" value="@Model.TaskInfo.Task_Type" required placeholder="Task Type" />
+                        <label>Task Type</label>
+                        <div class="invalid-feedback">Task Type is required.</div>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <input class="form-control" list="Task_NamelistOptions" id="Task_Name" name="Task_Name" value="@Model.TaskInfo.Task_Name" required placeholder="Task Name" />
+                        <datalist id="Task_NamelistOptions">
+                            @foreach (var task in Model.TaskList)
+                            {
+                                <option value="@task.Task_Name" data-description="@task.Task_Description" data-refno="@task.Ref_No">@task.Task_Name</option>
+                            }
+                        </datalist>
+                        <label>Task Name</label>
+                        <div class="invalid-feedback">Task Name is required.</div>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <input class="form-control" list="Task_DescriptionlistOptions" id="Task_Description" name="Task_Description" value="@Model.TaskInfo.Task_Description" required placeholder="Task Description">
+                        <datalist id="Task_DescriptionlistOptions">
+                            @foreach (var task in Model.TaskList)
+                            {
+                                <option value="@task.Task_Description">@task.Task_Description</option>
+                            }
+                        </datalist>
+                        <label>Task Description</label>
+                        <div class="invalid-feedback">Task Description is required.</div>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <input class="form-control" list="Assign_TolistOptions" id="Assign_To" name="Assign_To" value="@Model.TaskInfo.Assign_To" required placeholder="Assign To">
+                        <datalist id="Assign_TolistOptions">
+                            @foreach (var task in Model.AssignTolist)
+                            {
+                                <option value="@task.Assign_To">@task.Assign_To</option>
+                            }
+                        </datalist>
+                        <label>Assign To</label>
+                        <div class="invalid-feedback">Please specify the assignee.</div>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <input type="number" name="Qty" class="form-control" value="@Model.TaskInfo.Qty" required placeholder="Quantity" min="1" />
+                        <label>Quantity</label>
+                        <div class="invalid-feedback">Quantity must be at least 1.</div>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <select name="Unit" class="form-select" required>
+                            <option value="">Select Unit</option>
+                            <option value="Piece" selected="@(Model.TaskInfo.Unit == "Piece")">Piece</option>
+                            <option value="Case" selected="@(Model.TaskInfo.Unit == "Case")">Case</option>
+                            <option value="Pallet" selected="@(Model.TaskInfo.Unit == "Pallet")">Pallet</option>
+                            <option value="Kilogram" selected="@(Model.TaskInfo.Unit == "Kilogram")">Kilogram</option>
+                        </select>
+                        <label>Unit</label>
+                        <div class="invalid-feedback">Please select a unit.</div>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <select name="Priority_Level" class="form-select" required>
+                            <option value="">Select Priority Level</option>
+                            <option value="High" selected="@(Model.TaskInfo.Priority_Level == "High")">High</option>
+                            <option value="Medium" selected="@(Model.TaskInfo.Priority_Level == "Medium")">Medium</option>
+                            <option value="Low" selected="@(Model.TaskInfo.Priority_Level == "Low")">Low</option>
+                        </select>
+                        <label>Priority Level</label>
+                        <div class="invalid-feedback">Please select a priority level.</div>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <textarea name="Comments" class="form-control" placeholder="Comments">@(Model.TaskInfo.Comments)</textarea>
+                        <label>Comments</label>
+                    </div>
+
+                    <button type="submit" class="w-100 btn btn-lg btn-success">
+                        @(Model.TaskInfo.Id > 0 ? "Update Task" : "Submit Task")
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var myModal = new bootstrap.Modal(document.getElementById('assignTaskModal'), {
+                backdrop: 'static',
+                keyboard: false
+            });
+            myModal.show();
+
+            document.getElementById("closeAssignTaskModal").addEventListener("click", function () {
+                window.location.href = "/Index";
+            });
+
+            // Update modal title and button text dynamically
+            var taskId = document.querySelector('input[name="TaskId"]').value;
+            if (taskId > 0) {
+                document.getElementById('assignTaskModalLabel').innerText = "Update Task";
+                document.querySelector('button[type="submit"]').innerText = "Update Task";
+            } else {
+                document.getElementById('assignTaskModalLabel').innerText = "Assign New Task";
+                document.querySelector('button[type="submit"]').innerText = "Submit Task";
+            }
+        });
+    </script>
+}

@@ -1,0 +1,268 @@
+﻿@page
+@model TPL_TM.Pages.Manning_ScheduleModel
+@{
+}
+
+<!-- Manning Schedule Modal (Auto Open on Page Load) -->
+<div class="modal fade show"
+     id="manningScheduleModal"
+     tabindex="-1"
+     aria-labelledby="manningScheduleModalLabel"
+     aria-hidden="true"
+     style="display:block;">
+
+    <div class="modal-dialog modal-dialog-centered"
+         style="margin-top:80px;">
+
+        <div class="modal-content">
+
+
+            <div class="modal-header bg-primary text-white">
+
+                <h5 class="modal-title" id="manningScheduleModalLabel">
+                    @(Model.IsEdit ? "Edit Manning Schedule" : "Create Manning Schedule")
+                </h5>
+
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        id="closeManningScheduleModal">
+                </button>
+
+            </div>
+
+
+            <div class="modal-body">
+
+
+                @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+                {
+                    <div class="alert alert-danger">
+                        @Model.ErrorMessage
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(Model.SuccessMessage))
+                {
+                    <div class="alert alert-success">
+                        @Model.SuccessMessage
+                    </div>
+                }
+                <form id="manning-schedule-form"
+                      method="post"
+                      novalidate>
+                    @if (ViewData.ModelState.Values.Any(v => v.Errors.Count > 0))
+                    {
+                        <div asp-validation-summary="All"
+                             class="alert alert-danger">
+                        </div>
+                    }
+
+                    <!-- Schedule Date -->
+                    <div class="form-floating mb-3">
+
+                        <input asp-for="Schedule.Schedule_Date" type="date"
+                               class="form-control"                               
+                               required />
+
+                        <label>
+                            Schedule Date
+                        </label>
+
+                    </div>
+
+                    <!-- Machine Line -->
+                    <div class="form-floating mb-3">
+
+                        <input asp-for="Schedule.Machine_Line" class="form-control"
+                               list="MachineLineList"                               
+                               required />
+
+
+                        <datalist id="MachineLineList">
+
+                            @foreach (var line in Model.MachineLineList)
+                            {
+                                <option value="@line.Machine_Line"></option>
+                            }
+                        </datalist>
+                        <label>
+                            Machine Line
+                        </label>
+
+                    </div>
+
+                    <!-- Machine -->
+                    <div class="form-floating mb-3">
+                        <input asp-for="Schedule.Machine_Name" class="form-control"
+                               list="MachineList"                              
+                               required />
+                        <datalist id="MachineList">
+
+                            @foreach (var machine in Model.MachineList)
+                            {
+                                <option value="@machine.Machine_Name"></option>
+                            }
+
+                        </datalist>
+                        <label>
+                            Machine
+                        </label>
+                    </div>
+
+                    <!-- Employee -->
+                    <div class="form-floating mb-3">
+                        <input asp-for="Schedule.Employee_UserName" class="form-control"
+                               list="EmployeeList"
+                               id="Employee"                               
+                               required />
+                        <datalist id="EmployeeList">
+                            @foreach (var e in Model.EmployeeList)
+                            {
+                                <option value="@e.Employee_UserName"
+                                        data-shift="@e.Shift">
+                                </option>
+                            }
+                        </datalist>
+
+                        <label>
+                            Employee
+                        </label>
+                    </div>
+                    <!-- Shift -->
+                    <div class="form-floating mb-3">
+                        <select asp-for="Schedule.Shift"
+                                id="Shift"
+                                class="form-select">
+                            <option value="">
+                                Select Shift
+                            </option>
+                            <option>A</option>
+                            <option>B</option>
+                            <option>C</option>
+                        </select>
+                       
+                        <label>
+                            Shift
+                        </label>
+                    </div>
+
+                    <!-- Comments -->
+                    <div class="form-floating mb-3">
+
+                        <textarea asp-for="Schedule.Comments" class="form-control"                                  
+                              style="height:100px"></textarea>
+                        <label>
+                            Comments
+                        </label>
+
+
+                    </div>
+                    <input asp-for="Schedule.Id" type="hidden">
+                    <button type="submit"
+                            class="w-100 btn btn-lg btn-primary">
+
+                        @(Model.IsEdit ? "Update Manning Schedule"
+                                                : "Save Manning Schedule")
+
+                    </button>
+                </form>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+@section Scripts {
+
+
+    <script>
+
+
+        document.addEventListener("DOMContentLoaded", function () {
+
+
+            // Auto open modal
+            var modal = new bootstrap.Modal(
+                document.getElementById('manningScheduleModal'),
+                {
+                    backdrop: 'static',
+                    keyboard: false
+                });
+
+
+            modal.show();
+
+
+
+            // Close redirect
+            document.getElementById("closeManningScheduleModal")
+                .addEventListener("click", function(){
+
+                    window.location.href="/Manning_Schedule_Calendar";
+
+                });
+
+
+
+            // Employee -> Shift auto fill
+
+        const employee = document.getElementById("Employee");
+        const shift = document.getElementById("Shift");
+
+        function updateShift() {
+
+            if (employee.value === "")
+                return;
+
+            let selectedShift = "";
+
+            document.querySelectorAll("#EmployeeList option").forEach(option => {
+
+                if (option.value === employee.value)
+                    selectedShift = option.dataset.shift;
+
+            });
+
+            if (selectedShift !== "")
+                shift.value = selectedShift;
+        }
+
+        // Initial load
+        updateShift();
+
+        // Employee changed
+        employee.addEventListener("change", updateShift);
+
+
+            // Bootstrap validation
+
+            const form =
+                document.getElementById("manning-schedule-form");
+
+
+            form.addEventListener("submit", function(event){
+
+
+                if(!form.checkValidity())
+                {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+
+
+                form.classList.add("was-validated");
+
+
+            });
+
+
+        });
+
+    </script>
+
+}

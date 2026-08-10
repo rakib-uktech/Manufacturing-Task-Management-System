@@ -1,0 +1,72 @@
+﻿@page
+@model TPL_TM.Pages.Production_DeleteModel
+@{
+    ViewData["Title"] = "Delete Production Record";
+}
+
+<div class="modal fade show" id="deleteProductionModal" tabindex="-1" aria-labelledby="deleteProductionModalLabel" aria-hidden="true" style="display: block;">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 500px;">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteProductionModalLabel">Confirm Delete</h5>
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"
+                        onclick="window.location.href = redirectUrl">
+                </button>
+            </div>
+
+            <div class="modal-body">
+                @if (!string.IsNullOrEmpty(Model.errorMessage))
+                {
+                    <div class="alert alert-danger">@Model.errorMessage</div>
+                }
+                else
+                {
+                    <h5 class="text-danger">Are you sure you want to delete this production record?</h5>
+
+                    <table class="table table-bordered table-hover table-sm align-middle" style="background-color: #f9f9f9;">
+                        <tbody>
+                            <tr><th style="width: 30%;">Shift Letter:</th><td>@Model.production.Shift_Letter</td></tr>
+                            <tr><th>WO Number:</th><td>@Model.production.Wo_Number</td></tr>
+                            <tr><th>Batch ID:</th><td>@Model.production.Batch_Identifier</td></tr>
+                            <tr><th>Machine Line:</th><td>@Model.production.Machine_Line</td></tr>
+                            <tr><th>Machine Name:</th><td>@Model.production.Machine_Name</td></tr>
+                            <tr><th>Product Line:</th><td>@Model.production.Product_Line</td></tr>
+                            <tr><th>Part Number:</th><td>@Model.production.Part_Number</td></tr>
+                            <tr><th>Item Description:</th><td>@Model.production.Item_Description</td></tr>
+                            <tr><th>Start Time:</th><td>@Model.production.Timestamp_Start?.ToString("dd/MM/yyyy HH:mm")</td></tr>
+                            <tr><th>End Time:</th><td>@Model.production.Timestamp_End?.ToString("dd/MM/yyyy HH:mm")</td></tr>
+                            <tr><th>Count:</th><td>@Model.production.Product_Count</td></tr>
+                        </tbody>
+                    </table>
+
+                    <form method="post" asp-page-handler="DeleteProduction" novalidate>
+                        <input type="hidden" name="Id" value="@Model.production.Id" />
+                        <button type="submit" class="btn btn-danger w-100">Delete Production</button>
+                        <a href="/ProductionReport" class="btn btn-secondary w-100 mt-2">Cancel</a>
+                    </form>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var deleteModal = new bootstrap.Modal(document.getElementById('deleteProductionModal'), {
+                backdrop: 'static',
+                keyboard: false
+            });
+            deleteModal.show();
+        });
+    </script>
+
+    <script>
+        const redirectUrl = "@(
+            User.IsInRole("User") ? "/Operator_Index": "/ProductionReport")";
+    </script>
+
+}

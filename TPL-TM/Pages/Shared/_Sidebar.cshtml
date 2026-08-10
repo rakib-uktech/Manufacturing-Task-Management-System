@@ -1,0 +1,373 @@
+﻿@using Microsoft.AspNetCore.Identity
+@inject SignInManager<IdentityUser> SignInManager
+@inject UserManager<IdentityUser> UserManager
+
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        overflow-x: hidden;
+    }
+
+    /* Main container */
+    .main-container {
+        display: flex;
+        height: 100%;
+        min-height: auto;
+    }
+
+    /* Sidebar */
+    .sidebar {
+        position: fixed;
+        top: 56px; /* Offset below the fixed navbar */
+        left: 0;
+        height: calc(100vh - 56px); /* Full height minus navbar */
+        width: 250px;
+        background-color: #343a40;
+        color: white;
+        padding-top: 20px;
+        z-index: 1051;
+        transition: transform 0.3s ease-in-out;
+        transform: translateX(0);
+        /* Make sidebar scrollable on all screen sizes */
+        overflow-y: auto;
+        overflow-x: auto; /* ADD THIS */
+        scroll-behavior: smooth;
+    }
+
+
+        .sidebar.hide {
+            transform: translateX(-100%);
+        }
+
+        .sidebar .nav {
+            flex-wrap: nowrap;
+        }
+
+
+        .sidebar .nav-link {
+            color: #adb5bd;
+            font-size: 16px;
+            padding: 10px 15px;
+            white-space: nowrap; /* prevent line break */
+            overflow: hidden;           
+        }
+
+            .sidebar .nav-link:hover {
+                color: white;
+                background-color: #495057;
+                border-radius: 5px;
+            }
+
+    /* Separator */
+    .nav-item:not(:last-child)::after {
+        content: "";
+        display: block;
+        height: 1px;
+        background-color: #6c757d;
+        margin: 8px 0;
+        width: 90%;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    /* Content area */
+    .content {
+        flex-grow: 1;
+        margin-left: 250px;
+        padding: 20px;
+        padding-top: 76px; /* Add space for the navbar */
+        transition: margin-left 0.3s ease-in-out;
+    }
+
+    /* Mobile adjustments */
+    @@media (max-width: 992px) {
+        .sidebar {
+            transform: translateX(-100%);
+            top: 56px;
+            height: calc(100vh - 56px);
+            overflow-y: auto; /* Enable vertical scrolling */
+            overflow-x: auto; /* ADD THIS */
+        }
+
+            .sidebar.show {
+                transform: translateX(0);
+            }
+
+            .sidebar::-webkit-scrollbar {
+                height: 6px;
+            }
+
+        .content {
+            margin-left: 0;
+            padding-top: 76px;
+        }
+    }
+
+    /* Larger screens adjustments */
+    @@media (min-width: 992px) {
+        .sidebar {
+            transform: translateX(0);
+        }
+
+        .content {
+            margin-left: 250px;
+        }
+    }
+</style>
+
+<!-- Optional Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+    <a class="navbar-brand" href="#">TPL-TM</a>
+</nav>
+
+<!-- Main Container -->
+<div class="main-container">
+    @if (User.IsInRole("Admin") || User.IsInRole("Supervisor") || User.IsInRole("Management"))
+    {
+    <div id="sidebar" class="sidebar bg-dark text-white">
+        <h3 class="text-white text-center d-none d-sm-block">
+            <img src="~/images/logo.png" class="img-fluid" alt="Logo" />
+        </h3>
+        <div class="d-flex flex-column align-items-start p-3">
+                <ul class="nav flex-column w-100">
+                    <li class="nav-item">
+                        <a class="nav-link"
+                           asp-page="/AI_Assistant">
+
+                            <i class="bi bi-robot"></i>
+
+                            AI Assistant
+
+                        </a>
+                    </li>
+                    <!-- Dashboard Submenu -->
+                    <li class="nav-item">
+                        <a class="nav-link d-flex justify-content-between align-items-center"
+                           data-bs-toggle="collapse" href="#dashboardSubmenu">
+                            <span><i class="bi bi-house-door"></i> Dashboards</span>
+                            <i class="bi bi-chevron-down"></i>
+                        </a>
+                        <div class="collapse" id="dashboardSubmenu">
+                            <ul class="nav flex-column ms-3">
+                                <li class="nav-item">
+                                    <a class="nav-link js-nav-link" asp-page="/Index">
+                                        <i class="bi bi-speedometer2"></i> Task Dashboard
+                                    </a>
+                                </li>
+
+                                <li class="nav-item">
+                                    <a class="nav-link js-nav-link" asp-page="/Management_Dashboard">
+                                        <i class="bi bi-bar-chart"></i> Management Dashboard
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link js-nav-link" asp-page="/OEE_Dashboard">
+                                        <i class="bi bi-speedometer"></i> OEE Dashboard
+                                    </a>
+                                </li>
+
+                                <li class="nav-item">
+                                    <a class="nav-link js-nav-link" asp-page="/Production_Dashboard">
+                                        <i class="bi bi-gear"></i> Production Dashboard
+                                    </a>
+                                </li>
+                                <!-- Add more dashboards here -->
+                            </ul>
+                        </div>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link js-nav-link d-flex justify-content-between align-items-center"
+                           data-bs-toggle="collapse" href="#tasksSubmenu">
+                            <span><i class="bi bi-list-task"></i> Tasks</span>
+                            <i class="bi bi-chevron-down"></i>
+                        </a>
+                        <div class="collapse" id="tasksSubmenu">
+                            <ul class="nav flex-column ms-3">
+                                <li class="nav-item"><a class="nav-link js-nav-link" asp-page="/Assign_Task"><i class="bi bi-clipboard-check"></i> Assembly Build</a></li>
+                                <li class="nav-item"><a class="nav-link js-nav-link" asp-page="/Request_Inventory"><i class="bi bi-box-seam"></i> Request Inventory</a></li>
+                                <li class="nav-item"><a class="nav-link js-nav-link" asp-page="/Move_Item"><i class="bi bi-arrow-left-right"></i> Move Items</a></li>
+                                <li class="nav-item"><a class="nav-link js-nav-link" asp-page="/Clear_Waste"><i class="bi bi-trash"></i> Clear Waste</a></li>
+                                <li class="nav-item"><a class="nav-link" asp-page="/Quarantine_Item"><i class="bi bi-shield-exclamation"></i> Quarantine Item</a></li>
+                            </ul>
+                        </div>
+                    </li>
+
+                    <!-- Production Submenu -->
+                    <li class="nav-item">
+                        <a class="nav-link d-flex justify-content-between align-items-center"
+                           data-bs-toggle="collapse" href="#productionSubmenu">
+                            <span><i class="bi bi-bar-chart-line"></i> Production</span>
+                            <i class="bi bi-chevron-down"></i>
+                        </a>
+                        <div class="collapse" id="productionSubmenu">
+                            <ul class="nav flex-column ms-3">
+                                <li class="nav-item"><a class="nav-link js-nav-link" asp-page="/Production_Count"><i class="bi bi-bar-chart-line"></i> Production Count</a></li>
+                                <li class="nav-item"><a class="nav-link js-nav-link" asp-page="/Production_Update"><i class="bi bi-pencil-square"></i> Production Entry</a></li>
+                            </ul>
+                        </div>
+                    </li>
+
+                    <!-- Shift -->
+                    <li class="nav-item">
+                        <a class="nav-link js-nav-link d-flex justify-content-between align-items-center"
+                           data-bs-toggle="collapse" href="#shiftSubmenu">
+                            <span><i class="bi bi-clock"></i> Shift</span>
+                            <i class="bi bi-chevron-down"></i>
+                        </a>
+                        <div class="collapse" id="shiftSubmenu">
+                            <ul class="nav flex-column ms-3">
+                                <li class="nav-item"><a class="nav-link js-nav-link" asp-page="/Shift_Dashboard"><i class="bi bi-eye"></i> Shift Overview</a></li>
+                                <li class="nav-item"><a class="nav-link js-nav-link" asp-page="/Shift_Archive"><i class="bi bi-archive"></i> Shift Archive</a></li>
+                                <li class="nav-item"><a class="nav-link js-nav-link" asp-page="/Shift_Entry"><i class="bi bi-play-circle"></i> Shift Start</a></li>
+                                <li class="nav-item"><a class="nav-link js-nav-link" asp-page="/Shift_End"><i class="bi bi-stop-circle"></i> Shift End</a></li>
+                            </ul>
+                        </div>
+                    </li>
+                    <!-- CAPA -->
+                    <li class="nav-item">
+                        <a class="nav-link js-nav-link d-flex justify-content-between align-items-center"
+                           data-bs-toggle="collapse" href="#capaSubmenu">
+                            <span><i class="bi bi-shield-check"></i> CAPA</span>
+                            <i class="bi bi-chevron-down"></i>
+                        </a>
+
+                        <div class="collapse" id="capaSubmenu">
+                            <ul class="nav flex-column ms-3">
+
+                                <li class="nav-item">
+                                    <a class="nav-link js-nav-link" asp-page="/CAPA_Dashboard">
+                                        <i class="bi bi-speedometer2"></i> Dashboard
+                                    </a>
+                                </li>
+
+                                <li class="nav-item">
+                                    <a class="nav-link js-nav-link" asp-page="/Report_Incident">
+                                        <i class="bi bi-exclamation-triangle"></i> Report Incident
+                                    </a>
+                                </li>
+
+                                <li class="nav-item">
+                                    <a class="nav-link js-nav-link" asp-page="/CAPA_List">
+                                        <i class="bi bi-list-check"></i> CAPA List
+                                    </a>
+                                </li>
+
+                            </ul>
+                        </div>
+                    </li>
+
+                    <!-- Schedule -->
+                    <li class="nav-item">
+                        <a class="nav-link d-flex justify-content-between align-items-center"
+                           data-bs-toggle="collapse" href="#scheduleSubmenu">
+                            <span><i class="bi bi-calendar-week"></i> Schedule</span>
+                            <i class="bi bi-chevron-down"></i>
+                        </a>
+                        <div class="collapse" id="scheduleSubmenu">
+                            <ul class="nav flex-column ms-3">
+                                <li class="nav-item">
+                                    <a class="nav-link js-nav-link" asp-page="/ScheduleCalendar">
+                                        <i class="bi bi-calendar-week"></i> Task Schedule</a>
+                                </li>
+
+                                <li class="nav-item">
+                                    <a class="nav-link js-nav-link" asp-page="/Manning_Schedule_Calendar">
+                                        <i class="bi bi-person-workspace"></i> Manning Schedule
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link js-nav-link" asp-page="/Workorder_Schedule">
+                                        <i class="bi bi-calendar2-check"></i> Work Order Schedule
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link js-nav-link" asp-page="/Workorder_Scheduler">
+                                        <i class="bi bi-calendar3"></i> Production Scheduler
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
+
+                    <!-- Reports -->
+                    <li class="nav-item">
+                        <a class="nav-link d-flex justify-content-between align-items-center"
+                           data-bs-toggle="collapse" href="#reportsSubmenu">
+                            <span><i class="bi bi-file-earmark-text"></i> Reports</span>
+                            <i class="bi bi-chevron-down"></i>
+                        </a>
+                        <div class="collapse" id="reportsSubmenu">
+                            <ul class="nav flex-column ms-3">
+                                <li class="nav-item"><a class="nav-link js-nav-link" asp-page="/Waste_Report"><i class="bi bi-trash2-fill"></i> Waste Collection</a></li>
+                                <li class="nav-item"><a class="nav-link" asp-page="/Shift_Report"><i class="bi bi-list-ul"></i> Shift Report</a></li>
+                                <li class="nav-item"><a class="nav-link js-nav-link" asp-page="/Shift_Check_Report"><i class="bi bi-list-check"></i> Shift Check Report</a></li>
+                                <li class="nav-item"><a class="nav-link js-nav-link" asp-page="/Material_Consumption_Report"><i class="bi bi-box-seam"></i> Material Consume</a></li>
+                                <li class="nav-item"><a class="nav-link js-nav-link" asp-page="/Quality_Check_Report"><i class="bi bi-clipboard-check"></i> Quality Report</a></li>
+                                <li class="nav-item"><a class="nav-link js-nav-link" asp-page="/Waste_RecordsReport"><i class="bi bi-trash"></i> Waste Report</a></li>
+                                <li class="nav-item"><a class="nav-link js-nav-link" asp-page="/Downtime_Report"><i class="bi bi-clock-history"></i> Downtime Report</a></li>
+                                <li class="nav-item"><a class="nav-link js-nav-link" asp-page="/ProductionReport"><i class="bi bi-clipboard-data"></i> Production Report</a></li>
+                                <li class="nav-item"><a class="nav-link js-nav-link" asp-page="/Production_Summary"><i class="bi bi-bar-chart-line"></i> Production Summary</a></li>
+                                <li class="nav-item"><a class="nav-link js-nav-link" asp-page="/Production_Continental_Summary"><i class="bi bi-bar-chart-line"></i> Shift Summary</a></li>
+                                <li class="nav-item"><a class="nav-link js-nav-link" asp-page="/Material_Consumption_Summary"><i class="bi bi-box-seam"></i> Material Summary</a></li>
+                                <li class="nav-item"><a class="nav-link js-nav-link" asp-page="/Task_List"><i class="bi bi-list-task"></i> All Task Report</a></li>
+                            </ul>
+                        </div>
+                    </li>
+
+                    <!-- Settings -->
+                    <li class="nav-item">
+                        <a class="nav-link d-flex justify-content-between align-items-center"
+                           data-bs-toggle="collapse" href="#settingsSubmenu">
+                            <span><i class="bi bi-gear-fill"></i> Settings</span>
+                            <i class="bi bi-chevron-down"></i>
+                        </a>
+                        <div class="collapse" id="settingsSubmenu">
+                            <ul class="nav flex-column ms-3">
+                                <li class="nav-item"><a class="nav-link js-nav-link" asp-page="/Production_Target_List"><i class="bi bi-list-check"></i> Production Target</a></li>
+                                <li class="nav-item"><a class="nav-link js-nav-link" asp-page="/Quality_Check_Template_List"><i class="bi bi-clipboard-plus"></i> Quality Checks</a></li>
+                                <li class="nav-item"><a class="nav-link js-nav-link" asp-page="/Shift_Check_Template_List"><i class="bi bi-list-check"></i> Shift Checks</a></li>
+                                <li class="nav-item"><a class="nav-link js-nav-link" asp-page="/DowntimeReasonList"><i class="bi bi-clock-history"></i> Downtime Reasons</a></li>
+                                <li class="nav-item"><a class="nav-link js-nav-link" asp-page="/Product_Category_Setup"><i class="bi bi-tags-fill"></i> Product Categories</a></li>
+                                <li class="nav-item"><a class="nav-link js-nav-link" asp-page="/Machine_Setup"><i class="bi bi-cpu"></i> Machines</a></li>
+                            </ul>
+                        </div>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link js-nav-link" asp-page="/Help">
+                            <i class="bi bi-question-circle"></i> <span>Get Help</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item mt-auto">
+                        <a class="nav-link js-nav-link text-danger"
+                           asp-area="Identity"
+                           asp-page="/Account/Logout">
+                            <i class="bi bi-box-arrow-right"></i> <span>Logout</span>
+                        </a>
+                    </li>
+                </ul>
+
+
+        </div>
+    </div>
+    }
+</div>
+
+<!-- Content Area -->
+<div class="content">
+    <!-- Your page content here -->
+</div>
+
+<!-- Sidebar Toggle Script -->
+<script>
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        sidebar.classList.toggle('show');
+    }
+</script>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

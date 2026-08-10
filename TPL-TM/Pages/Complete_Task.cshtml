@@ -1,0 +1,402 @@
+﻿@page
+@model Complete_TaskModel
+@{
+    ViewData["Title"] = "Complete Task";
+}
+<style>
+    /* Custom table hover effect */
+    .table-hover tbody tr:hover {
+        background-color: #e9f5e9; /* Light greenish highlight */
+        transition: background-color 0.2s;
+    }
+
+    /* Reduce table row padding for a compact look */
+    .table th, .table td {
+        padding: 8px 12px;
+    }
+
+</style>
+<!-- Task Completion Modal -->
+<div class="modal fade show" id="completeTaskModal" tabindex="-1" aria-labelledby="completeTaskModalLabel" aria-hidden="true" style="display: block;">
+    <div class="modal-dialog modal-dialog-centered" style="margin-top: 80px; max-width: 600px;">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="completeTaskModalLabel">Complete Task - @Model.taskinfo.Task_Type</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body" style="padding: 15px;">
+                <form method="post" asp-page-handler="CompleteTask" novalidate id="complete-task-form">
+                    <!-- Task Details in Table Format -->
+                    <div class="table-responsive mb-3">
+                        <table class="table table-bordered table-hover table-sm align-middle" style="background-color: #f9f9f9;">
+                            <tbody>
+                                <tr>
+                                    <th style="width: 30%;">Ref No:</th>
+                                    <td>@Model.taskinfo.Ref_No</td>
+                                </tr>
+
+                                @if (Model.taskinfo.Task_Type == "Clear Waste")
+                                {
+                                    <tr>
+                                        <th>Waste Type:</th>
+                                        <td>@Model.taskinfo.Task_Name</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Waste Description:</th>
+                                        <td>@Model.taskinfo.Task_Description</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Waste Location:</th>
+                                        <td>
+                                            @Model.taskinfo.Assign_To
+                                            <button type="button" class="btn btn-sm btn-link p-0 ms-2" id="showMapBtn" title="Get Directions">
+                                                <i class="bi bi-geo-alt-fill text-primary" style="font-size: 1.2rem;"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>Quantity:</th>
+                                        <td>
+                                            <input type="number" name="Qty" class="form-control form-control-sm" value="@Model.taskinfo.Qty" min="0" step="any" />
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>Unit:</th>
+                                        <td>@Model.taskinfo.Unit</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Priority Level:</th>
+                                        <td>@Model.taskinfo.Priority_Level</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Requested On:</th>
+                                        <td>@Model.taskinfo.Create_On</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Requested By:</th>
+                                        <td>@Model.taskinfo.Created_by</td>
+                                    </tr>
+                                }
+                                @if (Model.taskinfo.Task_Type == "Request Inventory")
+                                {
+                                    <tr>
+                                        <th>Inventory Name:</th>
+                                        <td>@Model.taskinfo.Task_Name</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Inventory Description:</th>
+                                        <td>@Model.taskinfo.Task_Description</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Machine Name:</th>
+                                        <td>
+                                            @Model.taskinfo.Assign_To
+                                            <button type="button" class="btn btn-sm btn-link p-0 ms-2" id="showMapBtn" title="Get Directions">
+                                                <i class="bi bi-geo-alt-fill text-primary" style="font-size: 1.2rem;"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>Quantity:</th>
+                                        <td>
+                                            <input type="number" name="Qty" class="form-control form-control-sm" value="@Model.taskinfo.Qty" min="0" step="any" />
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>Unit:</th>
+                                        <td>@Model.taskinfo.Unit</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Priority Level:</th>
+                                        <td>@Model.taskinfo.Priority_Level</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Requested On:</th>
+                                        <td>@Model.taskinfo.Create_On</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Requested By:</th>
+                                        <td>@Model.taskinfo.Created_by</td>
+                                    </tr>
+
+                                }
+                                @if (Model.taskinfo.Task_Type == "Move Item")
+                                {
+                                    <tr>
+                                        <th>Item Name:</th>
+                                        <td>@Model.taskinfo.Task_Name</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Item Description:</th>
+                                        <td>@Model.taskinfo.Task_Description</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Move Location:</th>
+                                        <td>
+                                            @Model.taskinfo.Assign_To
+                                            <button type="button" class="btn btn-sm btn-link p-0 ms-2" id="showMapBtn" title="Get Directions">
+                                                <i class="bi bi-geo-alt-fill text-primary" style="font-size: 1.2rem;"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>Quantity:</th>
+                                        <td>
+                                            <input type="number" name="Qty" class="form-control form-control-sm" value="@Model.taskinfo.Qty" min="0" step="any" />
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>Unit:</th>
+                                        <td>@Model.taskinfo.Unit</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Priority Level:</th>
+                                        <td>@Model.taskinfo.Priority_Level</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Requested On:</th>
+                                        <td>@Model.taskinfo.Create_On</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Requested By:</th>
+                                        <td>@Model.taskinfo.Created_by</td>
+                                    </tr>
+                                }
+                                @if (Model.taskinfo.Task_Type == "Quarantine Item")
+                                {
+                                    <tr>
+                                        <th>Item Name:</th>
+                                        <td>@Model.taskinfo.Task_Name</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Item Description:</th>
+                                        <td>@Model.taskinfo.Task_Description</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Item Location:</th>
+                                        <td>
+                                            @Model.taskinfo.Assign_To
+                                            <button type="button" class="btn btn-sm btn-link p-0 ms-2" id="showMapBtn" title="Get Directions">
+                                                <i class="bi bi-geo-alt-fill text-primary" style="font-size: 1.2rem;"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>Quantity:</th>
+                                        <td>
+                                            <input type="number" name="Qty" class="form-control form-control-sm" value="@Model.taskinfo.Qty" min="0" step="any" />
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>Unit:</th>
+                                        <td>@Model.taskinfo.Unit</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Priority Level:</th>
+                                        <td>@Model.taskinfo.Priority_Level</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Quarantined On:</th>
+                                        <td>@Model.taskinfo.Create_On</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Quarantined By:</th>
+                                        <td>@Model.taskinfo.Created_by</td>
+                                    </tr>
+                                }
+                                @if (Model.taskinfo.Task_Type == "Assembly Build")
+                                {
+                                    <tr>
+                                        <th>Assembly Name:</th>
+                                        <td>@Model.taskinfo.Task_Name</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Assembly Description:</th>
+                                        <td>@Model.taskinfo.Task_Description</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Machine Name:</th>
+                                        <td>
+                                            @Model.taskinfo.Assign_To
+                                            <button type="button" class="btn btn-sm btn-link p-0 ms-2" id="showMapBtn" title="Get Directions">
+                                                <i class="bi bi-geo-alt-fill text-primary" style="font-size: 1.2rem;"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>Quantity:</th>
+                                        <td>
+                                            <input type="number" name="Qty" class="form-control form-control-sm" value="@Model.taskinfo.Qty" min="0" step="any" />
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>Unit:</th>
+                                        <td>@Model.taskinfo.Unit</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Priority Level:</th>
+                                        <td>@Model.taskinfo.Priority_Level</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Assigned On:</th>
+                                        <td>@Model.taskinfo.Create_On</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Assigned By:</th>
+                                        <td>@Model.taskinfo.Created_by</td>
+                                    </tr>
+                                }
+                                
+                            </tbody>
+
+                        </table>
+                    </div>
+
+                    <!-- Comments Section -->
+                    <div class="form-floating mb-3">
+                        <textarea class="form-control" name="Comments" rows="3" placeholder="Add comments (optional)">@(Model.taskinfo.Comments)</textarea>
+                        <label>Comments</label>
+                    </div>
+
+                    <!-- Hidden Fields -->
+                    <input type="hidden" name="TaskId" value="@Model.taskinfo.Id" />
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="w-100 btn btn-lg btn-success">Complete Task</button>
+
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Map Modal -->
+<div class="modal fade" id="mapModal" tabindex="-1" aria-labelledby="mapModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="mapModalLabel">Machine Location & Route</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div id="leafletMap" style="height: 500px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Bootstrap and JS -->
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Leaflet and Routing Machine -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.min.js"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const completeTaskModal = new bootstrap.Modal(document.getElementById('completeTaskModal'), {
+                backdrop: 'static',
+                keyboard: false
+            });
+            completeTaskModal.show();
+
+            document.querySelector(".btn-close").addEventListener("click", function () {
+                window.location.href = "/Index";
+            });
+
+            document.getElementById("complete-task-form").addEventListener("submit", function (event) {
+                if (!this.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                this.classList.add('was-validated');
+            });
+
+            // Map Modal + Routing Setup
+            document.getElementById("showMapBtn").addEventListener("click", function () {
+                const mapModal = new bootstrap.Modal(document.getElementById('mapModal'));
+                mapModal.show();
+
+                setTimeout(function () {
+                    const machineData = [
+                        {
+                            name: "@Model.taskinfo.Assign_To",
+                            lat: @Model.taskinfo.Latitude.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                            lng: @Model.taskinfo.Longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)
+                        },
+                        // You can extend this array with more machine entries from your model
+                        // Example: { name: "Machine 2", lat: 12.34, lng: 56.78 }
+                    ];
+
+                    const mapContainer = document.getElementById("leafletMap");
+                    mapContainer.innerHTML = ""; // Reset map
+                    const map = L.map('leafletMap').setView([0, 0], 2);
+
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '&copy; OpenStreetMap contributors'
+                    }).addTo(map);
+
+                    const validMachines = machineData.filter(m => m.lat !== 0 && m.lng !== 0);
+                    const bounds = [];
+
+                    validMachines.forEach(machine => {
+                        const marker = L.marker([machine.lat, machine.lng]).addTo(map)
+                            .bindPopup(`Machine: ${machine.name}`);
+                        bounds.push([machine.lat, machine.lng]);
+                    });
+
+                    if (bounds.length > 0) {
+                        map.fitBounds(bounds, { padding: [50, 50] });
+                    }
+
+                    if (!navigator.geolocation) {
+                        alert("Geolocation is not supported by your browser.");
+                        return;
+                    }
+
+                    navigator.geolocation.getCurrentPosition(function (position) {
+                        const userLat = position.coords.latitude;
+                        const userLng = position.coords.longitude;
+
+                        // Route to the first machine (you can add logic to route to clicked one)
+                        const target = validMachines[0];
+
+                        if (target) {
+                            L.Routing.control({
+                                waypoints: [
+                                    L.latLng(userLat, userLng),
+                                    L.latLng(target.lat, target.lng)
+                                ],
+                                createMarker: function (i, wp) {
+                                    return L.marker(wp.latLng)
+                                        .bindPopup(i === 0 ? "Your Location" : `Machine: ${target.name}`);
+                                },
+                                lineOptions: {
+                                    styles: [
+                                        { color: '#007bff', dashArray: '6, 10', weight: 4 },
+                                        { color: '#00c851', opacity: 0.4, weight: 8 }
+                                    ]
+                                },
+                                routeWhileDragging: false,
+                                show: false
+                            }).addTo(map);
+                        }
+
+                    }, function () {
+                        alert("Unable to retrieve your location.");
+                    });
+
+                }, 300);
+            });
+        });
+    </script>
+
+}
+
+

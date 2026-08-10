@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Production Report</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; color: #1a1a2e; }
+  .wrapper { max-width: 680px; margin: 0 auto; background: #ffffff; }
+
+  /* HEADER */
+  .header { background: linear-gradient(135deg, #0f4c3a 0%, #1a7a5e 60%, #22a073 100%); padding: 32px 40px; }
+  .header-top { display: flex; justify-content: space-between; align-items: flex-start; }
+  .logo-area { }
+  .logo-text { font-size: 11px; font-weight: 700; letter-spacing: 3px; color: rgba(255,255,255,0.6); text-transform: uppercase; }
+  .report-title { font-size: 26px; font-weight: 700; color: #ffffff; margin-top: 4px; line-height: 1.2; }
+  .report-subtitle { font-size: 13px; color: rgba(255,255,255,0.75); margin-top: 6px; }
+  .date-badge { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); border-radius: 8px; padding: 8px 16px; text-align: right; }
+  .date-label { font-size: 10px; color: rgba(255,255,255,0.6); letter-spacing: 1px; text-transform: uppercase; }
+  .date-value { font-size: 15px; font-weight: 600; color: #fff; margin-top: 2px; }
+
+  /* ALERT BAND */
+  .alert-band { background: #fff8e1; border-left: 4px solid #f59e0b; padding: 12px 40px; font-size: 13px; color: #92400e; display: flex; align-items: center; gap: 8px; }
+
+  /* SECTION */
+  .section { padding: 28px 40px; }
+  .section-title { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #6b7280; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .section-title::after { content: ''; flex: 1; height: 1px; background: #e5e7eb; }
+
+  /* KPI ROW */
+  .kpi-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+  .kpi-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; text-align: center; }
+  .kpi-card.green { background: #f0fdf4; border-color: #bbf7d0; }
+  .kpi-card.red { background: #fff1f2; border-color: #fecdd3; }
+  .kpi-card.amber { background: #fffbeb; border-color: #fde68a; }
+  .kpi-label { font-size: 11px; font-weight: 600; color: #6b7280; letter-spacing: 0.5px; text-transform: uppercase; }
+  .kpi-value { font-size: 28px; font-weight: 700; color: #111827; margin: 4px 0; line-height: 1; }
+  .kpi-value.green { color: #16a34a; }
+  .kpi-value.red { color: #dc2626; }
+  .kpi-value.amber { color: #d97706; }
+  .kpi-sub { font-size: 12px; color: #9ca3af; }
+
+  /* MACHINE TABLE */
+  .machine-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .machine-table th { background: #1e293b; color: #94a3b8; font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; padding: 10px 12px; text-align: left; }
+  .machine-table th:first-child { border-radius: 6px 0 0 6px; }
+  .machine-table th:last-child { border-radius: 0 6px 6px 0; text-align: right; }
+  .machine-table td { padding: 11px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+  .machine-table td:last-child { text-align: right; }
+  .machine-table tr:last-child td { border-bottom: none; }
+  .machine-table tr:hover td { background: #f8fafc; }
+  .machine-name { font-weight: 600; color: #0f172a; }
+  .machine-line { font-size: 11px; color: #64748b; margin-top: 2px; }
+  .progress-wrap { display: flex; align-items: center; gap: 8px; }
+  .progress-bar-bg { flex: 1; height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden; }
+  .progress-bar-fill { height: 100%; border-radius: 3px; }
+  .fill-green { background: #22c55e; }
+  .fill-amber { background: #f59e0b; }
+  .fill-red { background: #ef4444; }
+  .pct-text { font-size: 12px; font-weight: 600; min-width: 36px; text-align: right; }
+
+  /* SHIFT PILLS */
+  .shift-row { display: flex; gap: 4px; flex-wrap: nowrap; }
+  .shift-pill { font-size: 11px; padding: 2px 7px; border-radius: 4px; font-weight: 600; white-space: nowrap; }
+  .shift-a { background: #dcfce7; color: #15803d; }
+  .shift-b { background: #fef3c7; color: #92400e; }
+  .shift-c { background: #fee2e2; color: #b91c1c; }
+
+  /* DOWNTIME TABLE */
+  .downtime-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .downtime-table th { background: #450a0a; color: #fca5a5; font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; padding: 10px 12px; text-align: left; }
+  .downtime-table th:first-child { border-radius: 6px 0 0 6px; }
+  .downtime-table th:last-child { border-radius: 0 6px 6px 0; text-align: right; }
+  .downtime-table td { padding: 10px 12px; border-bottom: 1px solid #fef2f2; font-size: 13px; }
+  .downtime-table td:last-child { text-align: right; }
+  .downtime-table tr:last-child td { border-bottom: none; }
+  .reason-badge { display: inline-block; background: #fff1f2; color: #9f1239; border: 1px solid #fecdd3; border-radius: 4px; font-size: 11px; padding: 2px 8px; font-weight: 600; }
+  .minutes-val { font-weight: 700; color: #dc2626; font-size: 14px; }
+
+  /* WASTE SECTION */
+  .waste-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px; }
+  .waste-card { background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 14px 16px; }
+  .waste-type { font-size: 11px; font-weight: 700; color: #92400e; text-transform: uppercase; letter-spacing: 0.5px; }
+  .waste-machine { font-size: 13px; color: #78350f; margin-top: 2px; }
+  .waste-kg { font-size: 22px; font-weight: 700; color: #b45309; margin-top: 4px; }
+  .waste-kg span { font-size: 12px; font-weight: 400; }
+
+  /* SHIFT SUMMARY GRID */
+  .shift-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .shift-block { border-radius: 10px; padding: 16px; text-align: center; }
+  .shift-a-block { background: #f0fdf4; border: 1px solid #bbf7d0; }
+  .shift-b-block { background: #fffbeb; border: 1px solid #fde68a; }
+  .shift-c-block { background: #fef2f2; border: 1px solid #fecaca; }
+  .shift-block-label { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+  .shift-a-block .shift-block-label { color: #15803d; }
+  .shift-b-block .shift-block-label { color: #92400e; }
+  .shift-c-block .shift-block-label { color: #b91c1c; }
+  .shift-block-val { font-size: 24px; font-weight: 700; margin: 4px 0; }
+  .shift-a-block .shift-block-val { color: #16a34a; }
+  .shift-b-block .shift-block-val { color: #d97706; }
+  .shift-c-block .shift-block-val { color: #dc2626; }
+  .shift-block-sub { font-size: 11px; color: #9ca3af; }
+
+  /* AI INSIGHTS */
+  .insights-box { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 12px; padding: 24px; }
+  .insights-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+  .ai-icon { width: 32px; height: 32px; background: #6366f1; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+  .insights-title { font-size: 14px; font-weight: 700; color: #f1f5f9; }
+  .insights-subtitle { font-size: 12px; color: #64748b; }
+  .insight-item { padding: 10px 0; border-bottom: 1px solid #334155; }
+  .insight-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .insight-text { font-size: 13px; color: #cbd5e1; line-height: 1.6; }
+  .insight-tag { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 2px 7px; border-radius: 4px; margin-right: 6px; }
+  .tag-alert { background: #450a0a; color: #fca5a5; }
+  .tag-good { background: #052e16; color: #86efac; }
+  .tag-info { background: #172554; color: #93c5fd; }
+
+  /* DIVIDER */
+  .divider { height: 1px; background: #e5e7eb; margin: 0 40px; }
+
+  /* FOOTER */
+  .footer { background: #f8fafc; padding: 24px 40px; text-align: center; border-top: 1px solid #e5e7eb; }
+  .footer-text { font-size: 12px; color: #9ca3af; line-height: 1.8; }
+  .footer-brand { font-weight: 700; color: #6b7280; }
+  .footer-links { margin-top: 8px; }
+  .footer-links a { color: #6366f1; font-size: 12px; text-decoration: none; margin: 0 8px; }
+</style>
+</head>
+<body>
+
+<div class="wrapper">
+
+  <!-- ═══ HEADER ═══ -->
+  <div class="header">
+    <div class="header-top">
+      <div class="logo-area">
+        <div class="logo-text">TPL Production Systems</div>
+        <div class="report-title">Management Report</div>
+        <div class="report-subtitle">Live production monitoring · Machine &amp; product line summary</div>
+      </div>
+      <div class="date-badge">
+        <div class="date-label">Generated</div>
+        <div class="date-value">{{REPORT_DATE}}</div>
+        <div class="date-label" style="margin-top:4px">Period: {{PERIOD}}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ OPTIONAL ALERT ═══ -->
+  {{ALERT_BAND}}
+
+  <!-- ═══ KPI SUMMARY ═══ -->
+  <div class="section">
+    <div class="section-title">Overview</div>
+    <div class="kpi-row">
+      <div class="kpi-card green">
+        <div class="kpi-label">Total Production</div>
+        <div class="kpi-value green">{{TOTAL_PRODUCTION}}</div>
+        <div class="kpi-sub">units across all machines</div>
+      </div>
+      <div class="kpi-card red">
+        <div class="kpi-label">Total Downtime</div>
+        <div class="kpi-value red">{{TOTAL_DOWNTIME}}</div>
+        <div class="kpi-sub">minutes lost</div>
+      </div>
+      <div class="kpi-card amber">
+        <div class="kpi-label">Total Waste</div>
+        <div class="kpi-value amber">{{TOTAL_WASTE}}</div>
+        <div class="kpi-sub">kg recorded</div>
+      </div>
+    </div>
+
+    <!-- SHIFT BREAKDOWN -->
+    <div class="section-title" style="margin-top:20px">Shift Breakdown</div>
+    <div class="shift-summary">
+      <div class="shift-block shift-a-block">
+        <div class="shift-block-label">Shift A</div>
+        <div class="shift-block-val">{{SHIFT_A_TOTAL}}</div>
+        <div class="shift-block-sub">units produced</div>
+      </div>
+      <div class="shift-block shift-b-block">
+        <div class="shift-block-label">Shift B</div>
+        <div class="shift-block-val">{{SHIFT_B_TOTAL}}</div>
+        <div class="shift-block-sub">units produced</div>
+      </div>
+      <div class="shift-block shift-c-block">
+        <div class="shift-block-label">Shift C</div>
+        <div class="shift-block-val">{{SHIFT_C_TOTAL}}</div>
+        <div class="shift-block-sub">units produced</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ═══ MACHINE PERFORMANCE ═══ -->
+  <div class="section">
+    <div class="section-title">Machine Performance</div>
+    <table class="machine-table">
+      <thead>
+        <tr>
+          <th>Machine / Product</th>
+          <th>Produced</th>
+          <th>Achievement</th>
+          <th>Shifts (A · B · C)</th>
+          <th>Downtime</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{MACHINE_ROWS}}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ═══ DOWNTIME ANALYSIS ═══ -->
+  <div class="section">
+    <div class="section-title">Top Downtime Reasons</div>
+    <table class="downtime-table">
+      <thead>
+        <tr>
+          <th>Machine</th>
+          <th>Reason</th>
+          <th>Duration</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{DOWNTIME_ROWS}}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ═══ WASTE ANALYSIS ═══ -->
+  <div class="section">
+    <div class="section-title">Waste Analysis</div>
+    <div class="waste-row">
+      {{WASTE_CARDS}}
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ═══ AI INSIGHTS ═══ -->
+  <div class="section">
+    <div class="section-title">AI Insights</div>
+    <div class="insights-box">
+      <div class="insights-header">
+        <div class="ai-icon">🧠</div>
+        <div>
+          <div class="insights-title">Claude AI Analysis</div>
+          <div class="insights-subtitle">Auto-generated from production data</div>
+        </div>
+      </div>
+      {{AI_INSIGHTS}}
+    </div>
+  </div>
+
+  <!-- ═══ FOOTER ═══ -->
+  <div class="footer">
+    <div class="footer-text">
+      This report was auto-generated by <span class="footer-brand">TPL Production Systems</span><br>
+      {{REPORT_DATE}} · Data period: {{PERIOD}}<br>
+      <em style="color:#c4b5fd">AI analysis powered by Claude (Anthropic)</em>
+    </div>
+    <div class="footer-links">
+      <a href="#">View Dashboard</a>
+      <a href="#">Unsubscribe</a>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,72 @@
+html {
+  font-size: 14px;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+html {
+  position: relative;
+  min-height: 100%;
+}
+
+body {
+  margin-bottom: 60px;
+}
+@media (max-width: 768px) {
+    .modal-dialog {
+        max-width: 95%; /* Full width on mobile */
+        margin: 10px auto;
+    }
+
+    .modal-content {
+        border-radius: 12px;
+    }
+
+    .table-responsive {
+        overflow-x: auto; /* Enable horizontal scroll */
+        -webkit-overflow-scrolling: touch;
+    }
+
+    th, td {
+        white-space: nowrap;
+    }
+
+    .btn-close-white {
+        filter: invert(1);
+    }
+
+    /* Add margin for mobile views */
+    .card {
+        margin-bottom: 15px;
+    }
+
+}
+    #globalLoader {
+        position: fixed;
+        inset: 0;
+        background: rgba(255, 255, 255, 0.85);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+        /* hidden state */
+        #globalLoader.hide {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+    .loader-box {
+        text-align: center;
+    }
+

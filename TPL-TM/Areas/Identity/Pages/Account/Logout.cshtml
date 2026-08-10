@@ -1,0 +1,47 @@
+﻿@page
+@model LogoutModel
+@{
+    ViewData["Title"] = "Log out";
+}
+
+<!-- Logout Modal (Auto Open on Page Load) -->
+<div class="modal fade show" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true" style="display: block;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="logoutModalLabel">Log Out</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="closeModalButton"></button>
+            </div>
+            <div class="modal-body text-center">
+                @if (User.Identity?.IsAuthenticated ?? false)
+                {
+                    <p>Are you sure you want to log out?</p>
+                    <form asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Page("/Index", new { area = "" })" method="post">
+                        <button type="submit" class="btn btn-danger w-100">Log Out</button>
+                    </form>
+                }
+                else
+                {
+                    <p>You have successfully logged out of the application.</p>
+                    <a asp-page="/Account/Login" class="btn btn-success w-100">Log In Again</a>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var myModal = new bootstrap.Modal(document.getElementById('logoutModal'), {
+                backdrop: 'static', // Prevent closing when clicking outside
+                keyboard: false     // Prevent closing with keyboard (Esc)
+            });
+            myModal.show();
+
+            document.getElementById("closeModalButton").addEventListener("click", function () {
+                window.location.href = "/Index";
+            });
+        });
+    </script>
+}

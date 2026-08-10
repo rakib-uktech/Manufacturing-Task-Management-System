@@ -1,0 +1,728 @@
+﻿@page
+@model TPL_TM.Pages.Report_IncidentModel
+
+<div class="modal fade show"
+     id="incidentModal"
+     tabindex="-1"
+     aria-hidden="true"
+     style="display:block;">
+
+    <div class="modal-dialog modal-lg"
+         style="margin-top:80px;">
+
+        <div class="modal-content border-0 shadow-lg">
+
+            <!-- Header -->
+
+            <div class="modal-header bg-danger text-white">
+
+                <div class="w-100 d-flex justify-content-between align-items-center">
+
+                    <div>
+                        <h4 class="mb-1">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            Report Incident / CAPA
+                        </h4>
+
+                        <div class="opacity-75">
+                            @(Model.CAPA.Id > 0
+                            ? "Edit Existing CAPA Investigation"
+                            : "Create New Incident Investigation")
+                        </div>
+                    </div>
+
+                    <button type="button"
+                            class="btn-close btn-close-white"
+                            id="closeIncidentModal">
+                    </button>
+
+                </div>
+
+            </div>
+
+            <div class="modal-body p-4">
+                
+
+                <form id="incidentForm" method="post" enctype="multipart/form-data">
+                    <input type="hidden" asp-for="CAPA.Id" />
+                    <input type="hidden" asp-for="CAPA.CAPA_No" />
+                    <div class="card border-0 shadow-sm mb-4">
+
+                        <div class="card-header bg-danger text-white">
+
+                            <h5 class="mb-0">
+                                <i class="bi bi-file-earmark-text-fill me-2"></i>
+                                Incident Information
+                            </h5>
+
+                        </div>
+                        
+                        <div class="card-body">
+                            <div class="row">
+                            
+                                <div class="col-md-4">
+                                    <div class="form-floating mb-3">
+                                        <input asp-for="CAPA.Incident_Date"
+                                               type="date"
+                                               class="form-control" />
+                                        <label>Incident Date</label>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <div class="form-floating mb-3">
+                                        <select asp-for="CAPA.Incident_Type"
+                                                class="form-select">
+
+                                            <option value="">Select</option>
+                                            <option>Quality</option>
+                                            <option>Engineering</option>
+                                            <option>IT</option>
+                                            <option>Facilities</option>
+                                            <option>Safety</option>
+                                            <option>Food Safety</option>
+                                            <option>Machine Breakdown</option>
+                                            <option>Customer Complaint</option>
+                                            <option>Audit Finding</option>
+                                            <option>Near Miss</option>
+
+                                        </select>
+
+                                        <label>Incident Type</label>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <div class="form-floating mb-3">
+                                        <select asp-for="CAPA.Severity"
+                                                class="form-select">
+
+                                            <option value="">Select</option>
+                                            <option>Critical</option>
+                                            <option>Major</option>
+                                            <option>Minor</option>
+
+                                        </select>
+
+                                        <label>Severity</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-floating mb-3">
+                                        <input class="form-control"
+                                               list="MachineList"
+                                               asp-for="CAPA.Machine_Name">
+
+                                        <datalist id="MachineList">
+                                            @foreach (var machine in Model.MachineList)
+                                            {
+                                                <option value="@machine.Machine_Name"></option>
+                                            }
+                                        </datalist>
+
+                                        <label>Machine / Area</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-floating mb-3">
+
+                                        <select asp-for="CAPA.Department" id="department"
+                                                class="form-select">
+
+                                            <option value="">Select Department</option>
+
+                                            <option value="Engineering">Engineering</option>
+                                            <option value="Quality">Quality</option>
+                                            <option value="IT">IT</option>
+                                            <option value="Health & Safety">Health & Safety</option>
+                                            <option value="Production">Production</option>
+                                            <option value="Warehouse">Warehouse</option>
+                                            <option value="Logistics">Logistics</option>
+                                            <option value="Procurement">Procurement</option>
+                                            <option value="Planning">Planning</option>
+                                            <option value="Human Resources">Human Resources</option>
+                                            <option value="Finance">Finance</option>                                            
+                                        </select>
+
+                                        <label>Department</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="card border-0 shadow-sm mb-4">
+
+                        <div class="card-header bg-primary text-white">
+
+                            <h5 class="mb-0">
+                                <i class="bi bi-chat-left-text-fill me-2"></i>
+                                Incident Details
+                            </h5>
+
+                        </div>
+
+                        <div class="card-body">
+
+                            <div class="form-floating mb-3">
+
+                                <select id="incidentTitle"
+                                        asp-for="CAPA.Title"
+                                        class="form-select">
+
+                                    <option value="">Select Incident</option>
+
+                                    @foreach (var item in Model.IncidentTemplates)
+                                    {
+                                        <option value="@item.Incident_Title"
+                                                data-id="@item.Id">
+
+                                            @item.Incident_Title
+
+                                        </option>
+                                    }
+
+                                </select>
+
+                                <label>Incident Title</label>
+
+                            </div>
+
+                            <div class="form-floating mb-3">
+
+                                <textarea asp-for="CAPA.Description"
+                                          id="incidentDescription"
+                                          class="form-control"
+                                          style="height:150px">
+                                </textarea>
+
+                                <label>Incident Description</label>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+                    <div class="card border-0 shadow-sm mb-4">
+
+                        <div class="card-header bg-warning text-dark">
+
+                            <h5 class="mb-0">
+                                <i class="bi bi-shield-fill-exclamation me-2"></i>
+                                Immediate Containment
+                            </h5>
+
+                        </div>
+
+                        <div class="card-body">
+
+                            <div class="form-floating mb-3">
+                                <textarea asp-for="CAPA.Immediate_Action"
+                                          class="form-control"
+                                          style="height:120px"></textarea>
+
+                                <label>Immediate Action Taken</label>
+                            </div>
+                            <div class="row">
+
+                                <div class="col-md-6">
+                                    <div class="form-floating mb-3">
+
+                                        <select asp-for="CAPA.Assigned_To" id="assignedTo"
+                                                class="form-select">
+
+                                            <option value="">Select Investigation Owner</option>
+
+                                            @foreach (var user in Model.UserList)
+                                            {
+                                                <option value="@user">
+                                                    @user
+                                                </option>
+                                            }
+
+                                        </select>
+
+                                        <label>Investigation Owner</label>
+
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+
+                                    <div class="form-floating mb-3">
+                                        <input asp-for="CAPA.Target_Date"
+                                               type="date"
+                                               class="form-control">
+
+                                        <label>Target Closure Date</label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                           
+                            <div class="mb-3">
+
+                                <label class="form-label">
+                                    Incident Photos
+                                </label>
+
+                                <input asp-for="Photos"
+                                       type="file"
+                                       multiple
+                                       class="form-control"
+                                       accept="image/*"
+                                       capture="environment"
+                                       id="photoInput" />
+
+                                <small class="text-muted">
+                                    Select one or more photos or take photos using mobile camera.
+                                </small>
+
+                            </div>
+
+                            <!-- Preview Area -->
+                            <div id="photoPreviewContainer" class="row g-3 mt-2">
+
+
+                                @if (Model.ExistingPhotos != null && Model.ExistingPhotos.Count > 0)
+                                {
+                                    foreach (var photo in Model.ExistingPhotos)
+                                    {
+                                        <div class="col-md-3 col-6">
+
+                                            <div class="card shadow-sm">
+
+                                                <div class="position-relative">
+
+                                                    <img src="?handler=Photo&id=@photo.Id"
+                                                         class="card-img-top preview-image"
+                                                         onclick="showPreview(this.src)" />
+
+
+                                                    <button type="button"
+                                                            class="btn btn-danger btn-sm position-absolute top-0 end-0 m-1"
+                                                            onclick="deletePhoto(@photo.Id)">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+
+                                                </div>
+
+
+                                                <div class="card-body p-2 text-center">
+
+                                                    <small class="text-muted text-truncate d-block">
+                                                        @photo.File_Name
+                                                    </small>
+
+                                                </div>
+
+                                            </div>
+
+                                        </div>
+                                    }
+                                }
+
+                            </div>
+                                 
+
+                        </div>
+
+                    </div>
+
+                    
+
+                    <div class="card-body">
+
+                        @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+                        {
+                            <div class="alert alert-danger">
+                                @Model.ErrorMessage
+                            </div>
+                        }
+
+                    </div>
+
+                    <div class="sticky-actions">
+
+                        <div class="d-flex justify-content-end gap-2">
+
+                            <button type="button"
+                                    class="btn btn-secondary"
+                                    id="cancelIncident">
+
+                                <i class="bi bi-x-circle"></i>
+                                Cancel
+
+                            </button>
+
+                            <button type="submit"
+                                    class="btn btn-danger">
+
+                                <i class="bi bi-check-circle-fill"></i>
+
+                                @(Model.CAPA.Id > 0
+                                    ? "Update CAPA"
+                                    : "Submit Incident")
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                    
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div class="modal-backdrop fade show"></div>
+
+<div class="modal fade" id="imagePreviewModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content border-0">
+            <div class="modal-body p-0">
+                <img id="fullPreviewImage"
+                     class="img-fluid w-100" />
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts
+{
+    <script>
+
+        document.addEventListener("DOMContentLoaded", function () {
+
+            var modal = new bootstrap.Modal(
+                document.getElementById('incidentModal'),
+                {
+                    backdrop: 'static',
+                    keyboard: false
+                });
+
+            modal.show();
+
+            document.getElementById("closeIncidentModal")
+                .addEventListener("click", function () {
+
+                    window.location.href = "/CAPA_List";
+
+                });
+
+        });
+
+    </script>
+    <script>
+        document.getElementById("cancelIncident")
+        .addEventListener("click", function () {
+
+            window.location.href = "/CAPA_List";
+
+        });
+    </script>
+    <script>
+
+        document.getElementById("incidentTitle")
+            .addEventListener("change", function () {
+
+                let option =
+                    this.options[this.selectedIndex];
+
+                let id =
+                    option.getAttribute("data-id");
+
+                if (!id)
+                    return;
+
+                fetch('?handler=IncidentDescription&id=' + id)
+                    .then(response => response.json())
+                    .then(data => {
+
+                        document.getElementById(
+                            "incidentDescription"
+                        ).value = data;
+
+                    });
+            });
+
+    </script>
+    <script>
+        document.getElementById('photoInput')
+            .addEventListener('change', function (e) {
+
+                const previewContainer =
+                    document.getElementById('photoPreviewContainer');
+
+                previewContainer.innerHTML = '';
+
+                const files = e.target.files;
+
+                if (!files || files.length === 0)
+                    return;
+
+                Array.from(files).forEach((file, index) => {
+
+                    if (!file.type.startsWith('image/'))
+                        return;
+
+                    const reader = new FileReader();
+
+                    reader.onload = function (event) {
+
+                        const col = document.createElement('div');
+                        col.className = 'col-md-3 col-6';
+
+                        col.innerHTML = `
+                            <div class="card shadow-sm h-100">
+
+                               <img src="${event.target.result}"
+                                    class="card-img-top preview-image"
+                                    onclick="showPreview('${event.target.result}')">
+
+                                <div class="card-body p-2 text-center">
+
+                                    <small class="text-muted d-block text-truncate">
+                                        ${file.name}
+                                    </small>
+
+                                    <small class="text-success">
+                                        ${(file.size / 1024).toFixed(0)} KB
+                                    </small>
+
+                                </div>
+
+                            </div>
+                        `;
+
+                        previewContainer.appendChild(col);
+                    };
+
+                    reader.readAsDataURL(file);
+                });
+            });
+    </script>
+    <script>
+        function showPreview(src) {
+
+            document.getElementById("fullPreviewImage").src = src;
+
+            var modal =
+                new bootstrap.Modal(
+                    document.getElementById("imagePreviewModal"));
+
+            modal.show();
+        }
+    </script>
+    <script>
+                function deletePhoto(id)
+        {
+            Swal.fire({
+                title: "Delete photo?",
+                text: "This photo will be removed from CAPA.",
+                icon: "warning",
+                showCancelButton:true,
+                confirmButtonText:"Delete"
+            })
+            .then(result => {
+
+                if(result.isConfirmed)
+                {
+                    fetch(`?handler=DeletePhoto&id=${id}`,
+                    {
+                        method:"POST",
+                        headers:{
+                            "RequestVerificationToken":
+                            document.querySelector(
+                            'input[name="__RequestVerificationToken"]').value
+                        }
+                    })
+                    .then(()=>{
+                        location.reload();
+                    });
+                }
+
+            });
+        }
+    </script>
+    <script>
+        document.getElementById("incidentForm").addEventListener("submit", function (e) {
+
+            let errors = [];
+
+            const incidentDate = document.querySelector('[name="CAPA.Incident_Date"]');
+            const incidentType = document.querySelector('[name="CAPA.Incident_Type"]');
+            const severity = document.querySelector('[name="CAPA.Severity"]');
+            const machine = document.querySelector('[name="CAPA.Machine_Name"]');
+            const department = document.querySelector('[name="CAPA.Department"]');
+            const title = document.querySelector('[name="CAPA.Title"]');
+            const description = document.querySelector('[name="CAPA.Description"]');
+            const immediateAction = document.querySelector('[name="CAPA.Immediate_Action"]');
+            const assignedTo = document.querySelector('[name="CAPA.Assigned_To"]');
+            const targetDate = document.querySelector('[name="CAPA.Target_Date"]');
+
+            if (!incidentDate.value)
+                errors.push("Incident Date is required.");
+
+            if (!incidentType.value)
+                errors.push("Please select an Incident Type.");
+
+            if (!severity.value)
+                errors.push("Please select a Severity.");
+
+            if (!machine.value.trim())
+                errors.push("Machine / Area is required.");
+
+            if (!department.value)
+                errors.push("Please select a Department.");
+
+            if (!title.value)
+                errors.push("Please select an Incident Title.");
+
+            if (!description.value.trim())
+                errors.push("Incident Description is required.");
+
+            if (!immediateAction.value.trim())
+                errors.push("Immediate Action is required.");
+
+            if (!assignedTo.value)
+                errors.push("Please select an Investigation Owner.");
+
+            if (!targetDate.value)
+                errors.push("Please select a Target Closure Date.");
+
+            if (errors.length > 0) {
+                e.preventDefault();
+
+                Swal.fire({
+                    icon: "warning",
+                    title: "Validation Failed",
+                    html: errors.join("<br>"),
+                    confirmButtonText: "OK"
+                });
+
+                return false;
+            }
+
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+     <script>
+        document.getElementById("department")
+        .addEventListener("change", function () {
+
+            const department = this.value;
+
+            if (!department)
+                return;
+
+            fetch(`?handler=DepartmentOwner&department=${encodeURIComponent(department)}`)
+                .then(r => r.json())
+                .then(owner => {
+
+                    const ddl = document.getElementById("assignedTo");
+
+                    if (owner) {
+                        ddl.value = owner;
+                    }
+                });
+        });
+     </script>   
+}
+<style>
+    .modal-content {
+        border-radius: 18px;
+    }
+
+    .card {
+        border-radius: 16px;
+    }
+
+    .form-control,
+    .form-select {
+        border-radius: 12px;
+        border: 1px solid #dce3ea;
+    }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: #dc3545;
+            box-shadow: 0 0 0 .2rem rgba(220,53,69,.15);
+        }
+
+    .card-header {
+        border: none;
+    }
+
+    .kpi-card {
+        border: none;
+        border-radius: 16px;
+        transition: .3s;
+        box-shadow: 0 4px 12px rgba(0,0,0,.08);
+    }
+
+        .kpi-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0,0,0,.12);
+        }
+
+    .kpi-icon {
+        width: 58px;
+        height: 58px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.4rem;
+    }
+
+    .kpi-title {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-weight: 700;
+        color: #6c757d;
+    }
+
+    .kpi-value {
+        font-size: 1rem;
+        font-weight: 700;
+    }
+
+    .sticky-actions {
+        position: sticky;
+        bottom: 0;
+        background: white;
+        border-top: 1px solid #dee2e6;
+        padding: 15px;
+        z-index: 10;
+    }
+</style>
+<style>
+    .preview-image {
+        height: 220px;
+        object-fit: cover;
+        cursor: pointer;
+        transition: .3s;
+    }
+
+        .preview-image:hover {
+            transform: scale(1.03);
+        }
+
+    #photoPreviewContainer .card {
+        border-radius: 12px;
+        overflow: hidden;
+    }
+</style>

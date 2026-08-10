@@ -1,0 +1,869 @@
+﻿@page
+@model TPL_TM.Pages.Material_ConsumptionModel
+@{
+}
+
+<div class="modal fade show" id="materialModal" tabindex="-1" aria-labelledby="materialModalLabel" aria-hidden="true" style="display: block;">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 550px; margin-top: 80px;">
+        <div class="modal-content shadow-lg border-0 rounded-4">
+            <div class="modal-header bg-primary text-white d-flex align-items-center rounded-top-4">
+                <i class="bi bi-box-seam me-2 fs-4"></i>
+                <h5 class="modal-title fw-semibold" id="materialModalLabel">Record Material Consumption</h5>
+                <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal" aria-label="Close" id="closeMaterialModal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <input type="hidden" id="Auto_WO" value="@Request.Query["woNumber"]" />
+                <input type="hidden" id="Auto_Material" value="@Request.Query["materialId"]" />
+                <input type="hidden" id="Auto_RibbonLength" value="@Request.Query["ribbonLength"]" />
+
+                <form id="material-form" method="post" novalidate class="needs-validation">
+
+                    <!-- Work Order -->
+                    <div class="form-floating mb-3">
+                        <input class="form-control" list="Work_OrderlistOptions" id="Wo_Number" name="Wo_Number" required placeholder="Work Order" />
+                        <datalist id="Work_OrderlistOptions">
+                            @foreach (var wo in Model.MaterialList.GroupBy(x => x.WorkOrder).Select(g => g.First()))
+                            {
+                                <option value="@wo.WorkOrder">@wo.WorkOrder</option>
+                            }
+                        </datalist>
+                        <label for="Wo_Number"><i class="bi bi-gear me-1 text-primary"></i>Work Order</label>
+                        <div class="invalid-feedback">Work Order is required.</div>
+                    </div>
+
+                    <!-- Hidden Shift ID -->
+                    <input type="hidden" id="Shift_Id" name="Shift_Id" value="@Model.MaterialInfo.Shift_Id" />
+
+                    <!-- Material Name -->
+                    <div class="form-floating mb-3">
+                        <input class="form-control" list="Material_NamelistOptions" id="Material_Id" name="Material_Id" required placeholder="Material Name" />
+                        <datalist id="Material_NamelistOptions">
+                            @foreach (var mat in Model.MaterialList)
+                            {
+                                <option value="@mat.ItemId" data-description="@mat.DisplayName" data-wo="@mat.WorkOrder">@mat.ItemId</option>
+                            }
+                        </datalist>
+                        <label for="Material_Id"><i class="bi bi-box me-1 text-primary"></i>Material Name</label>
+                        <div class="invalid-feedback">Material Name is required.</div>
+                    </div>
+
+                    <!-- Material Description -->
+                    <div class="form-floating mb-3">
+                        <input class="form-control" id="Material_Description" name="Material_Description" placeholder="Material Description" readonly />
+                        <label for="Material_Description"><i class="bi bi-card-text me-1 text-primary"></i>Material Description</label>
+                    </div>
+
+                    
+                    <!-- Ribbon-based Calculation -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                <input type="number"
+                                       class="form-control"
+                                       id="Ribbon_Length"
+                                       name="Ribbon_Length"
+                                       placeholder="Ribbon Length per Reel"
+                                       min="0"
+                                       step="0.01">
+                                <label for="Ribbon_Length"><i class="bi bi-rulers me-1 text-primary"></i>Ribbon Length/Sheet/Box</label>
+                            </div>
+                        </div>
+                        <!-- Batch / Lot / Case Number -->
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3 position-relative">
+                                <input type="text"
+                                       class="form-control pe-5"
+                                       id="Batch_Identifier"
+                                       name="Batch_Identifier"
+                                       placeholder="Batch / Lot / Case Number"
+                                       autocomplete="off"
+                                       required />
+
+                                <label>
+                                    <i class="bi bi-upc-scan me-1 text-primary"></i>
+                                    Batch / Lot Number
+                                </label>
+
+                                <button type="button"
+                                        id="scanMaterialCaseBtn"
+                                        class="btn btn-outline-secondary position-absolute top-50 end-0 translate-middle-y me-2 p-1">
+                                    <i class="bi bi-qr-code-scan fs-4"></i>
+                                </button>
+
+                                <div class="invalid-feedback">
+                                    Lot Number is required.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                <input type="number"
+                                       class="form-control"
+                                       id="No_Of_Reels"
+                                       name="No_Of_Reels"
+                                       placeholder="No. of Reels"
+                                       min="1"
+                                       max="100"
+                                       step="1"
+                                       value="1">
+                                <div class="invalid-feedback">
+                                    Please enter a value between 1 and 100.
+                                </div>
+                                <label for="No_Of_Reels">
+                                    <i class="bi bi-123 me-1 text-primary"></i>
+                                    No. of Reels
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Case-based Calculation -->
+                    <div class="row g-3 mb-3 d-none">
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                <input type="number" class="form-control" id="Case_Qty" placeholder="Case Quantity" min="0" step="0.01">
+                                <label for="Case_Qty"><i class="bi bi-box2 me-1 text-primary"></i>Case Quantity</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                <input type="number" class="form-control" id="No_Of_Cases" placeholder="No. of Cases" min="0" step="1">
+                                <label for="No_Of_Cases"><i class="bi bi-collection me-1 text-primary"></i>No. of Cases</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+
+                    <!-- Quantity Consumed -->
+                    <div class="form-floating mb-4 d-none">
+                        <input type="number" name="Quantity_Consumed" id="Quantity_Consumed"
+                               class="form-control" required placeholder="Quantity Consumed"
+                               min="1" step="1" />
+                        <label for="Quantity_Consumed">
+                            <i class="bi bi-123 me-1 text-primary"></i>Total Quantity Consumed
+                        </label>
+                        <div class="invalid-feedback">Quantity must be at least 1.</div>
+                    </div>
+
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="w-100 btn btn-lg btn-primary shadow-sm rounded-3">
+                        <i class="bi bi-check-circle me-2"></i>Submit
+                    </button>
+                </form>
+                @if (TempData["MaterialSaved"] != null)
+                {
+                    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+                        <div id="materialToast" class="toast text-bg-success border-0">
+                            <div class="toast-body">
+                                <i class="bi bi-check-circle-fill me-2"></i>
+                                Material consumption saved
+                            </div>
+                        </div>
+                    </div>
+                }
+                @{
+                    var runningTotalQty = Model.ConsumptionEntries.Sum(x => x.Quantity_Consumed);
+                    var runningReelsUsed = Model.ConsumptionEntries.Count();
+                }
+                @if (Model.ConsumptionEntries.Any())
+                {
+                    <!-- TOTAL CONSUMED -->
+                    <div class="alert alert-info d-flex justify-content-between align-items-center rounded-3 shadow-sm mt-3 mb-2 py-2 px-3"
+                         data-bs-toggle="collapse"
+                         data-bs-target="#materialsTableCollapse"
+                         aria-expanded="false"
+                         style="cursor:pointer">
+                        <div class="fw-semibold small d-flex align-items-center">
+                            <i class="bi bi-bar-chart-fill me-2"></i>
+                            <span>Total Consumed</span>
+                            <i class="bi bi-chevron-down ms-2 chevron"></i>
+                        </div>
+
+                        <div class="small fw-semibold">
+                            @runningTotalQty
+                            <span class="text-muted">(@runningReelsUsed reels)</span>
+                        </div>
+                    </div>
+
+                    <!-- MATERIALS CONTAINER -->
+                    <div id="materialsAccordion">
+
+                        @foreach (var materialGroup in Model.ConsumptionEntries.GroupBy(x => x.Material_Id))
+                        {
+                            var materialKey = materialGroup.Key.Replace(" ", "_");
+                            var materialTotalQty = materialGroup.Sum(x => x.Quantity_Consumed);
+                            var materialReels = materialGroup.Count();
+
+                            <div class="mb-3">
+
+                                <!-- MATERIAL HEADER -->
+                                <div class="alert alert-info py-2 px-3 mb-1">
+                                    <button class="btn w-100 d-flex justify-content-between align-items-center collapsed p-0 bg-transparent border-0"
+                                            type="button"
+                                            data-bs-toggle="collapse"
+                                            data-bs-target="#mat-@materialKey"
+                                            aria-expanded="false">
+
+                                        <div class="d-flex align-items-center gap-2">
+                                            <i class="bi bi-chevron-down chevron"></i>
+                                            <i class="bi bi-box"></i>
+                                            <span class="fw-semibold">@materialGroup.Key</span>
+                                        </div>
+
+                                        <span class="badge bg-primary fs-6">
+                                            @materialTotalQty
+                                            <span class="fw-normal ms-1">(@materialReels reels)</span>
+                                        </span>
+
+                                    </button>
+                                </div>
+
+                                <!-- MATERIAL BODY (AUTO-CLOSE ENABLED) -->
+                                <div class="collapse"
+                                     id="mat-@materialKey"
+                                     data-bs-parent="#materialsAccordion">
+
+                                    @foreach (var lotGroup in materialGroup.GroupBy(x => x.Batch_Identifier))
+                                    {
+                                        var lotKey = $"{materialKey}-{lotGroup.Key}".Replace(" ", "_");
+                                        var lotTotalQty = lotGroup.Sum(x => x.Quantity_Consumed);
+                                        var lotReels = lotGroup.Count();
+
+                                        <div class="ms-2 mb-2">
+
+                                            <!-- LOT HEADER -->
+                                            <div class="alert alert-secondary py-1 px-2 mb-1 ms-2">
+                                                <button class="btn w-100 d-flex justify-content-between align-items-center collapsed p-0 bg-transparent border-0"
+                                                        type="button"
+                                                        data-bs-toggle="collapse"
+                                                        data-bs-target="#lot-@lotKey"
+                                                        aria-expanded="false">
+
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <i class="bi bi-chevron-down chevron"></i>
+                                                        <i class="bi bi-upc-scan"></i>
+                                                        <span class="fw-semibold small">Lot: @lotGroup.Key</span>
+                                                    </div>
+
+                                                    <span class="badge bg-dark">
+                                                        @lotTotalQty
+                                                        <span class="fw-normal ms-1">(@lotReels reels)</span>
+                                                    </span>
+
+                                                </button>
+                                            </div>
+
+                                            <!-- LOT BODY -->
+                                            <div class="collapse"
+                                                 id="lot-@lotKey"
+                                                 data-bs-parent="#mat-@materialKey">
+
+                                                @foreach (var lengthGroup in lotGroup.GroupBy(x => x.Quantity_Consumed))
+                                                {
+                                                    var reelsUsed = lengthGroup.Count();
+                                                    var ribbonLength = lengthGroup.Key;
+                                                    var totalLength = reelsUsed * ribbonLength;
+                                                    var first = lengthGroup.First();
+
+                                                    <div class="alert alert-light d-flex justify-content-between align-items-center py-1 px-2 mb-1 ms-3 border">
+                                                        <div class="small">
+                                                            @reelsUsed reels | @ribbonLength / reel
+                                                        </div>
+
+                                                        <div class="d-flex align-items-center gap-2">
+                                                            <span class="badge bg-secondary">@totalLength</span>
+                                                            <button type="button"
+                                                                    class="btn btn-sm btn-outline-primary quick-add-btn"
+                                                                    data-wo="@first.Wo_Number"
+                                                                    data-material="@first.Material_Id"
+                                                                    data-desc="@first.Material_Description"
+                                                                    data-lot="@first.Batch_Identifier"
+                                                                    data-length="@ribbonLength">
+                                                                <i class="bi bi-plus-lg"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+
+                @if (Model.ConsumptionEntries.Any())
+                {
+
+                    <!-- Collapsed Materials Table -->
+                    <div class="collapse" id="materialsTableCollapse">
+                        <div class="materials-table-container mt-3">
+                            <table class="table table-sm table-hover align-middle materials-table mb-0">
+                                <thead>
+                                    <tr>
+                                        <th class="text-center">Actions</th>
+                                        <th>WO</th>
+                                        <th>Material</th>
+                                        <th>Description</th>
+                                        <th>Qty</th>
+                                        <th>Case / Lot</th>
+                                        <th>User</th>
+                                        <th>Time</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    @foreach (var c in Model.ConsumptionEntries)
+                                    {
+                                        <tr>
+                                            <!-- Actions -->
+                                            <td class="text-center">
+                                                <div class="dropdown">
+                                                    <a href="#" class="btn btn-link p-0 text-decoration-none" data-bs-toggle="dropdown">
+                                                        <i class="bi bi-three-dots-vertical text-muted"></i>
+                                                    </a>
+                                                    <ul class="dropdown-menu dropdown-menu-end">
+                                                        <li>
+                                                            <a class="dropdown-item"
+                                                               href="/Material_Consumption_Edit?id=@c.Id">
+                                                                <i class="bi bi-pencil-square me-2 text-warning"></i> Edit
+                                                            </a>
+                                                        </li>
+                                                        <li>
+                                                            <a class="dropdown-item text-danger"
+                                                               href="/Material_Consumption_Delete?id=@c.Id"
+                                                               onclick="return confirm('Are you sure you want to delete this entry?');">
+                                                                <i class="bi bi-trash me-2"></i> Delete
+                                                            </a>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </td>
+                                            <td>@c.Wo_Number</td>
+                                            <td>@c.Material_Id</td>
+                                            <td>@c.Material_Description</td>
+                                            <td>@c.Quantity_Consumed</td>
+                                            <td>@c.Batch_Identifier</td>
+                                            <td>@c.Created_By</td>
+                                            <td>@c.Created_At?.ToString("g")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted fst-italic mt-2 mb-0">
+                        No material consumption recorded yet.
+                    </p>
+                }
+
+
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="caseScanModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content p-3">
+            <h6 class="mb-2 text-primary">
+                <i class="bi bi-qr-code-scan me-1"></i> Scan Code
+            </h6>
+            <div id="case-code-reader" style="width:100%"></div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://unpkg.com/html5-qrcode"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            /* ============================
+               MAIN MATERIAL MODAL
+            ============================= */
+            const myModal = new bootstrap.Modal(document.getElementById('materialModal'), {
+                backdrop: 'static',
+                keyboard: false
+            });
+            myModal.show();
+
+            document.getElementById("closeMaterialModal")?.addEventListener("click", function () {
+                window.location.href = "/Shift_Dashboard";
+            });
+
+            /* ============================
+               FORM VALIDATION
+            ============================= */
+            (function () {
+                'use strict';
+                const form = document.getElementById('material-form');
+                if (!form) return;
+
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            })();
+
+            /* ============================
+               WORK ORDER & MATERIAL LOGIC
+            ============================= */
+            const woInput = document.getElementById('Wo_Number');
+            const matInput = document.getElementById('Material_Id');
+            const descInput = document.getElementById('Material_Description');
+            const matList = document.getElementById('Material_NamelistOptions');
+
+            const allMaterialOptions = matList
+                ? Array.from(matList.querySelectorAll('option'))
+                : [];
+
+            function rebuildMaterialListForWO() {
+                const selectedWO = woInput?.value.trim();
+                if (!selectedWO || !matList) return;
+
+                matList.innerHTML = '';
+
+                allMaterialOptions
+                    .filter(opt => opt.dataset.wo === selectedWO)
+                    .forEach(opt => matList.appendChild(opt.cloneNode(true)));
+
+                if (matInput) matInput.value = '';
+                if (descInput) descInput.value = '';
+            }
+
+            function updateMaterialDescription() {
+                if (!matInput || !matList || !descInput) return;
+
+                const selected = Array.from(matList.querySelectorAll('option'))
+                    .find(o => o.value === matInput.value);
+
+                descInput.value = selected ? selected.dataset.description : '';
+            }
+
+            woInput?.addEventListener('input', rebuildMaterialListForWO);
+            woInput?.addEventListener('change', rebuildMaterialListForWO);
+            matInput?.addEventListener('input', updateMaterialDescription);
+            matInput?.addEventListener('change', updateMaterialDescription);
+
+            /* ============================
+               AUTO-FILL WO / MATERIAL
+            ============================= */
+            const autoWO = document.getElementById("Auto_WO")?.value;
+            const autoMaterial = document.getElementById("Auto_Material")?.value;
+
+            if (autoWO && woInput) {
+                woInput.value = autoWO;
+                rebuildMaterialListForWO();
+            }
+
+            if (autoMaterial && matInput) {
+                matInput.value = autoMaterial;
+                updateMaterialDescription();
+            }
+
+            /* ============================
+               AUTO QUANTITY CALCULATION
+            ============================= */
+           function calculateQuantity() {
+
+            const ribbonLength =
+                parseFloat(document.getElementById("Ribbon_Length")?.value) || 0;
+
+            const caseQty =
+                parseFloat(document.getElementById("Case_Qty")?.value) || 0;
+
+            const qtyInput =
+                document.getElementById("Quantity_Consumed");
+
+            let total = 0;
+
+            // Store SINGLE reel quantity only
+            if (ribbonLength > 0) {
+                total = ribbonLength;
+            }
+
+            // Case logic (if used)
+            if (caseQty > 0) {
+                total = caseQty;
+            }
+
+            if (qtyInput) {
+                qtyInput.value = total > 0
+                    ? Math.round(total)
+                    : '';
+            }
+        }
+
+            ["Ribbon_Length", "No_Of_Reels", "Case_Qty", "No_Of_Cases"]
+                .forEach(id => document.getElementById(id)?.addEventListener("input", calculateQuantity));
+
+            /* ============================
+               RESTORE LAST RIBBON ENTRY
+            ============================= */
+            const autoRibbonLength = document.getElementById("Auto_RibbonLength")?.value;
+            const ribbonInput = document.getElementById("Ribbon_Length");
+            const reelsInput = document.getElementById("No_Of_Reels");
+
+            if (autoRibbonLength && ribbonInput) ribbonInput.value = autoRibbonLength;
+            if (reelsInput) reelsInput.value = 1;
+
+            calculateQuantity();
+
+            const modalEl = document.getElementById('materialModal');
+            if (modalEl && ribbonInput) {
+                modalEl.addEventListener('shown.bs.modal', function () {
+                    ribbonInput.focus();
+                    ribbonInput.select();
+                }, { once: true });
+            }
+
+            /* ============================
+               TOAST
+            ============================= */
+            const toastEl = document.getElementById("materialToast");
+            if (toastEl) new bootstrap.Toast(toastEl, { delay: 2000 }).show();
+
+            /* ============================
+               FINAL SAFETY CHECK
+            ============================= */
+            document.getElementById("material-form")?.addEventListener("submit", function (e) {
+                const qty = parseInt(document.getElementById("Quantity_Consumed")?.value) || 0;
+                if (qty <= 0) {
+                    e.preventDefault();
+                    alert("⚠️ Quantity Consumed must be greater than 0.");
+                }
+            });
+
+            /* ============================
+               SCANNER INITIALIZATION
+            ============================= */
+            setupScanner(
+                "scanMaterialCaseBtn",
+                "caseScanModal",
+                "case-code-reader",
+                "Batch_Identifier",
+                function () {
+                    document.getElementById("Quantity_Consumed")?.focus();
+                }
+            );
+            /* ============================
+                QUICK ADD BUTTON LOGIC
+            ============================= */
+
+            document.addEventListener("click", function (e) {
+            const btn = e.target.closest(".quick-add-btn");
+            if (!btn) return;
+
+            // Read values from button
+            const wo = btn.dataset.wo;
+            const material = btn.dataset.material;
+            const desc = btn.dataset.desc;
+            const lot = btn.dataset.lot;
+            const length = btn.dataset.length;
+
+            // Fill form
+            const woInput = document.getElementById("Wo_Number");
+            const matInput = document.getElementById("Material_Id");
+            const descInput = document.getElementById("Material_Description");
+            const lotInput = document.getElementById("Batch_Identifier");
+            const ribbonInput = document.getElementById("Ribbon_Length");
+            const reelsInput = document.getElementById("No_Of_Reels");
+
+            if (woInput) {
+                woInput.value = wo;
+                woInput.dispatchEvent(new Event("change"));
+            }
+
+            if (matInput) {
+                matInput.value = material;
+                matInput.dispatchEvent(new Event("change"));
+            }
+
+            if (descInput) descInput.value = desc;
+            if (lotInput) lotInput.value = lot;
+            if (ribbonInput) ribbonInput.value = length;
+            if (reelsInput) reelsInput.value = 1;
+
+            // Recalculate quantity
+            if (typeof calculateQuantity === "function") {
+                calculateQuantity();
+            }
+            // AUTO SUBMIT AFTER AUTOFILL
+            setTimeout(() => {
+                const form = document.getElementById("material-form");
+
+                // Safety: ensure quantity exists
+                const qty = parseInt(document.getElementById("Quantity_Consumed")?.value) || 0;
+
+                if (form && qty > 0) {
+                    form.requestSubmit();
+                }
+            }, 100);
+            // UX: focus ribbon length for speed
+            ribbonInput?.focus();
+            ribbonInput?.select();
+        });
+
+        });
+
+        /* ============================
+           REUSABLE SCANNER LOGIC
+        ============================= */
+        function setupScanner(scanBtnId, modalId, readerId, targetInputId, onScanComplete) {
+
+            const scanBtn = document.getElementById(scanBtnId);
+            const modalEl = document.getElementById(modalId);
+            const targetInput = document.getElementById(targetInputId);
+
+            if (!scanBtn || !modalEl || !targetInput) return;
+
+            let html5QrCode;
+            const bsModal = new bootstrap.Modal(modalEl);
+
+            scanBtn.addEventListener("click", function () {
+                bsModal.show();
+
+                if (!html5QrCode) {
+                    html5QrCode = new Html5Qrcode(readerId);
+                }
+
+                html5QrCode.start(
+                    { facingMode: "environment" },
+                    { fps: 10, qrbox: 250 },
+                    (decodedText) => {
+
+                        const cleanedValue = cleanScannedValue(decodedText);
+                        targetInput.value = cleanedValue;
+
+                        html5QrCode.stop().then(() => {
+                            bsModal.hide();
+                        });
+
+                        if (typeof onScanComplete === "function") {
+                            onScanComplete(cleanedValue);
+                        }
+                    }
+                );
+            });
+
+            modalEl.addEventListener("hidden.bs.modal", () => {
+                if (html5QrCode?.isScanning) {
+                    html5QrCode.stop();
+                }
+            });
+        }
+
+        /* ============================
+           SCAN VALUE CLEANUP
+        ============================= */
+        function cleanScannedValue(value) {
+            if (!value) return "";
+            return value
+                .replace(/\u001D/g, "")
+                .replace(/[\r\n]/g, "")
+                .trim();
+        }
+
+
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var collapseEl = document.getElementById("materialsTableCollapse");
+            if (collapseEl && collapseEl.classList.contains("show")) {
+                collapseEl.classList.remove("show");
+            }
+        });
+    </script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            const ribbonInput = document.getElementById("Ribbon_Length");
+            if (!ribbonInput) return;
+
+            ribbonInput.addEventListener("input", function () {
+                let value = this.value;
+
+                // Allow digits + ONE decimal point only
+                value = value.replace(/[^0-9.]/g, "");
+
+                // Prevent multiple decimals
+                const parts = value.split(".");
+                if (parts.length > 2) {
+                    value = parts[0] + "." + parts.slice(1).join("");
+                }
+
+                // 🚫 Block barcode / lot scans (too many characters)
+                if (value.replace(".", "").length > 7) {
+                    this.classList.add("is-invalid");
+                    this.setCustomValidity("Invalid ribbon length scanned");
+                    return;
+                }
+
+                const num = parseFloat(value);
+
+                // ✅ Valid ribbon length range (adjust if needed)
+                if (!num || num <= 0 || num > 100000) {
+                    this.classList.add("is-invalid");
+                    this.setCustomValidity("Ribbon length must be between 0.01 and 100,000");
+                } else {
+                    this.classList.remove("is-invalid");
+                    this.setCustomValidity("");
+                    this.value = value; // keep cleaned value
+                }
+            });
+
+        });
+    </script>
+
+    <script>
+        document.getElementById("material-form")?.addEventListener("submit", function (e) {
+            const ribbon = document.getElementById("Ribbon_Length");
+            if (!ribbon) return;
+
+            const value = parseFloat(ribbon.value);
+
+            if (!value || value <= 0 || value > 100000) {
+                e.preventDefault();
+                ribbon.classList.add("is-invalid");
+                ribbon.focus();
+                alert("⚠️ Invalid Ribbon Length. Please enter a valid numeric value.");
+                return false;
+            }
+        });
+    </script>
+   
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            const reels = document.getElementById("No_Of_Reels");
+            if (!reels) return;
+
+            reels.addEventListener("input", function () {
+
+                const value = parseInt(this.value, 10);
+
+                if (value > 100) {
+                    this.classList.add("is-invalid");
+                    alert("⚠️ No. of Reels cannot be greater than 100.");
+                    this.value = 100;
+                    this.focus();
+                } else if (value < 1 && this.value !== "") {
+                    this.classList.add("is-invalid");
+                } else {
+                    this.classList.remove("is-invalid");
+                }
+            });
+
+        });
+    </script>
+
+    <style>
+        /* Optional: Custom styling for smoother appearance */
+        .modal-content {
+            animation: fadeInDown 0.4s ease-in-out;
+        }
+
+        @@keyframes fadeInDown {
+            from
+
+        {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        }
+
+        .form-floating > label i {
+            font-size: 0.95rem;
+        }
+
+        .materials-table-container {
+            max-height: 260px;
+            overflow-y: auto;
+            overflow-x: auto;
+        }
+
+        .materials-table {
+            border-radius: 0.75rem;
+            background: #f9fafb;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            font-size: 0.9rem;
+            width: 100%;
+            white-space: nowrap;
+        }
+
+            .materials-table thead {
+                background-color: #e9f5ff;
+                color: #0d6efd;
+                font-weight: 600;
+                position: sticky;
+                top: 0;
+                z-index: 2;
+            }
+
+            .materials-table tbody tr:hover {
+                background-color: #f1f9ff;
+                transition: background-color 0.2s ease-in-out;
+            }
+
+            .materials-table td:nth-child(3) {
+                max-width: 220px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+        .chevron {
+            transition: transform 0.25s ease;
+        }
+
+        /* default (collapsed) */
+        button.collapsed .chevron {
+            transform: rotate(0deg);
+        }
+
+        /* expanded */
+        button:not(.collapsed) .chevron {
+            transform: rotate(180deg);
+        }
+
+
+        /* Rotate chevron when collapse is shown */
+        #materialsTableCollapse.show + .chevron,
+        .collapse.show ~ .chevron {
+            transform: rotate(180deg);
+        }
+
+        .alert[data-bs-toggle="collapse"] i.bi-chevron-down {
+            transition: transform 0.3s ease;
+        }
+
+        .alert[data-bs-toggle="collapse"].collapsed i.bi-chevron-down {
+            transform: rotate(0deg);
+        }
+
+        .alert[data-bs-toggle="collapse"]:not(.collapsed) i.bi-chevron-down {
+            transform: rotate(180deg);
+        }
+
+
+    </style>
+}

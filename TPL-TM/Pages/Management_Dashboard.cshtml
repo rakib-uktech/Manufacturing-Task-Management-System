@@ -1,0 +1,1530 @@
+﻿@page
+@model TPL_TM.Pages.Management_DashboardModel
+
+<style>
+    :root {
+        --accent: #1D9E75;
+        --accent-dark: #0F6E56;
+        --warn: #EF9F27;
+        --warn-dark: #BA7517;
+        --danger: #E24B4A;
+        --danger-dark: #A32D2D;
+        --page-bg: #f5f7fb;
+        --surface: #ffffff;
+        --surface2: #f8f9fa;
+        --text: #212529;
+        --muted: #6c757d;
+        --border: rgba(0,0,0,0.08);
+        --input-border: #dee2e6;
+        --progress-track: #e9ecef;
+        --chart-grid: rgba(0,0,0,.05);
+        --gauge-track: #e9ecef;
+        --gauge-tick: #ced4da;
+        --gauge-needle: #495057;
+        --shadow: rgba(0,0,0,.10);
+        --green-bg: #d1f2e0;
+        --green-text: #0a5c36;
+        --amber-bg: #fff3cd;
+        --amber-text: #854f0b;
+        --red-bg: #f8d7da;
+        --red-text: #842029;
+        --blue-bg: #cfe2ff;
+        --blue-text: #0a367a;
+        --card-border: var(--border);
+    }
+
+    body.night-mode {
+        --accent: #00d4aa;
+        --accent-dark: #00b894;
+        --warn: #f59e0b;
+        --warn-dark: #fbbf24;
+        --danger: #ef4444;
+        --danger-dark: #f87171;
+        --page-bg: #0a0d12;
+        --surface: #111620;
+        --surface2: #171d2a;
+        --text: #e2e8f0;
+        --muted: #94a3b8;
+        --border: rgba(255,255,255,0.10);
+        --input-border: rgba(255,255,255,0.16);
+        --progress-track: rgba(255,255,255,0.10);
+        --chart-grid: rgba(255,255,255,.06);
+        --gauge-track: rgba(255,255,255,0.10);
+        --gauge-tick: rgba(255,255,255,0.22);
+        --gauge-needle: rgba(255,255,255,0.78);
+        --shadow: rgba(0,0,0,.40);
+        --green-bg: rgba(34,197,94,.15);
+        --green-text: #86efac;
+        --amber-bg: rgba(245,158,11,.16);
+        --amber-text: #fcd34d;
+        --red-bg: rgba(239,68,68,.16);
+        --red-text: #fca5a5;
+        --blue-bg: rgba(14,165,233,.16);
+        --blue-text: #7dd3fc;
+        --card-border: var(--border);
+    }
+
+    body {
+        font-family: 'Segoe UI', system-ui, sans-serif;
+        background: var(--page-bg);
+        color: var(--text);
+    }
+
+    .card,
+    .machine-card,
+    .panel,
+    .trend-panel,
+    .kpi-card {
+        background: var(--surface) !important;
+        border-color: var(--border) !important;
+        color: var(--text);
+    }
+
+    .dash-topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 1.25rem;
+    }
+
+    .dash-topbar-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .dash-logo-icon {
+        width: 40px;
+        height: 40px;
+        background: var(--accent);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .dash-page-title {
+        font-size: 20px;
+        font-weight: 600;
+        margin: 0;
+        color: var(--text);
+    }
+
+    .dash-page-sub {
+        font-size: 12px;
+        color: var(--muted);
+        margin: 0;
+    }
+
+    .live-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--accent);
+        display: inline-block;
+        animation: pulse 2s infinite;
+    }
+
+    @@keyframes pulse {
+        0%, 100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: .35;
+        }
+    }
+
+    .theme-toggle {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 11px;
+        color: var(--muted);
+        white-space: nowrap;
+    }
+
+    .switch {
+        position: relative;
+        width: 42px;
+        height: 22px;
+        flex: 0 0 auto;
+    }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+    .slider {
+        position: absolute;
+        inset: 0;
+        background: var(--surface2);
+        border: 1px solid var(--input-border);
+        border-radius: 22px;
+        cursor: pointer;
+        transition: .2s;
+    }
+
+        .slider::before {
+            content: "";
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            left: 3px;
+            top: 2px;
+            background: var(--muted);
+            border-radius: 50%;
+            transition: .2s;
+        }
+
+    .switch input:checked + .slider {
+        background: rgba(0,212,170,0.18);
+        border-color: rgba(0,212,170,0.45);
+    }
+
+        .switch input:checked + .slider::before {
+            transform: translateX(19px);
+            background: var(--accent);
+        }
+
+    .dash-filters {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        margin-bottom: 1.25rem;
+        padding-bottom: 2px;
+    }
+
+        .dash-filters label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--muted);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .dash-filters select,
+        .dash-filters input[type=date],
+        .dash-filters input[type=text],
+        .form-select,
+        .form-control {
+            font-size: 12px;
+            height: 30px;
+            border-radius: 6px;
+            border: 1px solid var(--input-border) !important;
+            padding: 0 8px;
+            flex-shrink: 0;
+            background: var(--surface2) !important;
+            color: var(--text) !important;
+        }
+
+        .dash-filters select,
+        .dash-filters input[type=date] {
+            width: 130px;
+        }
+
+        .dash-filters input[type=text] {
+            width: 150px;
+        }
+
+        .dash-filters input::placeholder,
+        .form-control::placeholder {
+            color: var(--muted);
+        }
+
+    .kpi-row {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+        margin-bottom: 1.25rem;
+    }
+
+    .kpi-card {
+        border-radius: 10px;
+        padding: 14px 16px;
+        border: 1px solid var(--card-border);
+    }
+
+    .kpi-label {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: .4px;
+        margin-bottom: 4px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .kpi-value {
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--text);
+        line-height: 1;
+    }
+
+    .kpi-delta {
+        font-size: 11px;
+        margin-top: 5px;
+    }
+
+        .kpi-delta.up {
+            color: var(--accent-dark);
+        }
+
+        .kpi-delta.down {
+            color: var(--danger-dark);
+        }
+
+        .kpi-delta.warn {
+            color: var(--warn-dark);
+        }
+
+    .section-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 10px;
+    }
+
+    .section-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .badge-green {
+        background: var(--green-bg);
+        color: var(--green-text);
+        font-size: 10px;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 20px;
+    }
+
+    .badge-amber {
+        background: var(--amber-bg);
+        color: var(--amber-text);
+        font-size: 10px;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 20px;
+    }
+
+    .badge-red {
+        background: var(--red-bg);
+        color: var(--red-text);
+        font-size: 10px;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 20px;
+    }
+
+    .badge-blue {
+        background: var(--blue-bg);
+        color: var(--blue-text);
+        font-size: 10px;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 20px;
+    }
+
+    .machines-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        margin-bottom: 1.25rem;
+    }
+
+    .machine-card {
+        border: 1px solid var(--card-border);
+        border-radius: 12px;
+        overflow: hidden;
+        transition: box-shadow .15s, transform .15s;
+    }
+
+        .machine-card:hover {
+            box-shadow: 0 4px 16px var(--shadow);
+            transform: translateY(-2px);
+        }
+
+        .machine-card.warning-card {
+            border-color: var(--warn) !important;
+        }
+
+        .machine-card.fault-card {
+            border-color: var(--danger) !important;
+        }
+
+    .machine-header {
+        padding: 10px 14px;
+        border-bottom: 1px solid var(--card-border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+    }
+
+    .machine-name {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text);
+    }
+
+    .machine-sub {
+        font-size: 11px;
+        color: var(--muted);
+        margin-top: 1px;
+    }
+
+    .machine-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        padding: 10px 14px;
+    }
+
+    .stat-label {
+        font-size: 10px;
+        color: var(--muted);
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .stat-value {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--text);
+    }
+
+        .stat-value.danger {
+            color: var(--danger-dark);
+        }
+
+        .stat-value.warn {
+            color: var(--warn-dark);
+        }
+
+    .gauge-progress-row {
+        display: grid;
+        grid-template-columns: 130px 1fr;
+        gap: 12px;
+        align-items: center;
+        padding: 4px 14px 12px;
+        border-bottom: 1px solid var(--card-border);
+    }
+
+    .gauge-wrap {
+        position: relative;
+        width: 130px;
+        height: 75px;
+        flex-shrink: 0;
+    }
+
+        .gauge-wrap canvas {
+            display: block;
+        }
+
+    .gauge-center-label {
+        position: absolute;
+        bottom: 6px;
+        left: 0;
+        right: 0;
+        text-align: center;
+        pointer-events: none;
+    }
+
+    .gauge-pct {
+        font-size: 15px;
+        font-weight: 700;
+        line-height: 1;
+        display: block;
+    }
+
+    .gauge-vs {
+        font-size: 9px;
+        color: var(--muted);
+        display: block;
+        margin-top: 1px;
+    }
+
+    .progress-side {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .progress-track {
+        height: 5px;
+        background: var(--progress-track);
+        border-radius: 3px;
+        overflow: hidden;
+    }
+
+    .progress-fill {
+        height: 100%;
+        border-radius: 3px;
+        background: var(--accent);
+    }
+
+        .progress-fill.warn {
+            background: var(--warn);
+        }
+
+        .progress-fill.danger {
+            background: var(--danger);
+        }
+
+    .progress-meta {
+        display: flex;
+        justify-content: space-between;
+        font-size: 10px;
+        color: var(--muted);
+        margin-top: 3px;
+    }
+
+    .shift-chips-inline {
+        display: flex;
+        gap: 4px;
+    }
+
+    .shift-chip {
+        flex: 1;
+        text-align: center;
+        padding: 3px 2px;
+        border-radius: 5px;
+        font-size: 10px;
+        font-weight: 600;
+    }
+
+    .shift-a {
+        background: var(--green-bg);
+        color: var(--green-text);
+    }
+
+    .shift-b {
+        background: var(--blue-bg);
+        color: var(--blue-text);
+    }
+
+    .shift-c {
+        background: var(--amber-bg);
+        color: var(--amber-text);
+    }
+
+    .two-col {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        margin-bottom: 1.25rem;
+    }
+
+    .panel {
+        border: 1px solid var(--card-border);
+        border-radius: 12px;
+        padding: 14px 16px;
+    }
+
+    .panel-title {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--muted);
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .dt-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 6px;
+    }
+
+    .dt-label {
+        font-size: 11px;
+        color: var(--muted);
+        min-width: 110px;
+        max-width: 110px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .dt-bar-wrap {
+        flex: 1;
+        height: 4px;
+        background: var(--progress-track);
+        border-radius: 2px;
+        overflow: hidden;
+    }
+
+    .dt-bar-fill {
+        height: 100%;
+        border-radius: 2px;
+        background: var(--danger);
+    }
+
+    .dt-val {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--text);
+        min-width: 34px;
+        text-align: right;
+    }
+
+    .trend-panel {
+        border: 1px solid var(--card-border);
+        border-radius: 12px;
+        padding: 14px 16px;
+        margin-bottom: 1.25rem;
+    }
+
+    .chart-legend {
+        display: flex;
+        gap: 14px;
+        font-size: 11px;
+        color: var(--muted);
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .legend-line {
+        width: 18px;
+        height: 2px;
+        border-radius: 1px;
+        background: var(--accent) !important;
+    }
+
+    .legend-dashed {
+        border-top: 2px dashed var(--muted);
+        width: 18px;
+    }
+
+    #aiReportContainer {
+        margin-top: 1rem;
+    }
+
+    #aiReportText {
+        white-space: pre-wrap;
+        font-size: 13px;
+        line-height: 1.6;
+        color: var(--text);
+    }
+
+    .text-muted,
+    .text-secondary {
+        color: var(--muted) !important;
+    }
+
+    @@media (max-width: 768px) {
+        .kpi-row {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .machines-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .two-col {
+            grid-template-columns: 1fr;
+        }
+
+        .gauge-progress-row {
+            grid-template-columns: 110px 1fr;
+        }
+
+        .gauge-wrap {
+            width: 110px;
+            height: 63px;
+        }
+    }
+</style>
+<!-- ==================== HEADER ==================== -->
+<div class="card shadow-sm p-3 mb-4">
+    <div class="dash-topbar">
+        <div class="dash-topbar-left">
+            <div class="dash-logo-icon">
+                <i class="bi bi-bar-chart-fill text-white fs-5"></i>
+            </div>
+            <div>
+                <p class="dash-page-title">Production Intelligence</p>
+                <p class="dash-page-sub">
+                    <span class="live-dot me-1"></span>Live manufacturing monitoring &mdash;
+                    <span id="nowTs"></span>
+                    @if (!string.IsNullOrEmpty(Model.errorMessage))
+                    {
+                        <span class="text-danger ms-2">@Model.errorMessage</span>
+                    }
+                </p>
+            </div>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <button id="refreshBtn" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-clockwise me-1"></i> Refresh</button>
+            <button id="exportBtn" class="btn btn-sm btn-outline-secondary"><i class="bi bi-download me-1"></i> Export</button>
+            <button id="aiReportBtn" class="btn btn-sm btn-outline-secondary">🤖 AI Report</button>
+            <button id="claudeReportBtn" class="btn btn-sm btn-outline-secondary">🧠 AI Report</button>
+            <button id="sendEmailBtn" class="btn btn-sm btn-danger">📧 Send AI Email</button>
+            <label class="theme-toggle">
+                <span>Night mode</span>
+                <span class="switch">
+                    <input type="checkbox" id="nightModeToggle">
+                    <span class="slider"></span>
+                </span>
+            </label>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== FILTERS ==================== -->
+<div class="card shadow-sm mb-4 p-3">
+    <div class="dash-filters">
+        <label>Line</label>
+        <select id="machineLine" class="form-select form-select-sm" style="width:160px;">
+            <option value="">All machine lines</option>
+        </select>
+
+        <label>Period</label>
+        <select id="range" class="form-select form-select-sm w-auto">
+            <option value="1" selected>Today</option>
+            <option value="7">Last 7 days</option>
+            <option value="30">Last 30 days</option>
+            <option value="all">All time</option>
+            <option value="custom">Custom range</option>
+        </select>
+
+        <input type="date" id="fromDate" class="form-control form-control-sm" disabled />
+        <input type="date" id="toDate" class="form-control form-control-sm" disabled />
+        <button id="applyBtn" class="btn btn-info btn-sm" disabled>Apply</button>
+
+        <input type="text" id="search" class="form-control form-control-sm"
+               placeholder="Search machine or product…" />
+
+        <div class="ms-auto d-flex align-items-center gap-2">
+            <span class="text-muted" style="font-size:11px;">Auto-refresh</span>
+            <input type="checkbox" id="autoRefresh" checked />
+        </div>
+    </div>
+</div>
+
+<!-- ==================== KPI CARDS ==================== -->
+<div class="kpi-row" id="kpiRow">
+    <div class="kpi-card">
+        <div class="kpi-label"><i class="bi bi-box-seam"></i> Total output</div>
+        <div class="kpi-value" id="kpiOutput">—</div>
+        <div class="kpi-delta up" id="kpiOutputDelta"></div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-label"><i class="bi bi-bullseye"></i> Achievement</div>
+        <div class="kpi-value" id="kpiAchievement">—</div>
+        <div class="kpi-delta" id="kpiAchievementDelta"></div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-label"><i class="bi bi-clock-history"></i> Downtime</div>
+        <div class="kpi-value" id="kpiDowntime">—</div>
+        <div class="kpi-delta down" id="kpiDowntimeDelta"></div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-label"><i class="bi bi-recycle"></i> Waste</div>
+        <div class="kpi-value" id="kpiWaste">—</div>
+        <div class="kpi-delta up" id="kpiWasteDelta"></div>
+    </div>
+</div>
+
+<!-- ==================== MAIN DASHBOARD ==================== -->
+<div id="dashboardContainer"></div>
+
+<!-- ==================== AI REPORT PANEL ==================== -->
+<div id="aiReportContainer" class="card shadow-sm mt-4 d-none">
+    <div class="card-body">
+        <h5 class="fw-semibold mb-3">🤖 AI Management Report</h5>
+        <pre id="aiReportText"></pre>
+    </div>
+</div>
+
+<!-- ==================== TREND CHART (GLOBAL) ==================== -->
+<div class="trend-panel mt-3" id="globalTrendPanel" style="display:none;">
+    <div class="section-head">
+        <div class="section-title">
+            <i class="bi bi-graph-up-arrow text-success"></i> 7-day output trend
+        </div>
+        <div class="chart-legend">
+            <div class="legend-item"><div class="legend-line" style="background:#1D9E75;"></div> Actual</div>
+            <div class="legend-item"><div class="legend-dashed"></div> Target</div>
+        </div>
+    </div>
+    <div style="position:relative;height:200px;">
+        <canvas id="globalTrendChart"></canvas>
+    </div>
+</div>
+
+<!-- ==================== SCRIPTS ==================== -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+
+<script>
+    $(function () {
+        function cssVar(name) {
+            return getComputedStyle(document.body).getPropertyValue(name).trim();
+        }
+
+        let THEME = {};
+        let REASON_COLORS = [];
+        let WASTE_COLORS = [];
+        let SHIFT_COLORS = [];
+
+        function refreshPalette() {
+            REASON_COLORS = [THEME.danger, THEME.warn, '#378ADD', THEME.accent, '#888780', '#7F77DD', '#D85A30'];
+            WASTE_COLORS = [THEME.warn, THEME.danger, '#378ADD', '#888780', THEME.accent, '#7F77DD'];
+            SHIFT_COLORS = [THEME.accent, '#378ADD', THEME.warn];
+        }
+
+        function syncThemeColors() {
+            THEME = {
+                accent: cssVar('--accent'),
+                accentDark: cssVar('--accent-dark'),
+                warn: cssVar('--warn'),
+                warnDark: cssVar('--warn-dark'),
+                danger: cssVar('--danger'),
+                dangerDark: cssVar('--danger-dark'),
+                muted: cssVar('--muted'),
+                text: cssVar('--text'),
+                grid: cssVar('--chart-grid'),
+                gaugeTrack: cssVar('--gauge-track'),
+                gaugeTick: cssVar('--gauge-tick'),
+                gaugeNeedle: cssVar('--gauge-needle')
+            };
+
+            refreshPalette();
+
+            if (window.Chart) {
+                Chart.defaults.color = THEME.muted;
+                Chart.defaults.font.family = "'Segoe UI', system-ui, sans-serif";
+            }
+        }
+
+        const savedTheme = localStorage.getItem('management-dashboard-theme') || 'light';
+        $('body').toggleClass('night-mode', savedTheme === 'night');
+        $('#nightModeToggle').prop('checked', savedTheme === 'night');
+        syncThemeColors();
+
+        document.getElementById('nowTs').textContent =
+            new Date().toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
+
+        function getFilters() {
+            return {
+                search: $('#search').val(),
+                range: $('#range').val(),
+                fromDate: $('#fromDate').val(),
+                toDate: $('#toDate').val(),
+                machineLine: $('#machineLine').val()
+            };
+        }
+
+        function debounce(fn, delay = 400) {
+            let t;
+            return () => {
+                clearTimeout(t);
+                t = setTimeout(fn, delay);
+            };
+        }
+
+        function achClass(pct) {
+            if (pct >= 90) return '';
+            if (pct >= 75) return 'warn';
+            return 'danger';
+        }
+
+        function gaugeColor(pct) {
+            if (pct >= 90) return THEME.accent;
+            if (pct >= 75) return THEME.warn;
+            return THEME.danger;
+        }
+
+        function drawGauge(canvasId, pct, color) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+
+            const dpr = window.devicePixelRatio || 1;
+            const W = canvas.clientWidth || canvas.width;
+            const H = canvas.clientHeight || canvas.height;
+
+            canvas.width = W * dpr;
+            canvas.height = H * dpr;
+
+            const ctx = canvas.getContext('2d');
+            ctx.scale(dpr, dpr);
+
+            const cx = W / 2;
+            const cy = H - 6;
+            const r = Math.min(cx, cy) - 8;
+            const capped = Math.min(Math.max(pct, 0), 100);
+
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, Math.PI, 0);
+            ctx.strokeStyle = THEME.gaugeTrack;
+            ctx.lineWidth = 11;
+            ctx.lineCap = 'butt';
+            ctx.stroke();
+
+            const fillEnd = Math.PI + (Math.PI * capped / 100);
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, Math.PI, fillEnd);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 11;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+
+            [25, 50, 75].forEach(v => {
+                const a = Math.PI + (Math.PI * v / 100);
+                const r1 = r + 6;
+                const r2 = r - 1;
+
+                ctx.beginPath();
+                ctx.moveTo(cx + Math.cos(a) * r1, cy + Math.sin(a) * r1);
+                ctx.lineTo(cx + Math.cos(a) * r2, cy + Math.sin(a) * r2);
+                ctx.strokeStyle = THEME.gaugeTick;
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            });
+
+            const na = Math.PI + (Math.PI * capped / 100);
+            const nl = r - 6;
+
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(cx + Math.cos(na) * nl, cy + Math.sin(na) * nl);
+            ctx.strokeStyle = THEME.gaugeNeedle;
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+            ctx.fillStyle = THEME.gaugeNeedle;
+            ctx.fill();
+        }
+
+        function showReport(text) {
+            $('#aiReportText').text(text);
+            $('#aiReportContainer').removeClass('d-none');
+        }
+
+        $('#nightModeToggle').change(function () {
+            const night = this.checked;
+            $('body').toggleClass('night-mode', night);
+            localStorage.setItem('management-dashboard-theme', night ? 'night' : 'light');
+            syncThemeColors();
+            loadDashboard();
+        });
+
+        $('#aiReportBtn').click(function () {
+            showReport('Generating AI report…');
+            $.get('/Management_Dashboard?handler=AIReport', getFilters(), showReport)
+                .fail(err => showReport('❌ Error: ' + err.responseText));
+        });
+
+        $('#claudeReportBtn').click(function () {
+            showReport('Generating Claude report…');
+            $.get('/Management_Dashboard?handler=ClaudeReport', getFilters(), showReport)
+                .fail(err => showReport('❌ Claude Error: ' + err.responseText));
+        });
+
+        $('#sendEmailBtn').click(function () {
+            showReport('Sending AI email…');
+            $.get('/Management_Dashboard?handler=SendAIEmail', getFilters(), showReport)
+                .fail(() => showReport('❌ Email send failed'));
+        });
+
+        $('#refreshBtn').click(loadDashboard);
+
+        $('#range').change(function () {
+            let custom = this.value === 'custom';
+            $('#fromDate,#toDate,#applyBtn').prop('disabled', !custom);
+            if (!custom) loadDashboard();
+        });
+
+        $('#applyBtn').click(loadDashboard);
+        $('#search').on('keyup', debounce(loadDashboard));
+        $('#machineLine').change(loadDashboard);
+
+        let autoTimer;
+
+        function startAutoRefresh() {
+            clearInterval(autoTimer);
+            if ($('#autoRefresh').is(':checked')) autoTimer = setInterval(loadDashboard, 30000);
+        }
+
+        $('#autoRefresh').change(startAutoRefresh);
+
+        const chartRegistry = {};
+
+        function safeChart(id, config) {
+            if (chartRegistry[id]) chartRegistry[id].destroy();
+
+            const el = document.getElementById(id);
+            if (!el) return;
+
+            chartRegistry[id] = new Chart(el, config);
+        }
+
+        function loadDashboard() {
+            syncThemeColors();
+
+            $.get('/Management_Dashboard?handler=DashboardData', getFilters(), function (data) {
+                let container = $('#dashboardContainer');
+                container.empty();
+
+                let totalOut = 0;
+                let totalTarget = 0;
+                let totalDown = 0;
+                let totalWaste = 0;
+
+                let grouped = {};
+
+                data.forEach(x => {
+                    grouped[x.machine_Line] ??= {};
+
+                    let key = `${x.machine_Line}_${x.machine_name}_${x.product_Line}_${x.shift}`;
+
+                    if (!grouped[x.machine_Line][key]) {
+                        grouped[x.machine_Line][key] = {
+                            machine_name: x.machine_name,
+                            product_Line: x.product_Line,
+                            shift: x.shift,
+                            total: 0,
+                            target: x.target,
+                            achievement: x.achievement,
+                            downtime: 0,
+                            waste: 0,
+                            wasteData: [],
+                            downtimeData: [],
+                            data: []
+                        };
+                    }
+
+                    let g = grouped[x.machine_Line][key];
+
+                    g.data.push(...x.data);
+                    g.total += x.total;
+                    g.downtime += x.downtime;
+                    g.waste += x.waste || 0;
+
+                    if (x.wasteData) g.wasteData.push(...x.wasteData);
+                    if (x.downtimeData) g.downtimeData.push(...x.downtimeData);
+
+                    totalOut += x.total;
+                    totalTarget += x.target;
+                    totalDown += x.downtime;
+                    totalWaste += x.waste || 0;
+                });
+
+                let overallAch = totalTarget > 0 ? Math.round(totalOut / totalTarget * 100) : 0;
+
+                $('#kpiOutput').text(totalOut.toLocaleString());
+
+                $('#kpiAchievement').text(overallAch + '%')
+                    .removeClass('text-danger text-warning')
+                    .addClass(overallAch >= 90 ? '' : overallAch >= 75 ? 'text-warning' : 'text-danger');
+
+                $('#kpiDowntime').text(totalDown.toLocaleString() + ' min');
+                $('#kpiWaste').text(totalWaste.toLocaleString() + ' kg');
+
+                let lines = Object.keys(grouped);
+                let existing = $('#machineLine option').map((_, o) => o.value).get().filter(v => v);
+
+                lines.forEach(l => {
+                    if (!existing.includes(l)) $('#machineLine').append(`<option value="${l}">${l}</option>`);
+                });
+
+                Object.keys(grouped).forEach(machineLine => {
+                    let safeLine = machineLine.replace(/\W/g, '_');
+
+                    let lineSection = $(`
+                        <div class="mb-4">
+                            <h5 class="fw-semibold mb-3 mt-2" style="color:var(--muted);">
+                                <i class="bi bi-diagram-3 me-2"></i>${machineLine}
+                            </h5>
+                            <div class="machines-grid" id="grid_${safeLine}"></div>
+                        </div>`);
+
+                    container.append(lineSection);
+
+                    let grid = lineSection.find('.machines-grid');
+                    let lineReasonSummary = {};
+
+                    Object.keys(grouped[machineLine]).forEach(productKey => {
+                        let item = grouped[machineLine][productKey];
+                        let items = item.data;
+                        let id = productKey.replace(/\W/g, '');
+
+                        let shiftSum = { A: 0, B: 0, C: 0 };
+                        let shiftDown = { A: 0, B: 0, C: 0 };
+
+                        items.forEach(x => {
+                            shiftSum[x.shift] = (shiftSum[x.shift] || 0) + x.product_Count;
+                        });
+
+                        let dt = item.downtimeData || [];
+
+                        dt.forEach(d => {
+                            shiftDown[d.shift] = (shiftDown[d.shift] || 0) + (d.total_Downtime || 0);
+                        });
+
+                        let reasonSummary = {};
+
+                        dt.forEach(d => {
+                            let r = d.reason_Name || 'Unknown';
+                            reasonSummary[r] = (reasonSummary[r] || 0) + (d.total_Downtime || 0);
+                            lineReasonSummary[r] = (lineReasonSummary[r] || 0) + (d.total_Downtime || 0);
+                        });
+
+                        let wt = item.wasteData || [];
+                        let wasteTypeSummary = {};
+
+                        wt.forEach(w => {
+                            let t = w.wasteType || 'Unknown';
+                            wasteTypeSummary[t] = (wasteTypeSummary[t] || 0) + (w.wasteWeight || 0);
+                        });
+
+                        let ach = item.achievement;
+                        let achCls = achClass(ach);
+                        let gColor = gaugeColor(ach);
+
+                        let statusBadge = ach >= 90
+                            ? '<span class="badge-green">Running</span>'
+                            : ach >= 75
+                                ? '<span class="badge-amber">Warning</span>'
+                                : '<span class="badge-red">Fault</span>';
+
+                        let cardBorderCls = ach >= 90 ? '' : ach >= 75 ? 'warning-card' : 'fault-card';
+
+                        let card = $(`
+                            <div class="machine-card ${cardBorderCls}">
+                                <div class="machine-header">
+                                    <div>
+                                        <div class="machine-name">${item.machine_name ?? ''}</div>
+                                        <div class="machine-sub">${item.product_Line ?? ''} &bull; Shift ${item.shift ?? ''}</div>
+                                    </div>
+                                    ${statusBadge}
+                                </div>
+
+                                <div class="machine-stats">
+                                    <div class="stat-cell">
+                                        <div class="stat-label">Output</div>
+                                        <div class="stat-value ${achCls}">${item.total.toLocaleString()}</div>
+                                    </div>
+                                    <div class="stat-cell">
+                                        <div class="stat-label">Target</div>
+                                        <div class="stat-value">${item.target.toLocaleString()}</div>
+                                    </div>
+                                    <div class="stat-cell">
+                                        <div class="stat-label">Downtime</div>
+                                        <div class="stat-value ${item.downtime > 60 ? 'danger' : 'warn'}">${item.downtime} min</div>
+                                    </div>
+                                </div>
+
+                                <div class="gauge-progress-row">
+                                    <div class="gauge-wrap" id="gaugeWrap_${id}">
+                                        <canvas id="gauge_${id}" width="130" height="75" style="width:130px;height:75px;display:block;"></canvas>
+                                        <div class="gauge-center-label">
+                                            <span class="gauge-pct" style="color:${gColor};">${ach}%</span>
+                                            <span class="gauge-vs">vs target</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="progress-side">
+                                        <div>
+                                            <div class="progress-track">
+                                                <div class="progress-fill ${achCls}" style="width:${Math.min(ach, 100)}%"></div>
+                                            </div>
+                                            <div class="progress-meta">
+                                                <span>Achievement</span>
+                                                <span>${ach}%</span>
+                                            </div>
+                                        </div>
+                                        <div class="shift-chips-inline">
+                                            <div class="shift-chip shift-a">A: ${shiftSum.A.toLocaleString()}</div>
+                                            <div class="shift-chip shift-b">B: ${shiftSum.B.toLocaleString()}</div>
+                                            <div class="shift-chip shift-c">C: ${shiftSum.C.toLocaleString()}</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div style="padding:10px 14px 12px;display:grid;grid-template-columns:110px 1fr;gap:10px;align-items:center;">
+                                    <div style="position:relative;height:110px;">
+                                        <canvas id="pie_${id}"></canvas>
+                                    </div>
+                                    <div>
+                                        <div style="font-size:10px;font-weight:600;color:var(--muted);margin-bottom:6px;">Downtime by shift (min)</div>
+                                        <div id="shiftDownList_${id}"></div>
+                                    </div>
+                                </div>
+
+                                <div style="padding:0 14px 12px;">
+                                    <div style="font-size:10px;font-weight:600;color:var(--muted);margin-bottom:4px;">7-day output</div>
+                                    <div style="position:relative;height:80px;">
+                                        <canvas id="chart_${id}"></canvas>
+                                    </div>
+                                </div>
+
+                                <div style="padding:0 14px 12px;">
+                                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+                                        <div style="font-size:10px;font-weight:600;color:var(--muted);">Waste</div>
+                                        <span class="badge-amber">${(item.waste || 0).toLocaleString()} kg</span>
+                                    </div>
+                                    <div style="position:relative;height:70px;">
+                                        <canvas id="waste_bar_${id}"></canvas>
+                                    </div>
+                                </div>
+                            </div>`);
+
+                        grid.append(card);
+
+                        setTimeout(() => drawGauge(`gauge_${id}`, ach, gColor), 20);
+
+                        let sdList = $(`#shiftDownList_${id}`);
+
+                        ['A', 'B', 'C'].forEach((s, i) => {
+                            let val = shiftDown[s] || 0;
+                            let maxVal = Math.max(shiftDown.A, shiftDown.B, shiftDown.C, 1);
+
+                            sdList.append(`
+                                <div class="dt-row" style="margin-bottom:5px;">
+                                    <div class="dt-label" style="min-width:20px;max-width:20px;">
+                                        <span style="font-size:10px;font-weight:700;color:${SHIFT_COLORS[i]};">${s}</span>
+                                    </div>
+                                    <div class="dt-bar-wrap">
+                                        <div class="dt-bar-fill" style="width:${Math.round(val / maxVal * 100)}%;background:${SHIFT_COLORS[i]};"></div>
+                                    </div>
+                                    <div class="dt-val">${val}m</div>
+                                </div>`);
+                        });
+
+                        setTimeout(() => {
+                            safeChart(`pie_${id}`, {
+                                type: 'doughnut',
+                                data: {
+                                    labels: ['A', 'B', 'C'],
+                                    datasets: [{
+                                        data: [shiftDown.A, shiftDown.B, shiftDown.C],
+                                        backgroundColor: SHIFT_COLORS,
+                                        borderWidth: 0,
+                                        hoverOffset: 4
+                                    }]
+                                },
+                                options: {
+                                    cutout: '65%',
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    plugins: { legend: { display: false } }
+                                }
+                            });
+                        }, 50);
+
+                        let labels = [];
+                        let last7 = [];
+
+                        for (let i = 6; i >= 0; i--) {
+                            let d = new Date();
+                            d.setDate(d.getDate() - i);
+                            labels.push((d.getMonth() + 1) + '-' + d.getDate());
+                            last7.push(items.filter(x => new Date(x.timestamp_Start).toDateString() === d.toDateString()).reduce((a, b) => a + b.product_Count, 0));
+                        }
+
+                        setTimeout(() => {
+                            safeChart(`chart_${id}`, {
+                                type: 'line',
+                                data: {
+                                    labels,
+                                    datasets: [{
+                                        data: last7,
+                                        fill: true,
+                                        tension: 0.35,
+                                        borderColor: THEME.accent,
+                                        backgroundColor: THEME.accent + '18',
+                                        borderWidth: 2,
+                                        pointRadius: 2
+                                    }]
+                                },
+                                options: {
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    plugins: { legend: { display: false } },
+                                    scales: {
+                                        x: {
+                                            ticks: { font: { size: 9 }, color: THEME.muted },
+                                            grid: { display: false }
+                                        },
+                                        y: {
+                                            beginAtZero: true,
+                                            ticks: { font: { size: 9 }, color: THEME.muted },
+                                            grid: { color: THEME.grid }
+                                        }
+                                    }
+                                }
+                            });
+                        }, 80);
+
+                        let wLabels = Object.keys(wasteTypeSummary);
+                        let wValues = Object.values(wasteTypeSummary);
+
+                        setTimeout(() => {
+                            if (!wLabels.length) return;
+
+                            safeChart(`waste_bar_${id}`, {
+                                type: 'bar',
+                                data: {
+                                    labels: wLabels,
+                                    datasets: [{
+                                        data: wValues,
+                                        backgroundColor: wLabels.map((_, i) => WASTE_COLORS[i % WASTE_COLORS.length]),
+                                        borderRadius: 4,
+                                        barThickness: 14
+                                    }]
+                                },
+                                options: {
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    plugins: {
+                                        legend: { display: false },
+                                        tooltip: { callbacks: { label: ctx => `${ctx.raw} kg` } }
+                                    },
+                                    scales: {
+                                        x: {
+                                            ticks: { font: { size: 9 }, color: THEME.muted, maxRotation: 30, autoSkip: false },
+                                            grid: { display: false }
+                                        },
+                                        y: {
+                                            beginAtZero: true,
+                                            ticks: { font: { size: 9 }, color: THEME.muted },
+                                            grid: { color: THEME.grid }
+                                        }
+                                    }
+                                }
+                            });
+                        }, 120);
+                    });
+
+                    let reasonLabels = Object.keys(lineReasonSummary).sort((a, b) => lineReasonSummary[b] - lineReasonSummary[a]);
+                    let reasonValues = reasonLabels.map(r => lineReasonSummary[r]);
+                    let reasonMax = Math.max(...reasonValues, 1);
+
+                    let reasonPanel = $(`
+                        <div class="two-col mb-3">
+                            <div class="panel">
+                                <div class="panel-title"><i class="bi bi-clock-history text-danger"></i> Downtime by reason — ${machineLine}</div>
+                                <div id="dtList_${safeLine}"></div>
+                                <div style="position:relative;height:160px;margin-top:10px;">
+                                    <canvas id="dtChart_${safeLine}"></canvas>
+                                </div>
+                            </div>
+                            <div class="panel">
+                                <div class="panel-title"><i class="bi bi-recycle text-warning"></i> Waste by type — ${machineLine}</div>
+                                <div style="display:flex;gap:8px;align-items:center;">
+                                    <div style="position:relative;height:160px;flex:1;">
+                                        <canvas id="wasteDonut_${safeLine}"></canvas>
+                                    </div>
+                                    <div id="wasteLegend_${safeLine}" style="font-size:11px;color:var(--muted);display:flex;flex-direction:column;gap:5px;min-width:110px;"></div>
+                                </div>
+                            </div>
+                        </div>`);
+
+                    container.append(reasonPanel);
+
+                    let dtListEl = $(`#dtList_${safeLine}`);
+
+                    reasonLabels.forEach((r, i) => {
+                        let pct = Math.round(reasonValues[i] / reasonMax * 100);
+
+                        dtListEl.append(`
+                            <div class="dt-row">
+                                <div class="dt-label">${r}</div>
+                                <div class="dt-bar-wrap"><div class="dt-bar-fill" style="width:${pct}%;background:${REASON_COLORS[i % REASON_COLORS.length]};"></div></div>
+                                <div class="dt-val">${reasonValues[i]}m</div>
+                            </div>`);
+                    });
+
+                    setTimeout(() => {
+                        if (!reasonLabels.length) return;
+
+                        safeChart(`dtChart_${safeLine}`, {
+                            type: 'bar',
+                            data: {
+                                labels: reasonLabels,
+                                datasets: [{
+                                    data: reasonValues,
+                                    backgroundColor: reasonLabels.map((_, i) => REASON_COLORS[i % REASON_COLORS.length]),
+                                    borderRadius: 4,
+                                    barThickness: 18
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: { display: false },
+                                    tooltip: { callbacks: { label: ctx => `${ctx.raw} min` } }
+                                },
+                                scales: {
+                                    x: {
+                                        ticks: { font: { size: 9 }, color: THEME.muted, maxRotation: 35, autoSkip: false },
+                                        grid: { display: false }
+                                    },
+                                    y: {
+                                        beginAtZero: true,
+                                        ticks: { font: { size: 9 }, color: THEME.muted },
+                                        grid: { color: THEME.grid }
+                                    }
+                                }
+                            }
+                        });
+                    }, 150);
+
+                    let lineWasteTypes = {};
+
+                    Object.values(grouped[machineLine]).forEach(item => {
+                        (item.wasteData || []).forEach(w => {
+                            let t = w.wasteType || 'Unknown';
+                            lineWasteTypes[t] = (lineWasteTypes[t] || 0) + (w.wasteWeight || 0);
+                        });
+                    });
+
+                    let wKeys = Object.keys(lineWasteTypes);
+                    let wVals = wKeys.map(k => lineWasteTypes[k]);
+                    let legendEl = $(`#wasteLegend_${safeLine}`);
+
+                    wKeys.forEach((k, i) => {
+                        legendEl.append(`
+                            <div style="display:flex;align-items:center;gap:5px;">
+                                <span style="width:8px;height:8px;border-radius:2px;background:${WASTE_COLORS[i % WASTE_COLORS.length]};flex-shrink:0;display:inline-block;"></span>
+                                ${k} ${wVals[i].toLocaleString()} kg
+                            </div>`);
+                    });
+
+                    setTimeout(() => {
+                        if (!wKeys.length) return;
+
+                        safeChart(`wasteDonut_${safeLine}`, {
+                            type: 'doughnut',
+                            data: {
+                                labels: wKeys,
+                                datasets: [{
+                                    data: wVals,
+                                    backgroundColor: wKeys.map((_, i) => WASTE_COLORS[i % WASTE_COLORS.length]),
+                                    borderWidth: 0,
+                                    hoverOffset: 4
+                                }]
+                            },
+                            options: {
+                                cutout: '65%',
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: { legend: { display: false } }
+                            }
+                        });
+                    }, 200);
+                });
+
+                let trendDays = [];
+                let trendActual = [];
+                let trendTarget = [];
+
+                for (let i = 6; i >= 0; i--) {
+                    let d = new Date();
+                    d.setDate(d.getDate() - i);
+
+                    trendDays.push((d.getMonth() + 1) + '-' + d.getDate());
+
+                    let dayTotal = 0;
+                    let dayTarget = 0;
+
+                    data.forEach(x => {
+                        (x.data || []).forEach(row => {
+                            if (new Date(row.timestamp_Start).toDateString() === d.toDateString()) dayTotal += row.product_Count;
+                        });
+
+                        if (new Date().toDateString() === d.toDateString()) dayTarget += x.target;
+                    });
+
+                    trendActual.push(dayTotal);
+                    trendTarget.push(dayTarget);
+                }
+
+                $('#globalTrendPanel').show();
+
+                setTimeout(() => {
+                    safeChart('globalTrendChart', {
+                        type: 'line',
+                        data: {
+                            labels: trendDays,
+                            datasets: [
+                                {
+                                    label: 'Actual',
+                                    data: trendActual,
+                                    fill: true,
+                                    tension: 0.35,
+                                    borderColor: THEME.accent,
+                                    backgroundColor: THEME.accent + '18',
+                                    borderWidth: 2,
+                                    pointRadius: 3,
+                                    pointBackgroundColor: THEME.accent
+                                },
+                                {
+                                    label: 'Target',
+                                    data: trendTarget,
+                                    fill: false,
+                                    tension: 0,
+                                    borderColor: THEME.muted,
+                                    borderDash: [4, 3],
+                                    borderWidth: 1.5,
+                                    pointRadius: 0
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { display: false } },
+                            scales: {
+                                x: {
+                                    ticks: { font: { size: 11 }, color: THEME.muted },
+                                    grid: { display: false }
+                                },
+                                y: {
+                                    beginAtZero: false,
+                                    ticks: {
+                                        font: { size: 10 },
+                                        color: THEME.muted,
+                                        callback: v => v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v
+                                    },
+                                    grid: { color: THEME.grid }
+                                }
+                            }
+                        }
+                    });
+                }, 250);
+            });
+        }
+
+        loadDashboard();
+        startAutoRefresh();
+    });
+</script>

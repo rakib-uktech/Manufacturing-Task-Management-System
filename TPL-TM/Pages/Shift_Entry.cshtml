@@ -1,0 +1,488 @@
+﻿@page
+@model TPL_TM.Pages.Shift_EntryModel
+@{
+}
+
+<div class="modal fade show" id="shiftEntryModal" tabindex="-1" aria-labelledby="shiftEntryModalLabel" aria-hidden="true" style="display:block;">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 650px; margin-top:80px;">
+        <div class="modal-content shadow-lg border-0 rounded-4">
+            <div class="modal-header bg-primary text-white d-flex align-items-center rounded-top-4">
+                <i class="bi bi-clock-history me-2 fs-4"></i>
+                <h5 class="modal-title fw-semibold" id="shiftEntryModalLabel">Start Shift</h5>
+                <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal" aria-label="Close" id="closeShiftEntryModal"></button>
+            </div>
+
+            <div class="modal-body p-4">
+                <form id="shift-start-form" method="post" asp-page-handler="StartShift" novalidate class="needs-validation">
+                    
+                    <div class="form-floating mb-3">
+                        <input class="form-control" list="WorkOrderOptions" id="Wo_Number" asp-for="ShiftInfo.WorkOrderNumber" data-netsuite="true" required />
+                        <datalist id="WorkOrderOptions">
+                            @foreach (var wo in Model.WorkOrders)
+                            {
+                                <option value="@wo.WorkOrder"
+                                        data-part="@wo.PartNumber"
+                                        data-desc="@wo.ItemDescription"
+                                        data-machine="@wo.MachineName"
+                                        data-machineline="@wo.MachineLine"
+                                        data-productline="@wo.ProductLine"
+                                        data-caseqty="@wo.CaseQty">
+                                </option>
+                            }
+                        </datalist>
+
+                        <label><i class="bi bi-gear me-1 text-primary"></i>Work Order</label>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <input class="form-control" id="Assembly_Item" asp-for="ShiftInfo.WorkOrderItem" data-netsuite="true" readonly />
+                        <label><i class="bi bi-box-seam me-1 text-primary"></i>Assembly Item</label>
+                    </div>
+                    
+                    <div class="form-floating mb-3">
+                        <input class="form-control" id="Assembly_Description" asp-for="ShiftInfo.WorkOrderDescription" data-netsuite="true" readonly />
+                        <label><i class="bi bi-card-text me-1 text-primary"></i>Assembly Description</label>
+                    </div>
+                    
+
+                    <!-- AUTO-FILLED FIELDS (HIDDEN) -->
+                    <div class="auto-filled-hidden">                       
+                        <!-- Machine Line -->
+                        <div class="form-floating mb-3">
+                            <select class="form-select" asp-for="ShiftInfo.Machine_Line" required id="ShiftInfo_Machine_Line" data-netsuite="true">
+                                <option value="">Select Machine Line</option>
+                                @foreach (var line in Model.MachineLineList.Select(m => m.Machine_Line).Distinct())
+                                {
+                                    <option value="@line">@line</option>
+                                }
+                            </select>
+                            <label>Machine Line</label>
+                        </div>
+
+                        <!-- Machine Name -->
+                        <div class="form-floating mb-3">
+                            <select class="form-select" asp-for="ShiftInfo.Machine_Name" required id="ShiftInfo_Machine_Name" data-netsuite="true">
+                                <option value="">Select Machine</option>
+                                @foreach (var name in Model.MachineNameList.Select(m => m.Machine_Name).Distinct())
+                                {
+                                    <option value="@name">@name</option>
+                                }
+                            </select>
+                            <label>Machine Name</label>
+                        </div>
+
+                        <!-- Product Line -->
+                        <div class="form-floating mb-4">
+                            <select class="form-select" asp-for="ShiftInfo.Product_Line" required id="ShiftInfo_Product_Line" data-netsuite="true">
+                                <option value="">Select Product Line</option>
+                                @foreach (var line in Model.ProductLineList)
+                                {
+                                    <option value="@line.Product_Line">@line.Product_Line</option>
+                                }
+                            </select>
+                            <label>Product Line</label>
+                        </div>
+
+                        <div class="form-floating mb-3">
+                            <input class="form-control" id="Case_Qty" asp-for="ShiftInfo.Case_Qty" data-netsuite="true" readonly />
+                            <label><i class="bi bi-card-text me-1 text-primary"></i>Case Qty</label>
+                        </div>
+
+                    </div>
+
+                    <!-- Machine Clearance Checklist -->
+                    <div class="mb-4" id="checklistContainer">
+                        <label class="fw-bold mb-2 text-primary">
+                            <i class="bi bi-clipboard-check me-1"></i>Machine Clearance Checklist
+                        </label>
+
+                        @for (int i = 0; i < Model.ShiftInfo.ShiftChecks.Count; i++)
+                        {
+                            <div class="d-flex align-items-center mb-2 check-item p-2 rounded-3 bg-light">
+                                <!-- Toggle Switch -->
+                                <div class="form-check form-switch me-2">
+                                    <input class="form-check-input shift-toggle" type="checkbox"
+                                           name="ShiftInfo.ShiftChecks[@i].CheckStatus"
+                                           value="true"
+                                           @(Model.ShiftInfo.ShiftChecks[i].CheckStatus ? "checked" : "")
+                                           data-index="@i" />
+                                    <input type="hidden" name="ShiftInfo.ShiftChecks[@i].CheckName" value="@Model.ShiftInfo.ShiftChecks[i].CheckName" />
+                                </div>
+
+                                <!-- Label -->
+                                <label class="form-check-label flex-grow-1">@Model.ShiftInfo.ShiftChecks[i].CheckName</label>
+
+                                <!-- Comment -->
+                                <input type="text" class="form-control form-control-sm check-comment"
+                                       placeholder="Comment if unchecked"
+                                       name="ShiftInfo.ShiftChecks[@i].Comment"
+                                       style="display:none; max-width:180px;" />
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Hidden Handover Rating -->
+                    <input type="hidden" asp-for="ShiftInfo.Handover_Rating" id="handoverRating" />
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="w-100 btn btn-lg btn-success shadow-sm rounded-3">
+                        <i class="bi bi-play-circle me-2"></i>Start Shift
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="netsuiteErrorModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4 shadow-lg">
+
+            <div class="modal-header bg-danger text-white rounded-top-4">
+                <i class="bi bi-exclamation-triangle-fill me-2 fs-4"></i>
+                <h5 class="modal-title">NetSuite Data Missing</h5>
+                <button type="button" class="btn-close btn-close-white"
+                        data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <p class="fw-semibold mb-2">
+                    The following fields are missing or not configured correctly:
+                </p>
+
+                <ul id="netsuiteMissingList" class="mb-3"></ul>
+
+                <div class="alert alert-warning mb-0">
+                    <strong>Action required:</strong><br />
+                    Please update these fields in <strong>NetSuite</strong>
+                    before starting the shift.
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+                    OK
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <script>
+       
+        function validateNetSuiteFieldsWithModal() {
+
+            const netsuiteFields = document.querySelectorAll("[data-netsuite='true']");
+            const missing = [];
+
+            netsuiteFields.forEach(el => {
+                const value = el.value?.trim();
+
+                if (!value) {
+                    const label =
+                        document.querySelector(`label[for='${el.id}']`)?.innerText
+                        || el.closest(".form-floating")?.querySelector("label")?.innerText
+                        || el.name
+                        || el.id;
+
+                    missing.push(label);
+                    el.classList.add("is-invalid");
+                } else {
+                    el.classList.remove("is-invalid");
+                }
+            });
+
+            if (missing.length > 0) {
+                const list = document.getElementById("netsuiteMissingList");
+                list.innerHTML = "";
+
+                missing.forEach(m => {
+                    const li = document.createElement("li");
+                    li.textContent = m;
+                    list.appendChild(li);
+                });
+
+                const modal = new bootstrap.Modal(
+                    document.getElementById("netsuiteErrorModal"),
+                    { backdrop: "static", keyboard: false }
+                );
+
+                modal.show();
+                return false;
+            }
+
+            return true;
+        }
+    </script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const shiftModal = new bootstrap.Modal(document.getElementById('shiftEntryModal'), { backdrop: 'static', keyboard: false });
+            shiftModal.show();
+
+            document.getElementById("closeShiftEntryModal").addEventListener("click", () => {
+                window.location.href = "/Index";
+            });
+
+            // Filter Product Lines by Machine Line
+            const machineLineSelect = document.getElementById("ShiftInfo_Machine_Line");
+            const productLineSelect = document.getElementById("ShiftInfo_Product_Line");
+            machineLineSelect?.addEventListener("change", function () {
+                const selectedType = this.value;
+                Array.from(productLineSelect.options).forEach(option => {
+                    if (!option.value) return;
+                    option.style.display = (option.getAttribute("data-type") === selectedType) ? "block" : "none";
+                });
+                productLineSelect.value = "";
+            });
+
+            // Fetch Previous Shift
+            const machineNameSelect = document.getElementById("ShiftInfo_Machine_Name");
+            machineNameSelect?.addEventListener("change", function () {
+                const line = machineLineSelect.value;
+                const name = machineNameSelect.value;
+                if (line && name) {
+                    fetch(`@Url.Page("/Shift_Entry")?handler=PreviousShift&machineLine=${encodeURIComponent(line)}&machineName=${encodeURIComponent(name)}`)
+                        .then(res => res.json())
+                        .then(data => console.log("Previous shift:", data))
+                        .catch(err => console.error("Error fetching previous shift:", err));
+                }
+            });
+
+            // Toggle comments + handover rating
+            const toggles = document.querySelectorAll(".shift-toggle");
+            const comments = document.querySelectorAll(".check-comment");
+            const ratingInput = document.getElementById("handoverRating");
+
+            toggles.forEach((toggle, idx) => {
+                toggle.addEventListener("change", function () {
+                    if (toggle.checked) {
+                        comments[idx].style.display = "none";
+                        comments[idx].value = "";
+                    } else {
+                        comments[idx].style.display = "inline-block";
+                    }
+
+                    // Update handover rating
+                    let checkedCount = 0;
+                    toggles.forEach(t => { if (t.checked) checkedCount++; });
+                    ratingInput.value = Math.round((checkedCount / toggles.length) * 10);
+                });
+
+                // Initialize visibility
+                if (!toggle.checked) comments[idx].style.display = "inline-block";
+            });
+
+            // Supervisor Authorization Flow
+            const userRole = "@Model.LoggedInUserRole";
+            const form = document.getElementById("shift-start-form");
+
+            form?.addEventListener("submit", function (event) {
+                // ✅ FIX: Default Case Qty BEFORE NetSuite validation
+                const caseQty = document.getElementById("Case_Qty");
+                if (caseQty && (!caseQty.value || caseQty.value.trim() === "")) {
+                    caseQty.value = "0";
+                }
+                // 🔴 NETSUITE VALIDATION FIRST
+                if (!validateNetSuiteFieldsWithModal()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    return;
+                }
+
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    form.classList.add('was-validated');
+                    return;
+                }
+
+                if (userRole === "User") {
+                    event.preventDefault();
+                    event.stopPropagation();
+
+                    const formData = new FormData(form);
+                    const obj = {};
+                    formData.forEach((v, k) => obj[k] = v);
+                    sessionStorage.setItem("pendingShiftForm", JSON.stringify(obj));
+
+                    const redirectUrl = `/ShiftSupervisorLogin?returnUrl=${encodeURIComponent(window.location.pathname)}`;
+                    window.location.href = redirectUrl;
+                }
+            });
+
+            const isSupervisorAuthorized = "@(TempData.Peek("SupervisorAuthorized") ?? false)" === "True";
+            if (isSupervisorAuthorized) {
+                const savedData = sessionStorage.getItem("pendingShiftForm");
+                if (savedData) {
+                    const data = JSON.parse(savedData);
+                    for (const key in data) {
+                        const el = document.querySelector(`[name='${key}']`);
+                        if (el) {
+                            if (el.type === "checkbox") el.checked = (data[key] === "true");
+                            else el.value = data[key];
+                        }
+                    }
+                    sessionStorage.removeItem("pendingShiftForm");
+                    form.submit();
+                }
+            }
+        });
+        
+    </script>
+
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            const woInput = document.getElementById("Wo_Number");
+            const asmInput = document.getElementById("Assembly_Item");
+            const descInput = document.getElementById("Assembly_Description");
+            const caseQtyInput = document.getElementById("Case_Qty");
+
+
+            const machineNameSelect = document.getElementById("ShiftInfo_Machine_Name");
+            const machineLineSelect = document.getElementById("ShiftInfo_Machine_Line");
+            const productLineSelect = document.getElementById("ShiftInfo_Product_Line");
+
+            const options = Array.from(document.querySelectorAll("#WorkOrderOptions option"));
+
+            function loadWorkOrderDetails() {
+
+            const match = options.find(o => o.value === woInput.value);
+
+            if (!match) {
+                asmInput.value = "";
+                descInput.value = "";
+                caseQtyInput.value = "";
+                machineNameSelect.value = "";
+                machineLineSelect.value = "";
+                productLineSelect.value = "";
+                return;
+            }
+
+            asmInput.value = match.dataset.part || "";
+            descInput.value = match.dataset.desc || "";
+            caseQtyInput.value = match.dataset.caseqty || "";
+
+            if (match.dataset.machine) {
+                machineNameSelect.value = match.dataset.machine;
+                machineNameSelect.dispatchEvent(new Event("change"));
+            }
+
+            if (match.dataset.machineline) {
+                machineLineSelect.value = match.dataset.machineline;
+                machineLineSelect.dispatchEvent(new Event("change"));
+            }
+
+            if (match.dataset.productline) {
+                productLineSelect.value = match.dataset.productline;
+            }
+        }
+
+        woInput.addEventListener("input", loadWorkOrderDetails);
+        loadWorkOrderDetails();
+        });
+        
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            const machine = document.getElementById("ShiftInfo_Machine_Name");
+
+            machine.addEventListener("change", loadChecklist);
+
+            function loadChecklist() {
+
+                fetch(`?handler=ShiftChecks&machineName=${encodeURIComponent(machine.value)}`)
+                    .then(r => r.json())
+                    .then(data => {
+
+                        let html = '';
+
+                        data.forEach((item, index) => {
+
+                            html += `
+                            <div class="d-flex align-items-center mb-2 check-item p-2 rounded-3 bg-light">
+
+                                <div class="form-check form-switch me-2">
+                                    <input class="form-check-input shift-toggle"
+                                           type="checkbox"
+                                           name="ShiftInfo.ShiftChecks[${index}].CheckStatus"
+                                           value="true"/>
+
+                                    <input type="hidden"
+                                           name="ShiftInfo.ShiftChecks[${index}].CheckName"
+                                           value="${item.checkName}">
+                                </div>
+
+                                <label class="form-check-label flex-grow-1">
+                                    ${item.checkName}
+                                </label>
+
+                                <input type="text"
+                                       class="form-control form-control-sm check-comment"
+                                       placeholder="Comment if unchecked"
+                                       name="ShiftInfo.ShiftChecks[${index}].Comment"
+                                       style="display:none;max-width:180px;">
+                            </div>`;
+                        });
+
+                        document.getElementById("checklistContainer").innerHTML =
+                            `
+                            <label class="fw-bold mb-2 text-primary">
+                                <i class="bi bi-clipboard-check me-1"></i>
+                                Machine Clearance Checklist
+                            </label>
+                            ${html}`;
+                    });
+            }
+
+            // Load correct checklist on page load
+            loadChecklist();
+
+        });
+    </script>
+
+    <style>
+        .check-item {
+            transition: background-color 0.2s;
+        }
+
+            .check-item:hover {
+                background-color: #eef3ff;
+            }
+
+        .shift-toggle {
+            width: 3em;
+            height: 1.5em;
+            border-radius: 1.5em;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+            .shift-toggle:checked {
+                background-color: #28a745 !important;
+                border-color: #28a745 !important;
+            }
+
+            .shift-toggle:not(:checked) {
+                background-color: #dc3545 !important;
+                border-color: #dc3545 !important;
+            }
+
+        .auto-filled-hidden {
+            display: none;
+        }
+
+        .is-invalid {
+            border: 2px solid #dc3545 !important;
+            background-color: #fff5f5;
+        }
+    </style>
+}

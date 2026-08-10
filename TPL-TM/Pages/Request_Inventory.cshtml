@@ -1,0 +1,218 @@
+﻿@page
+@model TPL_TM.Pages.Request_InventoryModel
+@{
+}
+
+<div class="modal fade show" id="assignTaskModal" tabindex="-1" aria-labelledby="assignTaskModalLabel" aria-hidden="true" style="display: block;">
+    <div class="modal-dialog modal-dialog-centered" style="margin-top: 80px;">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="assignTaskModalLabel">Request New Inventory</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="closeAssignTaskModal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="assign-task-form" method="post" novalidate>
+                    <!-- Work Order -->
+                    <div class="form-floating mb-3">
+                        <input class="form-control" list="Work_OrderlistOptions" asp-for="TaskInfo.Ref_No" id="Work_Order" required placeholder="Work Order" />
+                        <datalist id="Work_OrderlistOptions">
+                            @{
+                                var uniqueWorkOrders = Model.TaskList
+                                .GroupBy(task => task.Ref_No)
+                                .Select(group => group.First())
+                                .ToList();
+                            }
+                            @foreach (var task in uniqueWorkOrders)
+                            {
+                                <option value="@task.Ref_No">@task.Ref_No</option>
+                            }
+                        </datalist>
+                        <label>Work Order</label>
+                        <div class="invalid-feedback">Work Order is required.</div>
+                    </div>
+
+                   
+                    <!-- Inventory Name -->
+                    <div class="form-floating mb-3">
+                        <input class="form-control" list="Task_NamelistOptions" asp-for="TaskInfo.Task_Name" id="Task_Name" required placeholder="Inventory Name" />
+                        <datalist id="Task_NamelistOptions">
+                            @foreach (var task in Model.TaskList)
+                            {
+                                <option value="@task.Task_Name" data-description="@task.Task_Description" data-refno="@task.Ref_No">@task.Task_Name</option>
+                            }
+                        </datalist>
+                        <label>Inventory Name</label>
+                        <div class="invalid-feedback">Inventory Name is required.</div>
+                    </div>
+
+                    <!-- Inventory Description -->
+                    <div class="form-floating mb-3">
+                        <textarea class="form-control" asp-for="TaskInfo.Task_Description" id="Task_Description" rows="3" readonly placeholder="Inventory Description"></textarea>
+                        <label>Inventory Description</label>
+                    </div>
+
+                    <!-- Machine Name -->
+                    <div class="form-floating mb-3">
+                        <input class="form-control" list="Assign_TolistOptions" asp-for="TaskInfo.Assign_To" id="Assign_To" required placeholder="Machine Name" />
+                        <datalist id="Assign_TolistOptions">
+                            @foreach (var task in Model.AssignTolist)
+                            {
+                                <option value="@task.Assign_To">@task.Assign_To</option>
+                            }
+                        </datalist>
+                        <label>Machine Name</label>
+                        <div class="invalid-feedback">Please specify the machine name.</div>
+                    </div>
+
+                    <!-- Quantity -->
+                    <div class="form-floating mb-3">
+                        <input type="number" asp-for="TaskInfo.Qty" class="form-control" required placeholder="Quantity" min="1" />
+                        <label>Quantity</label>
+                        <div class="invalid-feedback">Quantity must be at least 1.</div>
+                    </div>
+
+                    <!-- Unit -->
+                    <div class="form-floating mb-3">
+                        <select name="Unit" class="form-select" required>
+                            <option value="">Select Unit</option>
+                            <option value="Piece" selected>Piece</option>
+                            <option value="Case">Case</option>
+                            <option value="Pallet">Pallet</option>
+                            <option value="Kilogram">Kilogram</option>
+                            <option value="Sheet">Sheet</option>
+                        </select>
+                        <label>Unit</label>
+                        <div class="invalid-feedback">Please select a unit.</div>
+                    </div>
+
+                    <!-- Priority Level -->
+                    <div class="form-floating mb-3">
+                        <select name="Priority_Level" class="form-select" required>
+                            <option value="">Select Priority Level</option>
+                            <option value="High" selected>High</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Low">Low</option>
+                        </select>
+                        <label>Priority Level</label>
+                        <div class="invalid-feedback">Please select a priority level.</div>
+                    </div>
+
+                    <!-- Comments -->
+                    <div class="form-floating mb-3">
+                        <textarea name="Comments" class="form-control" placeholder="Comments"></textarea>
+                        <label>Comments</label>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="w-100 btn btn-lg btn-primary">Submit Request</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var myModal = new bootstrap.Modal(document.getElementById('assignTaskModal'), {
+                backdrop: 'static',
+                keyboard: false
+            });
+            myModal.show();
+
+            document.getElementById("closeAssignTaskModal").addEventListener("click", function () {
+                window.location.href = "/Index";
+            });
+
+            // Form validation
+            (function () {
+                'use strict';
+                var form = document.getElementById('assign-task-form');
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            })();
+        });
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Form validation
+            (function () {
+                'use strict';
+                var form = document.getElementById('assign-task-form');
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            })();
+
+            // Handle Work Order, Task Name, and Task Description
+            const workOrderInput = document.getElementById('Work_Order');
+            const taskNameInput = document.getElementById('Task_Name');
+            const taskDescriptionInput = document.getElementById('Task_Description');
+            const taskOptionsContainer = document.getElementById('Task_NamelistOptions');
+
+            const taskOptions = Array.from(document.querySelectorAll('#Task_NamelistOptions option'));
+
+            // Update Task Name options based on Work Order selection
+            function updateTaskNameOptions() {
+                const selectedWorkOrder = workOrderInput.value.trim();
+
+                // Clear previous task list
+                taskOptionsContainer.innerHTML = '';
+
+                // Filter matching tasks for the selected work order
+                const matchedTasks = taskOptions.filter(option => option.dataset.refno === selectedWorkOrder);
+
+                if (matchedTasks.length > 0) {
+                    matchedTasks.forEach(option => {
+                        const newOption = document.createElement('option');
+                        newOption.value = option.value;
+                        newOption.dataset.description = option.dataset.description;
+                        newOption.dataset.refno = option.dataset.refno;
+                        taskOptionsContainer.appendChild(newOption);
+                    });
+                } else {
+                    taskNameInput.value = '';
+                    taskDescriptionInput.value = '';
+                }
+            }
+
+            // Update Task Description based on Task Name selection
+            function updateTaskDescription() {
+                const selectedTaskName = taskNameInput.value.trim();
+                const selectedOption = Array.from(taskOptionsContainer.children).find(option => option.value === selectedTaskName);
+
+                if (selectedOption) {
+                    taskDescriptionInput.value = selectedOption.dataset.description || '';
+                } else {
+                    taskDescriptionInput.value = '';
+                }
+            }
+
+            // Add event listeners for input and change
+            workOrderInput.addEventListener('input', updateTaskNameOptions);
+            workOrderInput.addEventListener('change', updateTaskNameOptions);
+
+            taskNameInput.addEventListener('input', updateTaskDescription);
+            taskNameInput.addEventListener('change', updateTaskDescription);
+            // Auto-populate when page opens
+            if (workOrderInput.value) {
+                updateTaskNameOptions();
+
+                if (taskNameInput.value) {
+                    updateTaskDescription();
+                }
+            }
+        });
+    </script>
+
+    
+}

@@ -1,0 +1,100 @@
+﻿@page
+@model TPL_TM.Pages.Quality_Check_Template_ListModel
+
+<div class="container mt-4">
+    <div class="card shadow p-3">
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3><i class="bi bi-list-check"></i> Quality Check Template</h3>
+
+            <div class="d-flex gap-2">
+                <button id="exportBtn" class="btn btn-outline-success">
+                    <i class="bi bi-download"></i> Export
+                </button>
+
+                <a href="/Quality_Check_Template" class="btn btn-success">
+                    <i class="bi bi-plus-circle"></i> Add New Template
+                </a>
+            </div>
+        </div>
+
+        <!-- Search box -->
+        <input id="templateSearch" class="form-control mb-3" placeholder="Search templates..." />
+
+        <div class="table-responsive">
+            <table id="templateTable" class="table table-striped table-bordered">
+                <thead class="table-success">
+                    <tr>
+                        <th>Actions</th>
+                        <th>ID</th>
+                        <th>Product Category</th>
+                        <th>Test Name</th>
+                        <th>Created On</th>
+                        <th>Created By</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var t in Model.TemplateList)
+                    {
+                        <tr>
+                            <td>
+                                <div class="dropdown">
+                                    <a class="btn btn-link p-0" data-bs-toggle="dropdown">
+                                        <i class="bi bi-three-dots-vertical"></i>
+                                    </a>
+
+                                    <ul class="dropdown-menu">
+                                        <li>
+                                            <a class="dropdown-item" href="/Quality_Check_Template_Edit?id=@t.Id">
+                                                <i class="bi bi-pencil-square text-warning"></i> Edit
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" href="/Quality_Check_Template_Delete?id=@t.Id"
+                                               onclick="return confirm('Delete this template?');">
+                                                <i class="bi bi-trash text-danger"></i> Delete
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </td>
+
+                            <td>@t.Id</td>
+                            <td>@t.Product_Category</td>
+                            <td>@t.Test_Name</td>
+                            <td>@t.Created_On?.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>@t.Created_By</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</div>
+
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+
+            var table = $('#templateTable').DataTable({
+                pageLength: 10
+            });
+
+            $('#templateSearch').keyup(function () {
+                table.search(this.value).draw();
+            });
+
+            $('#exportBtn').click(function () {
+                var wb = XLSX.utils.table_to_book(document.getElementById("templateTable"));
+                XLSX.writeFile(wb, "Quality_Template_List.xlsx");
+            });
+        });
+    </script>
+}

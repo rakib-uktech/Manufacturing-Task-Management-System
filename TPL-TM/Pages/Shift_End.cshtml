@@ -1,0 +1,149 @@
+﻿@page "{shiftId?}"
+@model TPL_TM.Pages.Shift_EndModel
+@{
+    ViewData["Title"] = "End Shift";
+}
+
+<div class="modal fade show" id="shiftEndModal" tabindex="-1" aria-labelledby="shiftEndModalLabel" aria-hidden="true" style="display:block;">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 550px; margin-top:80px;">
+        <div class="modal-content shadow-lg border-0 rounded-4">
+            <div class="modal-header bg-danger text-white d-flex align-items-center rounded-top-4">
+                <i class="bi bi-stop-circle me-2 fs-4"></i>
+                <h5 class="modal-title fw-semibold" id="shiftEndModalLabel">End Shift</h5>
+                <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal" aria-label="Close" id="closeShiftEndModal"></button>
+            </div>
+
+            <div class="modal-body p-4">
+                @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+                {
+                    <div class="alert alert-danger mb-4"><i class="bi bi-exclamation-triangle me-2"></i>@Model.ErrorMessage</div>
+                }
+
+                @if (Model.ActiveShift == null)
+                {
+                    <div class="alert alert-warning"><i class="bi bi-info-circle me-2"></i>No active shift found for your account.</div>
+                }
+                else
+                {
+                    <form id="shift-end-form" method="post" asp-page-handler="EndShift" novalidate class="needs-validation">
+                        @Html.AntiForgeryToken()
+
+                        <!-- Hidden Shift ID -->
+                        <input type="hidden" asp-for="ShiftInfo.Shift_Id" value="@Model.ActiveShift.Shift_Id" />
+
+                        <!-- Machine Info -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-primary"><i class="bi bi-diagram-3 me-1"></i>Machine Line</label>
+                            <input class="form-control" value="@Model.ActiveShift.Machine_Line" readonly />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-primary"><i class="bi bi-cpu me-1"></i>Machine Name</label>
+                            <input class="form-control" value="@Model.ActiveShift.Machine_Name" readonly />
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-primary"><i class="bi bi-box-seam me-1"></i>Product Line</label>
+                            <input class="form-control" value="@Model.ActiveShift.Product_Line" readonly />
+                        </div>
+
+                        <!-- Shift End Time -->
+                        <div class="form-floating mb-3">
+                            <input type="datetime-local"
+                                   asp-for="ShiftInfo.Shift_End_Time"
+                                   class="form-control"
+                                   value="@(DateTime.Now.ToString("yyyy-MM-ddTHH:mm"))"
+                                   required />
+                            <label><i class="bi bi-clock me-1 text-primary"></i>Shift End Time</label>
+                            <div class="invalid-feedback">Required.</div>
+                        </div>
+
+                        <!-- Shift Rating -->
+                        <div class="form-floating mb-3">
+                            <input type="number" asp-for="ShiftInfo.Shift_Rating" class="form-control" min="1" max="10" required />
+                            <label><i class="bi bi-star-half me-1 text-primary"></i>Shift Rating (1–10)</label>
+                            <div class="invalid-feedback">Required.</div>
+                        </div>
+
+                        <!-- Comment -->
+                        <div class="form-floating mb-4">
+                            <textarea asp-for="ShiftInfo.Comment" class="form-control" placeholder="Comment" rows="3"></textarea>
+                            <label><i class="bi bi-chat-dots me-1 text-primary"></i>Comments / Notes</label>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button type="submit" class="btn btn-lg btn-danger w-100 shadow-sm rounded-3">
+                            <i class="bi bi-stop-circle me-2"></i>End Shift
+                        </button>
+                    </form>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        .modal-content {
+            animation: fadeInDown 0.4s ease-in-out;
+        }
+
+        @@keyframes fadeInDown {
+            from
+
+        {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        }
+
+        .form-floating > label i {
+            font-size: 0.95rem;
+        }
+
+        .btn-danger:hover {
+            background-color: #c82333 !important;
+        }
+
+        .alert i {
+            vertical-align: middle;
+        }
+    </style>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('shiftEndModal'), {
+                backdrop: 'static',
+                keyboard: false
+            });
+            modal.show();
+
+            // Redirect on close
+            document.getElementById("closeShiftEndModal")?.addEventListener("click", () => {
+                window.location.href = "/Shift_Dashboard";
+            });
+
+            // Form validation
+            const form = document.getElementById('shift-end-form');
+            if (form) {
+                form.addEventListener('submit', (e) => {
+                    if (!form.checkValidity()) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                });
+            }
+        });
+    </script>
+}
