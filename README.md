@@ -2,8 +2,6 @@
 
 **Enterprise production management platform for manufacturing operations — task assignment, shift management, work order scheduling, and real-time production reporting.**
 
-<img width="1536" height="1024" alt="Manufacturing Task Management System — Software Architecture Diagram" src="https://github.com/user-attachments/assets/78b60c2a-2a1a-42ee-993b-0552ecc7eb69" />
-
 ---
 
 ## Overview
@@ -42,9 +40,8 @@ The platform was independently designed, developed, and deployed by me, and is c
 
 The application follows a standard three-tier architecture:
 
-```
-User Interface  →  Application Logic  →  Database
-```
+<img width="1536" height="1024" alt="Software Architechture Diagram" src="https://github.com/user-attachments/assets/187c4993-6b96-48a7-93ad-01fa5df74046" />
+
 
 **Frontend**
 - ASP.NET Core Razor Pages
@@ -85,32 +82,97 @@ User Interface  →  Application Logic  →  Database
 
 [Full Demonstration on YouTube](https://youtu.be/HF4pM2azJow)
 
-**Interactive Feature Walkthroughs**
-- [Walkthrough Guide 1](https://app.guidde.com/share/playbooks/wPCUBqhefwet14RbqW8zT5)
-- [Walkthrough Guide 2](https://app.guidde.com/share/playbooks/cndGpFoeL42rTw3ALUXHXi)
-- [Walkthrough Guide 3](https://app.guidde.com/share/playbooks/adnurGgZwomh9v6afA1uQL)
-
 ---
 
 ## Screenshots
 
-<img width="1900" height="906" alt="Production Dashboard Overview" src="https://github.com/user-attachments/assets/209d3a64-1851-40d6-a865-1aa48049c6c7" />
+The following screenshots demonstrate the main operational, reporting, scheduling, warehouse, quality, and AI capabilities of the Manufacturing Task Management System.
 
-<img width="1548" height="690" alt="Task Assignment Screen" src="https://github.com/user-attachments/assets/a115395e-72f5-4337-9df1-780138f5f117" />
+### 1. Production & Management Dashboards
 
-<img width="1009" height="898" alt="Shift Management Screen" src="https://github.com/user-attachments/assets/d410f125-8a79-42f8-94f4-372d41db4f94" />
+#### Production Dashboard
 
-<img width="1896" height="976" alt="Work Order Scheduling Screen" src="https://github.com/user-attachments/assets/1384f1c9-a7cc-43c0-8e51-040851009641" />
+Provides an overview of current production activity, task progress, and operational performance.
 
-<img width="810" height="917" alt="Work Order Progress Tracking" src="https://github.com/user-attachments/assets/41b09104-2e86-429a-aff4-711fa16a63e4" />
+<img width="875" height="459" alt="Production Dashboard" src="https://github.com/user-attachments/assets/690c479e-4c08-4c84-ab95-c7303dbaf4a8" />
 
-<img width="992" height="914" alt="Production Reporting Screen" src="https://github.com/user-attachments/assets/6829c6be-8744-4c1c-857a-0fcac3778940" />
+#### OEE Dashboard
 
-<img width="1581" height="916" alt="Production KPI Dashboard" src="https://github.com/user-attachments/assets/1a52acd9-9e89-4fb7-8042-d28b44891526" />
+Provides visibility into overall equipment effectiveness and key production performance indicators.
 
-<img width="1897" height="989" alt="Production Performance Overview" src="https://github.com/user-attachments/assets/d63f0a94-2f7a-4c1a-8510-44c34a1b8f01" />
+<img width="875" height="448" alt="OEE Dashboard" src="https://github.com/user-attachments/assets/dde54fcf-40b5-4b73-b808-2a673d7b1f4a" />
+
+#### Shift Dashboard
+
+Provides shift-level visibility into production activity, operator performance, and completed work.
+
+<img width="875" height="456" alt="Shift Dashboard" src="https://github.com/user-attachments/assets/397da2d7-34bc-43dc-bc89-241ed60ac0f7" />
 
 ---
+
+### 2. Task Management & Monitoring
+
+#### Task Monitoring Dashboard
+
+Allows supervisors and managers to monitor assigned tasks, progress, completion status, and operator activity in real time.
+
+<img width="875" height="417" alt="Task Monitoring Dashboard" src="https://github.com/user-attachments/assets/fd2c3e50-9a69-45bd-be4e-e80c8c0ebd12" />
+
+---
+
+### 3. Quality Management
+
+#### Quality Inspection Dashboard
+
+Provides visibility into quality inspections, inspection results, and manufacturing quality performance.
+
+<img width="798" height="411" alt="Quality Inspection Dashboard" src="https://github.com/user-attachments/assets/4fa17083-2f1e-46fd-b5de-f9df9d6d9616" />
+
+---
+
+### 4. Manufacturing Analytics
+
+#### Manufacturing Analytics Dashboard
+
+Provides management-level analytics and production insights to support operational decision-making.
+
+<img width="875" height="452" alt="Manufacturing Analytics Dashboard" src="https://github.com/user-attachments/assets/fd21d8c6-b48f-4b71-b504-5e650f187f37" />
+
+---
+
+### 5. Production Scheduling
+
+#### Production Scheduler
+
+Provides a visual scheduling interface for planning and managing production work orders across manufacturing resources.
+
+<img width="789" height="456" alt="Production Scheduler" src="https://github.com/user-attachments/assets/0e1b211d-d777-48b0-ba94-a9038e9a1f4e" />
+
+#### Manning Scheduler
+
+Enables supervisors to plan and manage operator allocation and workforce requirements across production shifts.
+
+<img width="777" height="401" alt="Manning Scheduler" src="https://github.com/user-attachments/assets/640c8e4b-f6c1-4eea-baf3-e8228543afdd" />
+
+---
+
+### 6. Warehouse Management
+
+#### Warehouse Scheduler
+
+Provides visibility and scheduling capabilities for warehouse activities supporting manufacturing operations.
+
+<img width="1900" height="907" alt="Warehouse Scheduler" src="https://github.com/user-attachments/assets/11fdf350-8bbd-49a1-84f9-8303b71125b3" />
+
+---
+
+### 7. Manufacturing AI Assistant
+
+#### Manufacturing AI Assistant
+
+An AI-powered assistant designed to help production operators, supervisors, and management access manufacturing information and operational insights.
+
+<img width="875" height="452" alt="Manufacturing AI Assistant" src="https://github.com/user-attachments/assets/07ec9f27-0bd9-419d-9c0f-37763b724652" />
 
 ## Installation
 
